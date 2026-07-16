@@ -1,0 +1,8 @@
+recruitos-frontend/node_modules
+recruitos-backend/node_modules
+recruitos-frontend/.env
+recruitos-backend/.env
+recruitos-frontend/dist
+recruitos-frontend/build
+recruitos-backend/dist
+recruitos-backend/build
