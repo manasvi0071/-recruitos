@@ -32,7 +32,29 @@ export default function Offers() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => {
+  let ignore = false;
+
+  async function init() {
+    setLoading(true);
+    try {
+      const [o, c, j] = await Promise.all([getOffers(), getCandidates(), getJobs()]);
+      if (!ignore) {
+        setOffers(o);
+        setCandidates(c);
+        setJobs(j);
+        setError('');
+      }
+    } catch (err) {
+      if (!ignore) setError(err.message);
+    } finally {
+      if (!ignore) setLoading(false);
+    }
+  }
+
+  init();
+  return () => { ignore = true; };
+}, []);
 
   async function handleSubmit(e) {
     e.preventDefault();

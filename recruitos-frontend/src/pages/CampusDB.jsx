@@ -55,8 +55,31 @@ export default function CampusDB() {
   }
 
   useEffect(() => {
-    loadColleges();
-  }, []);
+  let ignore = false;
+
+  async function init() {
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase
+      .from('colleges')
+      .select('*')
+      .order('name', { ascending: true })
+      .range(0, 4999);
+
+    if (ignore) return;
+
+    if (error) {
+      console.error('Failed to load colleges:', error);
+      setError('Could not load colleges. Check your Supabase connection.');
+    } else {
+      setColleges(data ?? []);
+    }
+    setLoading(false);
+  }
+
+  init();
+  return () => { ignore = true; };
+}, []);
 
   // --- FIX 1: case-insensitive, whitespace-trimmed course matching ---
   // --- FIX 2: "Unassigned" shows rows where course is blank/null ---

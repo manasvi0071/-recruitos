@@ -140,8 +140,30 @@ export default function Jobs() {
   }
 
   useEffect(() => {
-    loadJobs();
-  }, []);
+  let ignore = false;
+
+  async function init() {
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase
+      .from('job_profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (ignore) return;
+
+    if (error) {
+      console.error('Failed to load jobs:', error);
+      setError('Could not load job profiles. Check your Supabase connection.');
+    } else {
+      setJobs(data ?? []);
+    }
+    setLoading(false);
+  }
+
+  init();
+  return () => { ignore = true; };
+}, []);
 
   function startEdit(j) {
     setEditingId(j.id);

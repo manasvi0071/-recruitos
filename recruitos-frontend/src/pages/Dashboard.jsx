@@ -23,6 +23,14 @@ export default function Dashboard() {
   const [driveError, setDriveError] = useState('');
   const [deletingId, setDeletingId] = useState(null);
 
+  const [minDateTime] = useState(() =>
+  new Date(
+    Date.now() - new Date().getTimezoneOffset() * 60000
+  )
+    .toISOString()
+    .slice(0, 16)
+);
+
   function loadDrives() {
     setDrivesLoading(true);
     getUpcomingDrives()
@@ -73,83 +81,107 @@ export default function Dashboard() {
     }
   }
 
-  useEffect(() => {
-    async function loadDashboardData() {
-      setLoading(true);
-      setError(null);
-      try {
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+useEffect(() => {
+  let ignore = false;
 
-        const [
-          { count: collegesCount, error: collegesErr },
-          { count: resumesCount, error: resumesErr },
-          { count: selectionsCount, error: selectionsErr },
-          { count: joinedCount, error: joinedErr },
-          { data: recentApps, error: appsErr },
-          { count: companiesCount, error: companiesErr },
-          { data: companyRows, error: companyRowsErr },
-          { count: positionsCount, error: positionsErr },
-          { count: selectionsThisWeekCount, error: selectionsWeekErr },
-        ] = await Promise.all([
-          supabase.from('colleges').select('*', { count: 'exact', head: true }),
-          supabase.from('candidates').select('*', { count: 'exact', head: true }),
-          supabase.from('applications').select('*', { count: 'exact', head: true }).eq('stage', 'Selected'),
-          supabase.from('joining').select('*', { count: 'exact', head: true }).eq('status', 'Joined'),
-          supabase
-            .from('applications')
-            .select('id, stage, resume_score, candidates(name, colleges(name)), job_profiles(title)')
-            .order('created_at', { ascending: false })
-            .limit(4),
-          supabase.from('companies').select('*', { count: 'exact', head: true }),
-          supabase.from('companies').select('name').order('created_at', { ascending: false }).limit(2),
-          supabase.from('job_profiles').select('*', { count: 'exact', head: true }),
-          supabase
-            .from('applications')
-            .select('*', { count: 'exact', head: true })
-            .eq('stage', 'Selected')
-            .gte('created_at', oneWeekAgo.toISOString()),
-        ]);
+  async function loadDashboardData() {
+    setLoading(true);
+    setError(null);
+    try {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-        if (collegesErr || resumesErr || selectionsErr || joinedErr || appsErr
-          || companiesErr || companyRowsErr || positionsErr || selectionsWeekErr) {
-          throw collegesErr || resumesErr || selectionsErr || joinedErr || appsErr
-            || companiesErr || companyRowsErr || positionsErr || selectionsWeekErr;
-        }
+      const [
+        { count: collegesCount, error: collegesErr },
+        { count: resumesCount, error: resumesErr },
+        { count: selectionsCount, error: selectionsErr },
+        { count: joinedCount, error: joinedErr },
+        { data: recentApps, error: appsErr },
+        { count: companiesCount, error: companiesErr },
+        { data: companyRows, error: companyRowsErr },
+        { count: positionsCount, error: positionsErr },
+        { count: selectionsThisWeekCount, error: selectionsWeekErr },
+      ] = await Promise.all([
+        supabase.from('colleges').select('*', { count: 'exact', head: true }),
+        supabase.from('candidates').select('*', { count: 'exact', head: true }),
+        supabase.from('applications').select('*', { count: 'exact', head: true }).eq('stage', 'Selected'),
+        supabase.from('joining').select('*', { count: 'exact', head: true }).eq('status', 'Joined'),
+        supabase
+          .from('applications')
+          .select('id, stage, resume_score, candidates(name, colleges(name)), job_profiles(title)')
+          .order('created_at', { ascending: false })
+          .limit(4),
+        supabase.from('companies').select('*', { count: 'exact', head: true }),
+        supabase.from('companies').select('name').order('created_at', { ascending: false }).limit(2),
+        supabase.from('job_profiles').select('*', { count: 'exact', head: true }),
+        supabase
+          .from('applications')
+          .select('*', { count: 'exact', head: true })
+          .eq('stage', 'Selected')
+          .gte('created_at', oneWeekAgo.toISOString()),
+      ]);
 
-        setStats({
-          colleges: collegesCount ?? 0,
-          resumes: resumesCount ?? 0,
-          selections: selectionsCount ?? 0,
-          joined: joinedCount ?? 0,
-        });
-        setApplications(recentApps ?? []);
-
-        const totalSelections = selectionsCount ?? 0;
-        const totalJoined = joinedCount ?? 0;
-        const conversion = totalSelections > 0 ? Math.round((totalJoined / totalSelections) * 100) : 0;
-
-        setCorpStats({
-          companies: companiesCount ?? 0,
-          companyNames: (companyRows ?? []).map((c) => c.name),
-          positions: positionsCount ?? 0,
-          selections: totalSelections,
-          selectionsThisWeek: selectionsThisWeekCount ?? 0,
-          joined: totalJoined,
-          conversion,
-        });
-      } catch (err) {
-        console.error('Dashboard load error:', err);
-        setError('Could not load dashboard data. Check your Supabase connection.');
-      } finally {
-        setLoading(false);
+      if (collegesErr || resumesErr || selectionsErr || joinedErr || appsErr
+        || companiesErr || companyRowsErr || positionsErr || selectionsWeekErr) {
+        throw collegesErr || resumesErr || selectionsErr || joinedErr || appsErr
+          || companiesErr || companyRowsErr || positionsErr || selectionsWeekErr;
       }
+
+      if (ignore) return;
+
+      setStats({
+        colleges: collegesCount ?? 0,
+        resumes: resumesCount ?? 0,
+        selections: selectionsCount ?? 0,
+        joined: joinedCount ?? 0,
+      });
+      setApplications(recentApps ?? []);
+
+      const totalSelections = selectionsCount ?? 0;
+      const totalJoined = joinedCount ?? 0;
+      const conversion = totalSelections > 0 ? Math.round((totalJoined / totalSelections) * 100) : 0;
+
+      setCorpStats({
+        companies: companiesCount ?? 0,
+        companyNames: (companyRows ?? []).map((c) => c.name),
+        positions: positionsCount ?? 0,
+        selections: totalSelections,
+        selectionsThisWeek: selectionsThisWeekCount ?? 0,
+        joined: totalJoined,
+        conversion,
+      });
+    } catch (err) {
+      console.error('Dashboard load error:', err);
+      if (!ignore) setError('Could not load dashboard data. Check your Supabase connection.');
+    } finally {
+      if (!ignore) setLoading(false);
+    }
+  }
+
+  async function init() {
+    setDrivesLoading(true);
+    try {
+      const d = await getUpcomingDrives();
+      if (!ignore) setDrives(d);
+    } catch {
+      // ignore drive load errors, same as before
+    } finally {
+      if (!ignore) setDrivesLoading(false);
     }
 
-    loadDashboardData();
-    loadDrives();
-    getColleges().then(setColleges).catch(() => {});
-  }, []);
+    try {
+      const c = await getColleges();
+      if (!ignore) setColleges(c);
+    } catch {
+      // ignore college load errors, same as before
+    }
+  }
+
+  loadDashboardData();
+  init();
+
+  return () => { ignore = true; };
+}, []);
 
   const stageBadgeClass = {
     'Resume Review': 'gray',
@@ -299,7 +331,7 @@ export default function Dashboard() {
                 <input
                   type="datetime-local"
                   value={driveForm.scheduled_at}
-                  min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                  min={minDateTime}
                   onChange={(e) => setDriveForm({ ...driveForm, scheduled_at: e.target.value })}
                   required
                   style={{ width: '100%', boxSizing: 'border-box' }}

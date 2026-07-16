@@ -25,7 +25,28 @@ export default function Interview() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => {
+  let ignore = false;
+
+  async function init() {
+    setLoading(true);
+    try {
+      const [i, c] = await Promise.all([getInterviews(), getCandidates()]);
+      if (!ignore) {
+        setInterviews(i);
+        setCandidates(c);
+        setError('');
+      }
+    } catch (err) {
+      if (!ignore) setError(err.message);
+    } finally {
+      if (!ignore) setLoading(false);
+    }
+  }
+
+  init();
+  return () => { ignore = true; };
+}, []);
 
   async function handleSubmit(e) {
     e.preventDefault();

@@ -18,8 +18,6 @@ const REPORT_LIST = [
 
 export default function Reports() {
   const [apps, setApps] = useState([]);
-  const [colleges, setColleges] = useState([]);
-  const [companies, setCompanies] = useState([]);
   const [offers, setOffers] = useState([]);
   const [joining, setJoining] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,12 +25,27 @@ export default function Reports() {
   const [active, setActive] = useState(null);
 
   useEffect(() => {
-    Promise.all([getAllApplications(), getColleges(), getCompanies(), getOffers(), getJoiningStatus()])
-      .then(([a, col, comp, off, joi]) => {
-        setApps(a); setColleges(col); setCompanies(comp); setOffers(off); setJoining(joi);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    let ignore = false;
+
+    async function init() {
+      try {
+        const [a, , , off, joi] = await Promise.all([
+          getAllApplications(), getColleges(), getCompanies(), getOffers(), getJoiningStatus(),
+        ]);
+        if (!ignore) {
+          setApps(a);
+          setOffers(off);
+          setJoining(joi);
+        }
+      } catch (err) {
+        if (!ignore) setError(err.message);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+
+    init();
+    return () => { ignore = true; };
   }, []);
 
   const campusRows = useMemo(() => {

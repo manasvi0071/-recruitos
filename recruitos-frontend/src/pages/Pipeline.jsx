@@ -26,15 +26,37 @@ export default function Pipeline() {
   const [error, setError] = useState('');
   const [movingId, setMovingId] = useState(null);
 
-  function loadAll() {
-    setLoading(true);
-    Promise.all([getAllApplications(), getJobs()])
-      .then(([a, j]) => { setApps(a); setJobs(j); })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+  useEffect(() => {
+  let ignore = false;
+
+  async function fetchData() {
+    try {
+      const [a, j] = await Promise.all([
+        getAllApplications(),
+        getJobs(),
+      ]);
+
+      if (ignore) return;
+
+      setApps(a);
+      setJobs(j);
+    } catch (err) {
+      if (!ignore) {
+        setError(err.message);
+      }
+    } finally {
+      if (!ignore) {
+        setLoading(false);
+      }
+    }
   }
 
-  useEffect(() => { loadAll(); }, []);
+  fetchData();
+
+  return () => {
+    ignore = true;
+  };
+}, []);
 
   const filtered = useMemo(() => {
     if (!jobFilter) return apps;

@@ -39,7 +39,28 @@ export default function GD() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { loadAll(); }, []);
+ useEffect(() => {
+  let ignore = false;
+
+  async function init() {
+    setLoading(true);
+    try {
+      const [r, c] = await Promise.all([getGdRatings(), getCandidates()]);
+      if (!ignore) {
+        setRatings(r);
+        setCandidates(c);
+        setError('');
+      }
+    } catch (err) {
+      if (!ignore) setError(err.message);
+    } finally {
+      if (!ignore) setLoading(false);
+    }
+  }
+
+  init();
+  return () => { ignore = true; };
+}, []);
 
   async function handleSubmit(e) {
     e.preventDefault();

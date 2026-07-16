@@ -39,8 +39,30 @@ export default function CorpDB() {
   }
 
   useEffect(() => {
-    loadCompanies();
-  }, []);
+  let ignore = false;
+
+  async function init() {
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase
+      .from('companies')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (ignore) return;
+
+    if (error) {
+      console.error('Failed to load companies:', error);
+      setError('Could not load companies. Check your Supabase connection.');
+    } else {
+      setCompanies(data ?? []);
+    }
+    setLoading(false);
+  }
+
+  init();
+  return () => { ignore = true; };
+}, []);
 
   function startEdit(c) {
     setEditingId(c.id);

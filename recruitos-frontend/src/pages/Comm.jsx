@@ -25,7 +25,29 @@ export default function Comm() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { loadAll(); }, []);
+ useEffect(() => {
+  let ignore = false;
+
+  async function init() {
+    setLoading(true);
+    try {
+      const [c, col, comp] = await Promise.all([getCommunications(), getColleges(), getCompanies()]);
+      if (!ignore) {
+        setComms(c);
+        setColleges(col);
+        setCompanies(comp);
+        setError('');
+      }
+    } catch (err) {
+      if (!ignore) setError(err.message);
+    } finally {
+      if (!ignore) setLoading(false);
+    }
+  }
+
+  init();
+  return () => { ignore = true; };
+}, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
