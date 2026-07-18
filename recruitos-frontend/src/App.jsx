@@ -18,6 +18,7 @@ import Pipeline from './pages/Pipeline';
 import GDAdmin from './pages/GDAdmin';
 import GDRoom from './pages/GDRoom';
 import AIInterview from './pages/AIInterview';
+import Landing from './pages/Landing';
 
 const pages = {
   dashboard: Dashboard,
@@ -67,6 +68,10 @@ export default function App() {
   if (window.location.pathname.startsWith('/interview/')) {
   return <AIInterview />;
 }
+
+  if (window.location.pathname === '/' || window.location.pathname === '/landing') {
+    return <Landing />;
+  }
 
   if (loading) {
     return null;
