@@ -237,7 +237,7 @@ export async function addGdRating({ candidate_id, confidence, communication, lea
 export async function getInterviews() {
   const { data, error } = await supabase
     .from('interviews')
-    .select('*, candidates ( name )')
+    .select('*, candidates ( name, college_id, colleges ( name ) )')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data;
@@ -279,7 +279,7 @@ export async function getOffers() {
 export async function getCandidates() {
   const { data, error } = await supabase
     .from('candidates')
-    .select('id, name')
+    .select('id, name, college_id, colleges ( name )')
     .order('name', { ascending: true });
   if (error) throw error;
   return data;
@@ -443,4 +443,32 @@ export async function updateApplicationScore(applicationId, { resume_score, matc
     .update({ resume_score, matched_skills, missing_skills })
     .eq('id', applicationId);
   if (error) throw error;
+}
+
+export async function getInteractions() {
+  const { data, error } = await supabase
+    .from('interactions')
+    .select('*, colleges ( name )')
+    .order('interaction_date', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function createInteraction(payload) {
+  const { data, error } = await supabase
+    .from('interactions')
+    .insert(payload)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getCompanyNames() {
+  const { data, error } = await supabase
+    .from('job_profiles')
+    .select('company');
+  if (error) throw error;
+  // distinct, non-empty
+  return [...new Set((data || []).map((j) => j.company).filter(Boolean))].sort();
 }

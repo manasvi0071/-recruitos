@@ -1,6 +1,20 @@
 import { useEffect, useState } from 'react';
 import { getCommunications, addCommunication, getColleges, getCompanies } from '../lib/api';
 
+async function generateEmailNote({ entityType, entityName, hint }) {
+  const res = await fetch('http://localhost:5000/api/generate-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ entityType, entityName, hint }),
+  });
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(errBody.error || 'Could not generate email. Please try again.');
+  }
+  const data = await res.json();
+  return data.email;
+}
+
 export default function Comm() {
   const [comms, setComms] = useState([]);
   const [colleges, setColleges] = useState([]);
@@ -12,6 +26,7 @@ export default function Comm() {
   const [form, setForm] = useState({ entity_type: 'college', entity_id: '', type: 'Email', note: '', date: '' });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
+  const [generating, setGenerating] = useState(false);
 
   function loadAll() {
     setLoading(true);
@@ -63,6 +78,26 @@ export default function Comm() {
       setFormError(err.message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleGenerateEmail() {
+    if (!form.entity_id) { setFormError('Please select a college or company first'); return; }
+    setFormError('');
+    setGenerating(true);
+    try {
+      const list = form.entity_type === 'college' ? colleges : companies;
+      const entityName = list.find((x) => x.id === form.entity_id)?.name || '';
+      const email = await generateEmailNote({
+        entityType: form.entity_type,
+        entityName,
+        hint: form.note,
+      });
+      setForm((f) => ({ ...f, note: email }));
+    } catch (err) {
+      setFormError(err.message);
+    } finally {
+      setGenerating(false);
     }
   }
 
@@ -120,11 +155,33 @@ export default function Comm() {
               <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
             </div>
             <div className="field" style={{ gridColumn: '1 / -1' }}>
-              <label>Note *</label>
-              <input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} required placeholder="e.g. Job Profile sent for Software Trainee" />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label>Note *</label>
+                {form.type === 'Email' && (
+                  <button
+                    type="button"
+                    onClick={handleGenerateEmail}
+                    disabled={generating}
+                    style={{
+                      fontSize: 11.5, fontWeight: 700, padding: '4px 12px', borderRadius: 20, border: 'none',
+                      background: 'var(--primary)', color: '#fff', cursor: 'pointer',
+                    }}
+                  >
+                    {generating ? 'Generating…' : '✨ Generate with AI'}
+                  </button>
+                )}
+              </div>
+              <textarea
+                value={form.note}
+                onChange={(e) => setForm({ ...form, note: e.target.value })}
+                required
+                rows={form.type === 'Email' ? 5 : 2}
+                placeholder="e.g. Job Profile sent for Software Trainee"
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13.5, fontFamily: "'Plus Jakarta Sans', sans-serif", resize: 'vertical' }}
+              />
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
-              {formError && <p style={{ color: 'var(--red, #d64545)', fontSize: 12.5, marginBottom: 8 }}>{formError}</p>}
+              {formError && <p style={{ color: 'var(--red)', fontSize: 12.5, marginBottom: 8 }}>{formError}</p>}
               <button className="btn-primary" type="submit" disabled={saving}>
                 {saving ? 'Saving…' : 'Save Interaction'}
               </button>
@@ -133,10 +190,10 @@ export default function Comm() {
         </div>
       )}
 
-      {loading && <div className="panel"><p style={{ color: 'var(--slate-light)' }}>Loading…</p></div>}
-      {error && <div className="panel"><p style={{ color: 'var(--red, #d64545)' }}>{error}</p></div>}
+      {loading && <div className="panel"><p style={{ color: 'var(--text-muted)' }}>Loading…</p></div>}
+      {error && <div className="panel"><p style={{ color: 'var(--red)' }}>{error}</p></div>}
       {!loading && !error && Object.keys(grouped).length === 0 && (
-        <div className="panel"><p style={{ color: 'var(--slate-light)' }}>No interactions logged yet</p></div>
+        <div className="panel"><p style={{ color: 'var(--text-muted)' }}>No interactions logged yet</p></div>
       )}
 
       <div className="grid2">

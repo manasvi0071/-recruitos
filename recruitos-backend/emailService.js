@@ -4,6 +4,79 @@ require('dotenv').config();
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.FROM_EMAIL;
 
+// ─── AI EMAIL GENERATION — used by the Communication CRM "Generate with AI" button ───
+// Calls the Claude API server-side (API key never touches the browser) to draft a
+// subject + body for an ad-hoc communication, then wraps it in the same RecruitOS
+// branded template used by the rest of this file.
+
+async function generateAIEmailContent({ recipientType, recipientName, context }) {
+  const prompt = `You are writing a short, professional email on behalf of "Talent Corner", a campus recruitment agency, for their RecruitOS platform.
+
+Recipient type: ${recipientType === 'college' ? 'College placement cell (TPO)' : recipientType === 'company' ? 'Hiring company HR contact' : 'Student'}
+Recipient name: ${recipientName || 'the recipient'}
+${context ? `Context / purpose of this email: ${context}` : 'Context: a routine recruitment update — use your best judgement for the subject.'}
+
+Respond in exactly this format, nothing else:
+Subject: <subject line>
+---
+<email body only, no greeting salutation issues, plain text, under 130 words, professional and warm tone, sign off as "Talent Corner Recruitment Team">`;
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.1-8b-instant',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.6,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Groq API error: ${response.status} ${errText}`);
+  }
+
+  const data = await response.json();
+  const raw = data.choices[0].message.content.trim();
+
+  const [subjectLine, ...rest] = raw.split('---');
+  const subject = subjectLine.replace(/^Subject:\s*/i, '').trim();
+  const body = rest.join('---').trim();
+
+  return { subject, body };
+}
+
+// Sends the AI-drafted content using the same branded template as the rest of this file.
+async function sendAIGeneratedEmail({ toEmail, toName, recipientType, context }) {
+  const { subject, body } = await generateAIEmailContent({ recipientType, recipientName: toName, context });
+
+  const bodyHtml = body
+    .split('\n')
+    .filter((line) => line.trim().length > 0)
+    .map((line) => `<p style="margin:0 0 12px;">${line}</p>`)
+    .join('');
+
+  await resend.emails.send({
+    from: FROM,
+    to: toEmail,
+    subject,
+    html: `
+      <div style="font-family:Inter,sans-serif; max-width:580px; margin:auto; padding:32px; color:#33363F;">
+        <div style="background:#0A0C12; padding:20px 28px; border-radius:10px; margin-bottom:28px;">
+          <h2 style="color:#EDE6D6; font-family:Georgia,serif; margin:0;">RecruitOS</h2>
+          <p style="color:#9C8054; font-size:11px; margin:4px 0 0; text-transform:uppercase; letter-spacing:0.08em;">Talent Corner — Campus Recruitment Platform</p>
+        </div>
+        ${bodyHtml}
+      </div>
+    `,
+  });
+
+  return { subject, body };
+}
+
 // ─── 1. EMAIL TO COLLEGE when drive is announced ───
 async function sendCollegeOutreachEmail({ tpoName, collegeName, tpoEmail, jobTitle, company, driveDate }) {
   await resend.emails.send({
@@ -161,6 +234,8 @@ async function sendGDShortlistEmail({ studentName, studentEmail, topic }) {
 }
 
 module.exports = {
+  generateAIEmailContent,
+  sendAIGeneratedEmail,
   sendCollegeOutreachEmail,
   sendStudentSelectionEmail,
   sendCollegeSelectionEmail,

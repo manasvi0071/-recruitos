@@ -2,17 +2,24 @@ const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 const { analyzeResume } = require('./resumeAnalyzer');
+const { scoreGDSession } = require('./gdScorer');
+const { generateEmail } = require('./generateEmailRoute');
 const {
   sendCollegeOutreachEmail,
   sendStudentSelectionEmail,
   sendCollegeSelectionEmail,
   sendCompanySelectionEmail,
+  sendGDInviteEmail,
+  sendGDShortlistEmail,
 } = require('./emailService');
 require('dotenv').config();
+
+const aiInterviewRoutes = require('./aiInterviewRoutes');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/api/ai-interview', aiInterviewRoutes);
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
@@ -237,8 +244,10 @@ app.post('/api/communications', async (req, res) => {
   res.json(data[0]);
 });
 
+// ---- GENERATE EMAIL (Comm.jsx "Generate with AI" button) ----
+app.post('/api/generate-email', generateEmail);
+
 app.listen(5000, () => console.log('✅ RecruitOS backend running on http://localhost:5000'));
-const { scoreGDSession } = require('./gdScorer');
 
 // Create GD Session
 app.post('/api/gd/create', async (req, res) => {

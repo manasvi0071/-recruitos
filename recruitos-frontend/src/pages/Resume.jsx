@@ -242,7 +242,8 @@ export default function Resume() {
                             <div className="skills">
                               {isAI && hasScore && '🤖 AI scored'}
                               {!hasScore && r.ai_status === 'Pending' && '⏳ Analyzing resume...'}
-                              {!hasScore && r.ai_status !== 'Pending' && 'Not scored yet'}
+                              {!hasScore && r.ai_status === 'Failed' && '⚠️ Auto-scoring failed — add score manually'}
+                              {!hasScore && r.ai_status !== 'Pending' && r.ai_status !== 'Failed' && 'Not scored yet'}
                             </div>
                             {hasScore && (
                               <div className="progress-bar" style={{ maxWidth: 240 }}>

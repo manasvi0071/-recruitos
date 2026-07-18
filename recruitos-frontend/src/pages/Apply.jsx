@@ -3,11 +3,12 @@ import { getJobs, getColleges, uploadResume, createCandidate, applyToJob, update
 import { extractPdfText, scoreResume } from '../lib/resumeScoring';
 
 export default function Apply() {
-  const [step, setStep] = useState(1); // 1 = fill form, 2 = browse jobs
+  const [step, setStep] = useState(1);
   const [colleges, setColleges] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [candidateId, setCandidateId] = useState(null);
   const [resumeText, setResumeText] = useState('');
+  const [resumeExtractFailed, setResumeExtractFailed] = useState(false);
   const [appliedJobIds, setAppliedJobIds] = useState([]);
   const [scoringJobIds, setScoringJobIds] = useState([]);
 
@@ -37,6 +38,7 @@ export default function Apply() {
         setResumeText(text);
       } catch (extractErr) {
         console.warn('Could not extract resume text, AI scoring will be skipped:', extractErr);
+        setResumeExtractFailed(true);
       }
 
       setStep(2);
@@ -55,14 +57,31 @@ export default function Apply() {
 
       if (resumeText) {
         setScoringJobIds((prev) => [...prev, job.id]);
+        // Fire-and-forget, but ALWAYS resolve the ai_status either way.
         scoreResume(resumeText, job.skills, job.title)
-          .then((result) => updateApplicationScore(application.id, {
-            resume_score: result.score,
-            matched_skills: result.matched_skills,
-            missing_skills: result.missing_skills,
-          }))
-          .catch((scoreErr) => console.warn('AI scoring failed:', scoreErr))
+          .then((result) =>
+            updateApplicationScore(application.id, {
+              resume_score: result.score,
+              matched_skills: result.matched_skills,
+              missing_skills: result.missing_skills,
+              ai_status: 'Done',
+            })
+          )
+          .catch((scoreErr) => {
+            console.warn('AI scoring failed:', scoreErr);
+            // Critical fix: mark it Failed instead of leaving it Pending forever.
+            updateApplicationScore(application.id, {
+              ai_status: 'Failed',
+              ai_feedback: `Automated scoring failed: ${scoreErr.message}`,
+            }).catch((e2) => console.error('Could not even update ai_status to Failed:', e2));
+          })
           .finally(() => setScoringJobIds((prev) => prev.filter((id) => id !== job.id)));
+      } else if (resumeExtractFailed) {
+        // We know upfront scoring can't run — record that immediately instead of leaving "Pending".
+        updateApplicationScore(application.id, {
+          ai_status: 'Failed',
+          ai_feedback: 'Could not extract text from resume PDF (may be scanned/image-only).',
+        }).catch((e) => console.error(e));
       }
     } catch (err) {
       alert('Could not apply: ' + err.message);
