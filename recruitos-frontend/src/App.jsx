@@ -69,41 +69,48 @@ export default function App() {
   return <AIInterview />;
 }
 
-  if (window.location.pathname === '/' || window.location.pathname === '/landing') {
+  const isAppRoute = window.location.pathname.startsWith('/app');
+
+  if (window.location.pathname === '/') {
     return <Landing />;
   }
 
-  if (loading) {
-    return null;
-  }
+  if (isAppRoute) {
+    if (loading) {
+      return null;
+    }
 
-  if (!session) {
-    return <Login />;
-  }
+    if (!session) {
+      return <Login />;
+    }
 
-  const PageComponent = pages[activePage];
+    const PageComponent = pages[activePage];
 
-  return (
-    <div id="screen-app" style={{ display: 'block' }}>
-      <div className="topbar">
-        <div className="brand">
-          <div className="brand-mark">R</div>
-          <div><div className="brand-name">RecruitOS</div><div className="brand-sub">Campus Recruitment Platform</div></div>
+    return (
+      <div id="screen-app" style={{ display: 'block' }}>
+        <div className="topbar">
+          <div className="brand">
+            <div className="brand-mark">R</div>
+            <div><div className="brand-name">RecruitOS</div><div className="brand-sub">Campus Recruitment Platform</div></div>
+          </div>
+          <div className="top-actions">
+            <span className="pill">Talent Corner Workspace</span>
+            <span>{session.user.email}</span>
+            <span className="logout-link" onClick={() => supabase.auth.signOut()}>Log out</span>
+            <div className="avatar">TC</div>
+          </div>
         </div>
-        <div className="top-actions">
-          <span className="pill">Talent Corner Workspace</span>
-          <span>{session.user.email}</span>
-          <span className="logout-link" onClick={() => supabase.auth.signOut()}>Log out</span>
-          <div className="avatar">TC</div>
+
+        <div className="app">
+          <Sidebar activePage={activePage} setActivePage={setActivePage} />
+          <div className="main">
+            <PageComponent />
+          </div>
         </div>
       </div>
+    );
+  }
 
-      <div className="app">
-        <Sidebar activePage={activePage} setActivePage={setActivePage} />
-        <div className="main">
-          <PageComponent />
-        </div>
-      </div>
-    </div>
-  );
+  // Fallback — unknown path
+  return <Landing />;
 }

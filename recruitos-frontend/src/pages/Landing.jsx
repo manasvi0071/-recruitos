@@ -51,8 +51,9 @@ export default function Landing() {
           <a href="#about">About</a>
           <a href="#growth">Career Growth</a>
           <a href="#contact">Contact</a>
+          <a href="/app" style={{ color: 'var(--text-secondary)' }}>Team Login</a>
         </div>
-        <button className="btn-gold">Join Us</button>
+        <button className="btn-gold" onClick={() => { window.location.href = '/app'; }}>Join Us</button>
       </nav>
 
       {/* ===== HERO ===== */}
@@ -128,7 +129,6 @@ export default function Landing() {
           </p>
         </div>
 
-        {/* Department picker */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 36 }}>
           {departments.map((d) => (
             <span
@@ -142,7 +142,6 @@ export default function Landing() {
           ))}
         </div>
 
-        {/* Level headers */}
         <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)' }}>
             {levels.map((lvl, i) => (
@@ -162,7 +161,6 @@ export default function Landing() {
             ))}
           </div>
 
-          {/* Role path for selected department */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)' }}>
             {activeDept.path.map((role, i) => (
               <div key={role} style={{
@@ -188,7 +186,6 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Typical growth journey strip */}
         <div className="panel" style={{ marginTop: 24 }}>
           <div className="panel-title" style={{ marginBottom: 16 }}>Typical Growth Journey</div>
           <div className="email-flow">
