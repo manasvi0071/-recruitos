@@ -36,9 +36,10 @@ export default function AIInterview() {
         setJob(jobRow);
         setPhase('intro');
       } catch (err) {
+        console.error('Failed to load interview info:', err);
         setErrorMsg('Could not load your interview details. Please check the link or contact the recruiter.');
         setPhase('error');
-      }
+   }
     }
     loadInfo();
   }, [candidateId, jobId]);
@@ -171,6 +172,11 @@ export default function AIInterview() {
             Your interview has been submitted. Our recruitment team will review it and reach out
             with next steps soon. Good luck!
           </p>
+          {result?.summary && (
+             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 16, fontStyle: 'italic' }}>
+               {result.summary}
+             </p>
+           )}
         </div>
       </div>
     );
