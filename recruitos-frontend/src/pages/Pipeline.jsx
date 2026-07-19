@@ -5,11 +5,11 @@ const STAGES = ['Resume Review', 'Aptitude', 'GD', 'Interview', 'Selected', 'Rej
  
 const STAGE_ACCENT = {
   'Resume Review': 'var(--text-muted)',
-  'Aptitude': 'var(--gold)',
-  'GD': 'var(--gold)',
-  'Interview': 'var(--blue)',
-  'Selected': 'var(--green)',
-  'Rejected': 'var(--red)',
+  'Aptitude': 'var(--warning)',
+  'GD': 'var(--warning)',
+  'Interview': 'var(--info)',
+  'Selected': 'var(--success)',
+  'Rejected': 'var(--danger)',
 };
  
 function nextStage(current) {
