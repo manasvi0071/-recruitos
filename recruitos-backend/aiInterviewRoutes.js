@@ -17,6 +17,45 @@ Required Qualification: ${job.qualification || 'N/A'}
 Key Skills: ${Array.isArray(job.skills) ? job.skills.join(', ') : job.skills || 'N/A'}`;
 }
 
+router.post('/score-resume', async (req, res) => {
+  try {
+    const { resumeText, jobSkills, jobTitle } = req.body;
+    if (!resumeText || !jobTitle) {
+      return res.status(400).json({ error: 'resumeText and jobTitle are required' });
+    }
+
+    const prompt = `You are a resume screening assistant for a job titled "${jobTitle}".
+Required skills for this job: ${(jobSkills || []).join(', ') || 'not specified'}.
+
+Resume text:
+---
+${resumeText.slice(0, 6000)}
+---
+
+Respond with ONLY valid JSON, no markdown, no code fences, no explanation, in exactly this shape:
+{"score": <integer 0-100>, "matched_skills": [<strings>], "missing_skills": [<strings>]}`;
+
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.1-8b-instant',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.2,
+    });
+
+    let raw = completion.choices[0].message.content.trim();
+    raw = raw.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(raw);
+
+    res.json({
+      score: Math.max(0, Math.min(100, Math.round(result.score))),
+      matched_skills: result.matched_skills || [],
+      missing_skills: result.missing_skills || [],
+    });
+  } catch (err) {
+    console.error('Resume scoring error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/start', async (req, res) => {
   try {
     const { candidate_id, job_id } = req.body;
