@@ -17,42 +17,32 @@ export default function Interview() {
 
   const [showLinks, setShowLinks] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
+  const [openLinkGroup, setOpenLinkGroup] = useState(null);
+  const [openResultGroup, setOpenResultGroup] = useState(null);
 
-  // 'inhouse' = campus candidates (has a college linked), 'corporate' = client hiring (no college)
   const [viewMode, setViewMode] = useState('inhouse');
 
   function loadAll() {
     setLoading(true);
     Promise.all([getInterviews(), getCandidates(), getAllApplications()])
-      .then(([i, c, a]) => {
-        setInterviews(i);
-        setCandidates(c);
-        setApplications(a);
-      })
+      .then(([i, c, a]) => { setInterviews(i); setCandidates(c); setApplications(a); })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }
 
   useEffect(() => {
     let ignore = false;
-
     async function init() {
       setLoading(true);
       try {
         const [i, c, a] = await Promise.all([getInterviews(), getCandidates(), getAllApplications()]);
-        if (!ignore) {
-          setInterviews(i);
-          setCandidates(c);
-          setApplications(a);
-          setError('');
-        }
+        if (!ignore) { setInterviews(i); setCandidates(c); setApplications(a); setError(''); }
       } catch (err) {
         if (!ignore) setError(err.message);
       } finally {
         if (!ignore) setLoading(false);
       }
     }
-
     init();
     return () => { ignore = true; };
   }, []);
@@ -85,8 +75,6 @@ export default function Interview() {
     });
   }
 
-  // A candidate counts as "in-house" (campus) if they have a college linked.
-  // No college on file means the hire is treated as corporate/client-side.
   function isInHouse(interview) {
     return Boolean(interview.candidates?.college_id || interview.candidates?.colleges?.name);
   }
@@ -97,6 +85,21 @@ export default function Interview() {
 
   const inHouseCount = interviews.filter(isInHouse).length;
   const corporateCount = interviews.length - inHouseCount;
+
+  function groupByCandidate(list, getCandidate) {
+    const map = new Map();
+    list.forEach((item) => {
+      const cand = getCandidate(item);
+      const key = cand?.id || cand?.name || 'unknown';
+      if (!map.has(key)) map.set(key, { key, candidate: cand, items: [] });
+      map.get(key).items.push(item);
+    });
+    return Array.from(map.values());
+  }
+
+  const linkGroups = groupByCandidate(applications, (a) => a.candidates);
+  const mockGroups = groupByCandidate(mockInterviews, (i) => i.candidates);
+  const personalGroups = groupByCandidate(personalInterviews, (i) => i.candidates);
 
   return (
     <div className="page active" id="page-interview">
@@ -112,18 +115,11 @@ export default function Interview() {
         </div>
       </div>
 
-      {/* In-house vs Corporate toggle */}
       <div className="mode-toggle" style={{ marginBottom: 20 }}>
-        <button
-          className={`mode-btn ${viewMode === 'inhouse' ? 'active' : ''}`}
-          onClick={() => setViewMode('inhouse')}
-        >
+        <button className={`mode-btn ${viewMode === 'inhouse' ? 'active' : ''}`} onClick={() => setViewMode('inhouse')}>
           🎓 In-house (Campus) · {inHouseCount}
         </button>
-        <button
-          className={`mode-btn ${viewMode === 'corporate' ? 'active' : ''}`}
-          onClick={() => setViewMode('corporate')}
-        >
+        <button className={`mode-btn ${viewMode === 'corporate' ? 'active' : ''}`} onClick={() => setViewMode('corporate')}>
           🏢 Corporate (Client) · {corporateCount}
         </button>
       </div>
@@ -131,24 +127,37 @@ export default function Interview() {
       {showLinks && (
         <div className="panel">
           <div className="panel-title">🤖 Send AI Interview</div>
-          <div className="panel-sub">Copy a candidate's personal interview link and share it with them (email, WhatsApp, etc.)</div>
+          <div className="panel-sub">Pick a candidate, then copy the link for the specific job you want them interviewed for.</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {applications.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No applications yet.</p>}
-            {applications.map((app) => (
-              <div key={app.id} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
-                background: 'var(--surface-2)',
-              }}>
-                <div style={{ fontSize: 13 }}>
-                  <strong style={{ color: 'var(--text-primary)' }}>{app.candidates?.name}</strong>
-                  <span style={{ color: 'var(--text-muted)' }}> — {app.job_profiles?.title} at {app.job_profiles?.company || 'N/A'}</span>
+            {linkGroups.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No applications yet.</p>}
+            {linkGroups.map((g) => {
+              const isOpen = openLinkGroup === g.key;
+              return (
+                <div key={g.key} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                  <div
+                    onClick={() => setOpenLinkGroup(isOpen ? null : g.key)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--surface-2)', cursor: 'pointer' }}
+                  >
+                    <strong style={{ fontSize: 13, color: 'var(--text-primary)' }}>{g.candidate?.name}</strong>
+                    <span className="pill">{g.items.length} job{g.items.length > 1 ? 's' : ''} {isOpen ? '▲' : '▼'}</span>
+                  </div>
+                  {isOpen && (
+                    <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {g.items.map((app) => (
+                        <div key={app.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: 'white', border: '1px solid var(--border)', borderRadius: 8 }}>
+                          <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>
+                            {app.job_profiles?.title} {app.job_profiles?.company ? `at ${app.job_profiles.company}` : ''}
+                          </span>
+                          <button className="btn-outline" style={{ fontSize: 11.5, padding: '5px 10px' }} onClick={() => copyInterviewLink(app)}>
+                            {copiedId === app.id ? '✓ Copied' : '📋 Copy Link'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <button className="btn-outline" style={{ fontSize: 12, padding: '6px 12px' }} onClick={() => copyInterviewLink(app)}>
-                  {copiedId === app.id ? '✓ Copied' : '📋 Copy Link'}
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -162,9 +171,7 @@ export default function Interview() {
               <select value={form.candidate_id} onChange={(e) => setForm({ ...form, candidate_id: e.target.value })} required>
                 <option value="">Select candidate…</option>
                 {candidates.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} {c.colleges?.name ? `— ${c.colleges.name} (In-house)` : '(Corporate)'}
-                  </option>
+                  <option key={c.id} value={c.id}>{c.name} {c.colleges?.name ? `— ${c.colleges.name} (In-house)` : '(Corporate)'}</option>
                 ))}
               </select>
             </div>
@@ -175,28 +182,15 @@ export default function Interview() {
                 <option value="HR">Personal Interview (HR)</option>
               </select>
             </div>
-
             {form.type === 'Mock' ? (
               <>
-                <div className="field">
-                  <label>Confidence (0-10)</label>
-                  <input type="number" step="0.1" value={form.confidence} onChange={(e) => setForm({ ...form, confidence: e.target.value })} />
-                </div>
-                <div className="field">
-                  <label>Technical Knowledge (0-10)</label>
-                  <input type="number" step="0.1" value={form.technical} onChange={(e) => setForm({ ...form, technical: e.target.value })} />
-                </div>
-                <div className="field">
-                  <label>Grammar & Communication (0-10)</label>
-                  <input type="number" step="0.1" value={form.communication} onChange={(e) => setForm({ ...form, communication: e.target.value })} />
-                </div>
+                <div className="field"><label>Confidence (0-10)</label><input type="number" step="0.1" value={form.confidence} onChange={(e) => setForm({ ...form, confidence: e.target.value })} /></div>
+                <div className="field"><label>Technical Knowledge (0-10)</label><input type="number" step="0.1" value={form.technical} onChange={(e) => setForm({ ...form, technical: e.target.value })} /></div>
+                <div className="field"><label>Grammar & Communication (0-10)</label><input type="number" step="0.1" value={form.communication} onChange={(e) => setForm({ ...form, communication: e.target.value })} /></div>
               </>
             ) : (
               <>
-                <div className="field" style={{ gridColumn: '1 / -1' }}>
-                  <label>HR Notes</label>
-                  <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-                </div>
+                <div className="field" style={{ gridColumn: '1 / -1' }}><label>HR Notes</label><input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
                 <div className="field">
                   <label>Recommendation</label>
                   <select value={form.recommendation} onChange={(e) => setForm({ ...form, recommendation: e.target.value })}>
@@ -207,12 +201,9 @@ export default function Interview() {
                 </div>
               </>
             )}
-
             <div style={{ gridColumn: '1 / -1' }}>
               {formError && <p style={{ color: 'var(--red)', fontSize: 12.5, marginBottom: 8 }}>{formError}</p>}
-              <button className="btn-primary" type="submit" disabled={saving}>
-                {saving ? 'Saving…' : 'Save Interview'}
-              </button>
+              <button className="btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Interview'}</button>
             </div>
           </form>
         </div>
@@ -225,46 +216,72 @@ export default function Interview() {
         <div className="panel">
           <div className="panel-title">Mock Interview — AI Evaluation</div>
           <div className="panel-sub">{viewMode === 'inhouse' ? 'In-house / campus candidates' : 'Corporate / client hiring'}</div>
-          {!loading && mockInterviews.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No mock interviews yet</p>}
-          {mockInterviews.map((i) => (
-            <div key={i.id} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-              <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 8 }}>
-                Candidate: {i.candidates?.name}
-                {i.candidates?.colleges?.name && (
-                  <span style={{ color: 'var(--text-muted)' }}> · {i.candidates.colleges.name}</span>
+          {!loading && mockGroups.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No mock interviews yet</p>}
+          {mockGroups.map((g) => {
+            const isOpen = openResultGroup === `mock-${g.key}`;
+            const best = Math.max(...g.items.map((i) => i.overall ?? 0));
+            return (
+              <div key={g.key} style={{ marginBottom: 12, border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                <div onClick={() => setOpenResultGroup(isOpen ? null : `mock-${g.key}`)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--surface-2)', cursor: 'pointer' }}>
+                  <div>
+                    <strong style={{ fontSize: 13 }}>{g.candidate?.name}</strong>
+                    {g.candidate?.colleges?.name && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}> · {g.candidate.colleges.name}</span>}
+                  </div>
+                  <span className="pill">{g.items.length} interview{g.items.length > 1 ? 's' : ''} · best {best}/10 {isOpen ? '▲' : '▼'}</span>
+                </div>
+                {isOpen && (
+                  <div style={{ padding: '4px 14px 14px' }}>
+                    {g.items.map((i) => (
+                      <div key={i.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                        <p style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
+                          {i.job_profiles?.title || 'Role not linked'} {i.job_profiles?.company ? `· ${i.job_profiles.company}` : ''}
+                        </p>
+                        <div className="rating-row"><span>Confidence</span><strong>{i.confidence} / 10</strong></div>
+                        <div className="rating-row"><span>Technical Knowledge</span><strong>{i.technical} / 10</strong></div>
+                        <div className="rating-row"><span>Grammar & Communication</span><strong>{i.communication} / 10</strong></div>
+                        <div className="rating-row"><strong>Overall Score</strong><strong style={{ color: 'var(--gold)' }}>{i.overall} / 10</strong></div>
+                        {i.notes && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8, lineHeight: 1.5 }}>{i.notes}</p>}
+                        {i.recommendation && <span className={`badge ${i.recommendation === 'Recommended' ? 'green' : 'red'}`} style={{ marginTop: 8, display: 'inline-block' }}>{i.recommendation}</span>}
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </p>
-              <div className="rating-row"><span>Confidence</span><strong>{i.confidence} / 10</strong></div>
-              <div className="rating-row"><span>Technical Knowledge</span><strong>{i.technical} / 10</strong></div>
-              <div className="rating-row"><span>Grammar & Communication</span><strong>{i.communication} / 10</strong></div>
-              <div className="rating-row"><strong>Overall Score</strong><strong style={{ color: 'var(--gold)' }}>{i.overall} / 10</strong></div>
-              {i.notes && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8, lineHeight: 1.5 }}>{i.notes}</p>}
-              {i.recommendation && (
-                <span className={`badge ${i.recommendation === 'Recommended' ? 'green' : 'red'}`} style={{ marginTop: 8, display: 'inline-block' }}>
-                  {i.recommendation}
-                </span>
-              )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
+
         <div className="panel">
           <div className="panel-title">Personal Interview — HR Notes</div>
           <div className="panel-sub">{viewMode === 'inhouse' ? 'In-house / campus candidates' : 'Corporate / client hiring'}</div>
-          {!loading && personalInterviews.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No personal interviews yet</p>}
-          {personalInterviews.map((i) => (
-            <div key={i.id} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-              <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 10 }}>
-                Candidate: {i.candidates?.name}
-                {i.candidates?.colleges?.name && (
-                  <span style={{ color: 'var(--text-muted)' }}> · {i.candidates.colleges.name}</span>
+          {!loading && personalGroups.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No personal interviews yet</p>}
+          {personalGroups.map((g) => {
+            const isOpen = openResultGroup === `personal-${g.key}`;
+            return (
+              <div key={g.key} style={{ marginBottom: 12, border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                <div onClick={() => setOpenResultGroup(isOpen ? null : `personal-${g.key}`)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--surface-2)', cursor: 'pointer' }}>
+                  <div>
+                    <strong style={{ fontSize: 13 }}>{g.candidate?.name}</strong>
+                    {g.candidate?.colleges?.name && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}> · {g.candidate.colleges.name}</span>}
+                  </div>
+                  <span className="pill">{g.items.length} interview{g.items.length > 1 ? 's' : ''} {isOpen ? '▲' : '▼'}</span>
+                </div>
+                {isOpen && (
+                  <div style={{ padding: '4px 14px 14px' }}>
+                    {g.items.map((i) => (
+                      <div key={i.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                        <p style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
+                          {i.job_profiles?.title || 'Role not linked'} {i.job_profiles?.company ? `· ${i.job_profiles.company}` : ''}
+                        </p>
+                        <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 10 }}>{i.notes}</p>
+                        {i.recommendation && <span className={`badge ${i.recommendation === 'Recommended' ? 'green' : 'red'}`}>{i.recommendation}</span>}
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </p>
-              <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 14 }}>{i.notes}</p>
-              {i.recommendation && (
-                <span className={`badge ${i.recommendation === 'Recommended' ? 'green' : 'red'}`}>{i.recommendation}</span>
-              )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

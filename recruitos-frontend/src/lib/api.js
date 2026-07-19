@@ -237,7 +237,7 @@ export async function addGdRating({ candidate_id, confidence, communication, lea
 export async function getInterviews() {
   const { data, error } = await supabase
     .from('interviews')
-    .select('*, candidates ( name, college_id, colleges ( name ) )')
+    .select('*, candidates ( name, college_id, colleges ( name ) ), job_profiles ( title, company )')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data;

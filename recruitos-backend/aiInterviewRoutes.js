@@ -157,6 +157,7 @@ Respond with ONLY valid JSON, no other text, in exactly this shape:
 
     const { error: interviewErr } = await supabase.from('interviews').insert([{
       candidate_id: session.candidate_id,
+      job_id: session.job_id,
       type: 'Mock',
       confidence: Number(evaluation.confidence),
       technical: Number(evaluation.technical),
