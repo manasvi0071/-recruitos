@@ -481,6 +481,10 @@ a:hover { color: var(--brand-purple-dark); }
   flex-shrink: 0;
   overflow-y: auto;
   border-right: 1px solid rgba(255,255,255,0.05);
+  position: sticky;
+  top: 62px;
+  height: calc(100vh - 62px);
+  align-self: flex-start;
 }
 
 .side-section-label {
