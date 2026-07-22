@@ -2,9 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import * as XLSX from 'xlsx';
 
-// "Unassigned" added so colleges with a blank/null course are visible
-// and editable instead of silently disappearing from every filter.
-const courses = ['Engineering', 'MBA', 'BCA', 'BSc IT', 'MCA', 'Pharmacy', 'Law', 'Commerce', 'Arts', 'Medical', 'Polytechnic', 'Unassigned'];
+const courses = ['All', 'Engineering', 'MBA', 'BCA', 'BSc IT', 'MCA', 'Pharmacy', 'Law', 'Commerce', 'Arts', 'Medical', 'Polytechnic'];
 
 const badgeForStatus = {
   'Interested': 'green',
@@ -18,7 +16,7 @@ const emptyForm = {
 };
 
 export default function CampusDB() {
-  const [activeCourse, setActiveCourse] = useState('Engineering');
+  const [activeCourse, setActiveCourse] = useState('All');
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('All Status');
 
@@ -81,16 +79,15 @@ export default function CampusDB() {
   return () => { ignore = true; };
 }, []);
 
-  // --- FIX 1: case-insensitive, whitespace-trimmed course matching ---
-  // --- FIX 2: "Unassigned" shows rows where course is blank/null ---
-  const filtered = colleges.filter((c) => {
-    const courseValue = (c.course ?? '').toLowerCase().trim();
-    const activeCourseValue = activeCourse.toLowerCase().trim();
+const filtered = colleges.filter((c) => {
+  const courseValue = (c.course ?? '').toLowerCase().trim();
+  const coursesAvailableValue = (c.courses_available ?? '').toLowerCase();
+  const activeCourseValue = activeCourse.toLowerCase().trim();
 
-    const matchCourse =
-      activeCourse === 'Unassigned'
-        ? courseValue === ''
-        : courseValue.includes(activeCourseValue);
+  const matchCourse =
+  activeCourse === 'All'
+    ? true
+    : courseValue.includes(activeCourseValue) || coursesAvailableValue.includes(activeCourseValue);
 
     const q = search.toLowerCase().trim();
     const matchSearch =
@@ -188,18 +185,19 @@ export default function CampusDB() {
       const wb = XLSX.read(evt.target.result, { type: 'binary' });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-      const mapped = rows.map((r) => ({
-        name: r.name || r.Name || r.College || r.college || '',
-        city: r.city || r.City || '',
-        // FIX 4: never fabricate 'Engineering' — leave truly blank cells blank
-        course: r.course || r.Course || '',
-        tpo: r.tpo || r.TPO || r.Tpo || '',
-        strength: r.strength || r.Strength || '',
-        status: r.status || r.Status || 'Interested',
-        country: r.country || r.Country || '',
-        state: r.state || r.State || '',
-        website: r.website || r.Website || '',
-      })).filter((r) => r.name);
+const mapped = rows.map((r) => ({
+  name: r.name || r.Name || r.College || r.college || '',
+  city: r.city || r.City || '',
+  course: r.course || r.Course || '',
+  tpo: r.tpo || r.TPO || r.Tpo || '',
+  strength: r.strength || r.Strength || '',
+  status: r.status || r.Status || 'Interested',
+  country: r.country || r.Country || '',
+  state: r.state || r.State || '',
+  website: r.website || r.Website || '',
+  institution_type: r.institution_type || r['Institution Type'] || '',
+  courses_available: r.courses_available || r['Courses Available'] || '',
+})).filter((r) => r.name);
       setImportRows(mapped);
     };
     reader.readAsBinaryString(file);
@@ -220,6 +218,8 @@ export default function CampusDB() {
         strength: row.strength ? parseInt(row.strength, 10) : null,
         status: row.status || 'Interested',
         country: row.country || null,
+        institution_type: row.institution_type || null,
+        courses_available: row.courses_available || null,
         state: row.state || null,
         website: row.website || null,
       }]);
@@ -376,20 +376,24 @@ export default function CampusDB() {
 
         <table>
           <tbody>
-            <tr><th>College</th><th>City</th><th>Course</th><th>TPO</th><th>Strength</th><th>Last Contact</th><th>Status</th><th>Actions</th></tr>
+            <tr><th>College</th><th>Institution Type</th><th>City</th><th>Country</th><th>Website</th><th>Courses Available</th><th>Status</th><th>Actions</th></tr>
             {loading ? (
               <tr><td colSpan={8} style={{ textAlign: 'center', padding: 24 }}>Loading…</td></tr>
             ) : filtered.length > 0 ? (
               filtered.map((c) => (
-                <tr key={c.id}>
-                  <td>{c.name}</td>
-                  <td>{c.city ?? '—'}</td>
-                  <td>{c.course ?? '—'}</td>
-                  <td>{c.tpo ?? '—'}</td>
-                  <td>{c.strength ?? '—'}</td>
-                  <td>{formatDate(c.last_contact)}</td>
-                  <td><span className={`badge ${badgeForStatus[c.status] ?? 'gray'}`}>{c.status}</span></td>
-                  <td style={{ display: 'flex', gap: 6 }}>
+<tr key={c.id}>
+  <td>{c.name}</td>
+  <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{c.institution_type || '—'}</td>
+  <td>{c.city ?? '—'}</td>
+  <td>{c.country ?? '—'}</td>
+  <td>
+    {c.website ? <a href={c.website} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)' }}>Visit ↗</a> : '—'}
+  </td>
+  <td style={{ maxWidth: 260, fontSize: 11.5, color: 'var(--text-muted)' }} title={c.courses_available}>
+    {c.courses_available ? (c.courses_available.length > 60 ? c.courses_available.slice(0, 60) + '…' : c.courses_available) : '—'}
+  </td>
+  <td><span className={`badge ${badgeForStatus[c.status] ?? 'gray'}`}>{c.status}</span></td>
+  <td style={{ display: 'flex', gap: 6 }}>
                     <button className="btn-outline" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => startEdit(c)}>Edit</button>
                     <button className="btn-outline" style={{ padding: '4px 10px', fontSize: 12, color: 'crimson' }} onClick={() => handleDeleteCollege(c.id, c.name)}>Delete</button>
                   </td>

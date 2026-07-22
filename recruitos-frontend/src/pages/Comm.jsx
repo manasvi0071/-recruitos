@@ -158,17 +158,15 @@ export default function Comm() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label>Note *</label>
                 {form.type === 'Email' && (
-                  <button
-                    type="button"
-                    onClick={handleGenerateEmail}
-                    disabled={generating}
-                    style={{
-                      fontSize: 11.5, fontWeight: 700, padding: '4px 12px', borderRadius: 20, border: 'none',
-                      background: 'var(--primary)', color: '#fff', cursor: 'pointer',
-                    }}
-                  >
-                    {generating ? 'Generating…' : '✨ Generate with AI'}
-                  </button>
+                <button
+                  type="button"
+                   onClick={handleGenerateEmail}
+                   disabled={generating}
+                    className="btn-gold"
+                    style={{ fontSize: 11.5, padding: '5px 14px' }}
+                >
+                 {generating ? 'Generating…' : '✨ Generate with AI'}
+                 </button>
                 )}
               </div>
               <textarea
