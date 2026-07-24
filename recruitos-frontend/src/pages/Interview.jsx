@@ -17,6 +17,7 @@ export default function Interview() {
 
   const [showLinks, setShowLinks] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
+  const [sendingId, setSendingId] = useState(null);
   const [openLinkGroup, setOpenLinkGroup] = useState(null);
   const [openResultGroup, setOpenResultGroup] = useState(null);
 
@@ -75,6 +76,27 @@ export default function Interview() {
     });
   }
 
+  async function sendInterviewEmail(app) {
+    const candId = app.candidates?.id;
+    const jobId = app.job_profiles?.id;
+    if (!candId || !jobId) return;
+    setSendingId(app.id);
+    try {
+      const res = await fetch('http://localhost:5000/api/ai-interview/send-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidate_id: candId, job_id: jobId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not send email');
+      alert(`Interview link emailed to ${app.candidates?.name}!`);
+    } catch (err) {
+      alert('Could not send email: ' + err.message);
+    } finally {
+      setSendingId(null);
+    }
+  }
+
   function isInHouse(interview) {
     return Boolean(interview.candidates?.college_id || interview.candidates?.colleges?.name);
   }
@@ -127,7 +149,7 @@ export default function Interview() {
       {showLinks && (
         <div className="panel">
           <div className="panel-title">🤖 Send AI Interview</div>
-          <div className="panel-sub">Pick a candidate, then copy the link for the specific job you want them interviewed for.</div>
+          <div className="panel-sub">Pick a candidate, then copy the link or email it directly for the specific job.</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {linkGroups.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No applications yet.</p>}
             {linkGroups.map((g) => {
@@ -148,9 +170,14 @@ export default function Interview() {
                           <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>
                             {app.job_profiles?.title} {app.job_profiles?.company ? `at ${app.job_profiles.company}` : ''}
                           </span>
-                          <button className="btn-outline" style={{ fontSize: 11.5, padding: '5px 10px' }} onClick={() => copyInterviewLink(app)}>
-                            {copiedId === app.id ? '✓ Copied' : '📋 Copy Link'}
-                          </button>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button className="btn-outline" style={{ fontSize: 11.5, padding: '5px 10px' }} onClick={() => copyInterviewLink(app)}>
+                              {copiedId === app.id ? '✓ Copied' : '📋 Copy Link'}
+                            </button>
+                            <button className="btn-gold" style={{ fontSize: 11.5, padding: '5px 10px' }} disabled={sendingId === app.id} onClick={() => sendInterviewEmail(app)}>
+                              {sendingId === app.id ? 'Sending…' : '📧 Send Email'}
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>

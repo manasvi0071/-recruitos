@@ -233,6 +233,33 @@ async function sendGDShortlistEmail({ studentName, studentEmail, topic }) {
   });
 }
 
+async function sendAIInterviewInviteEmail({ studentName, studentEmail, jobTitle, company, interviewLink }) {
+  await resend.emails.send({
+    from: FROM,
+    to: studentEmail,
+    subject: `Your AI Interview — ${jobTitle}${company ? ` at ${company}` : ''}`,
+    html: `
+      <div style="font-family:Inter,sans-serif;max-width:580px;margin:auto;padding:32px;color:#33363F;">
+        <div style="background:#0A0C12;padding:20px 28px;border-radius:10px;margin-bottom:28px;">
+          <h2 style="color:#EDE6D6;font-family:Georgia,serif;margin:0;">RecruitOS</h2>
+          <p style="color:#9C8054;font-size:11px;margin:4px 0 0;text-transform:uppercase;letter-spacing:0.08em;">Talent Corner — Campus Recruitment</p>
+        </div>
+        <h2 style="color:#0A0C12;font-family:Georgia,serif;">Hi ${studentName}, it's interview time!</h2>
+        <p>You've been shortlisted for a short AI-conducted screening interview for:</p>
+        <div style="background:#FAF8F4;border:1px solid #E6E2D6;border-radius:10px;padding:20px 24px;margin:20px 0;">
+          <p style="margin:0 0 8px;"><strong>Role:</strong> ${jobTitle}</p>
+          ${company ? `<p style="margin:0;"><strong>Company:</strong> ${company}</p>` : ''}
+        </div>
+        <p>Click the button below to start. It's a friendly text-based interview and takes about 5-10 minutes.</p>
+        <a href="${interviewLink}" style="display:inline-block;background:#0A0C12;color:#EDE6D6;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;margin:8px 0;">
+          Start Interview
+        </a>
+        <p style="margin-top:16px;font-size:12px;color:#8B8E97;">This link is personal to you. Do not share it with others.</p>
+        <p>Best of luck!<br/><strong>Talent Corner Recruitment Team</strong></p>
+      </div>`,
+  });
+}
+
 module.exports = {
   generateAIEmailContent,
   sendAIGeneratedEmail,
@@ -242,4 +269,5 @@ module.exports = {
   sendCompanySelectionEmail,
   sendGDInviteEmail,
   sendGDShortlistEmail,
+  sendAIInterviewInviteEmail,
 };

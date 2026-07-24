@@ -252,9 +252,13 @@ useEffect(() => {
       )}
 
       <div className="panel">
-        <div className="panel-title">{isInhouse ? 'In-house Recruitment Pipeline' : 'Corporate Recruitment Pipeline'}</div>
-        <div className="panel-sub">Campus DB → Requirements → JD → College Email → Resumes → Analysis → Assessments → Interviews → Selection → Offer → Joining → Report</div>
-      </div>
+  <div className="panel-title">{isInhouse ? 'In-house Recruitment Pipeline' : 'Corporate Recruitment Pipeline'}</div>
+  <div className="panel-sub">
+    {isInhouse
+      ? 'Campus DB → Requirements → JD → College Email → Resumes → Analysis → Assessments → Interviews → Selection → Offer → Joining → Report'
+      : 'Client Requirement → Sourcing → Screening → Client Submission → Interview → Selection → Offer → Joining → Report'}
+  </div>
+</div>
 
       <div className="grid2">
         <div className="panel">

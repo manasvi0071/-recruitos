@@ -1,6 +1,7 @@
 const express = require('express');
 const Groq = require('groq-sdk');
 const { createClient } = require('@supabase/supabase-js');
+const { sendAIInterviewInviteEmail } = require('./emailService');
 
 const router = express.Router();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -16,6 +17,39 @@ Responsibilities: ${job.responsibilities || 'N/A'}
 Required Qualification: ${job.qualification || 'N/A'}
 Key Skills: ${Array.isArray(job.skills) ? job.skills.join(', ') : job.skills || 'N/A'}`;
 }
+
+// Send the AI interview link to the candidate's email
+router.post('/send-invite', async (req, res) => {
+  try {
+    const { candidate_id, job_id } = req.body;
+    if (!candidate_id || !job_id) {
+      return res.status(400).json({ error: 'candidate_id and job_id are required' });
+    }
+
+    const { data: candidate, error: candErr } = await supabase
+      .from('candidates').select('name, email').eq('id', candidate_id).single();
+    if (candErr) throw candErr;
+
+    const { data: job, error: jobErr } = await supabase
+      .from('job_profiles').select('title, company').eq('id', job_id).single();
+    if (jobErr) throw jobErr;
+
+    const interviewLink = `${req.headers.origin || 'http://localhost:5173'}/interview/${candidate_id}/${job_id}`;
+
+    await sendAIInterviewInviteEmail({
+      studentName: candidate.name,
+      studentEmail: candidate.email,
+      jobTitle: job.title,
+      company: job.company,
+      interviewLink,
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Send interview invite error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.post('/score-resume', async (req, res) => {
   try {
