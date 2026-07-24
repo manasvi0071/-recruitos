@@ -238,12 +238,6 @@ const mapped = rows.map((r) => ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
-  function formatDate(dateStr) {
-    if (!dateStr) return '—';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-  }
-
   return (
     <div className="page active" id="page-campusdb">
       <div className="page-head">
