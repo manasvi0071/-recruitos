@@ -16,6 +16,7 @@ require('dotenv').config();
 
 const aiInterviewRoutes = require('./aiInterviewRoutes');
 const aptitudeRoutes = require('./aptitudeRoutes');
+const { createGDRoom, createMeetingToken } = require('./dailyService');
 
 const app = express();
 app.use(cors());
@@ -252,41 +253,46 @@ app.listen(5000, () => console.log('✅ RecruitOS backend running on http://loca
 
 // Create GD Session
 app.post('/api/gd/create', async (req, res) => {
-  const { topic, duration_minutes, job_id, candidates } = req.body;
+  try {
+    const { topic, duration_minutes, job_id, candidates } = req.body;
 
-  const { data: session, error } = await supabase
-    .from('gd_sessions')
-    .insert([{ topic, duration_minutes, job_id }])
-    .select()
-    .single();
+    const dailyRoom = await createGDRoom(`gd-${Date.now()}`, duration_minutes);
 
-  if (error) return res.status(500).json({ error });
+    const { data: session, error } = await supabase
+      .from('gd_sessions')
+      .insert([{ topic, duration_minutes, job_id, daily_room_url: dailyRoom.url, daily_room_name: dailyRoom.name }])
+      .select()
+      .single();
 
-  // Add participants
-  const participants = candidates.map(c => ({
-    session_id: session.id,
-    candidate_id: c.id,
-    candidate_name: c.name,
-    candidate_email: c.email,
-  }));
+    if (error) return res.status(500).json({ error });
 
-  const { data: parts } = await supabase
-    .from('gd_participants')
-    .insert(participants)
-    .select();
+    const participants = candidates.map(c => ({
+      session_id: session.id,
+      candidate_id: c.id,
+      candidate_name: c.name,
+      candidate_email: c.email,
+    }));
 
-  // Send email to each student with their join link
-  for (const p of parts) {
-    await sendGDInviteEmail({
-      studentName: p.candidate_name,
-      studentEmail: p.candidate_email,
-      topic: session.topic,
-      duration: duration_minutes,
-      joinLink: `${process.env.FRONTEND_URL}/gd/${session.id}?token=${p.join_token}`,
-    });
+    const { data: parts } = await supabase
+      .from('gd_participants')
+      .insert(participants)
+      .select();
+
+    for (const p of parts) {
+      await sendGDInviteEmail({
+        studentName: p.candidate_name,
+        studentEmail: p.candidate_email,
+        topic: session.topic,
+        duration: duration_minutes,
+        joinLink: `${process.env.FRONTEND_URL}/gd/${session.id}?token=${p.join_token}`,
+      });
+    }
+
+    res.json({ success: true, session });
+  } catch (err) {
+    console.error('GD create error:', err);
+    res.status(500).json({ error: err.message });
   }
-
-  res.json({ success: true, session });
 });
 
 // Start GD Session
@@ -388,4 +394,32 @@ app.post('/api/gd/:id/shortlist', async (req, res) => {
   }
 
   res.json({ success: true });
+});
+
+app.get('/api/gd/:id/token', async (req, res) => {
+  try {
+    const { token } = req.query;
+    const { data: participant, error } = await supabase
+      .from('gd_participants')
+      .select('*, gd_sessions(daily_room_name, daily_room_url)')
+      .eq('session_id', req.params.id)
+      .eq('join_token', token)
+      .single();
+
+    if (error || !participant) return res.status(404).json({ error: 'Invalid link' });
+
+    const dailyToken = await createMeetingToken(
+      participant.gd_sessions.daily_room_name,
+      participant.candidate_name
+    );
+
+    res.json({
+      dailyToken,
+      roomUrl: participant.gd_sessions.daily_room_url,
+      candidateName: participant.candidate_name,
+    });
+  } catch (err) {
+    console.error('GD token error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
