@@ -1,6 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { getJobs, getColleges, uploadResume, createCandidate, applyToJob, updateApplicationScore } from '../lib/api';
 import { extractPdfText, scoreResume } from '../lib/resumeScoring';
+import CollegeAutocomplete from './CollegeAutocomplete';
+
+// Employment type values in the data are inconsistently entered
+// (e.g. "Full-Time", "internship", "Internship Full-Time", "Full-Time / Training Role").
+// Normalize them into a small set of clean categories for the filter dropdown.
+function normalizeEmploymentType(raw) {
+  if (!raw) return null;
+  const t = raw.toLowerCase();
+  if (t.includes('intern')) return 'Internship';
+  if (t.includes('part')) return 'Part-Time';
+  if (t.includes('contract')) return 'Contract';
+  if (t.includes('full')) return 'Full-Time';
+  return raw.trim();
+}
 
 export default function Apply() {
   const [step, setStep] = useState(1);
@@ -18,10 +32,36 @@ export default function Apply() {
   const [error, setError] = useState('');
   const [applyingJobId, setApplyingJobId] = useState(null);
 
+  const [search, setSearch] = useState('');
+  const [locationFilter, setLocationFilter] = useState('all');
+  const [experienceFilter, setExperienceFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [expandedJobId, setExpandedJobId] = useState(null);
+
   useEffect(() => {
     getColleges().then(setColleges).catch(() => {});
     getJobs().then(setJobs).catch(() => {});
   }, []);
+
+  const locationOptions = useMemo(
+    () => ['all', ...new Set(jobs.map((j) => j.location).filter(Boolean))],
+    [jobs]
+  );
+  const typeOptions = useMemo(
+    () => ['all', ...new Set(jobs.map((j) => normalizeEmploymentType(j.employment_type)).filter(Boolean))],
+    [jobs]
+  );
+
+  const filteredJobs = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return jobs.filter((j) => {
+      const matchesSearch = !q || j.title?.toLowerCase().includes(q);
+      const matchesLocation = locationFilter === 'all' || j.location === locationFilter;
+      const matchesExperience = experienceFilter === 'all' || (j.experience || '').toLowerCase().includes(experienceFilter);
+      const matchesType = typeFilter === 'all' || normalizeEmploymentType(j.employment_type) === typeFilter;
+      return matchesSearch && matchesLocation && matchesExperience && matchesType;
+    });
+  }, [jobs, search, locationFilter, experienceFilter, typeFilter]);
 
   async function handleFormSubmit(e) {
     e.preventDefault();
@@ -57,7 +97,6 @@ export default function Apply() {
 
       if (resumeText) {
         setScoringJobIds((prev) => [...prev, job.id]);
-        // Fire-and-forget, but ALWAYS resolve the ai_status either way.
         scoreResume(resumeText, job.skills, job.title)
           .then((result) =>
             updateApplicationScore(application.id, {
@@ -69,7 +108,6 @@ export default function Apply() {
           )
           .catch((scoreErr) => {
             console.warn('AI scoring failed:', scoreErr);
-            // Critical fix: mark it Failed instead of leaving it Pending forever.
             updateApplicationScore(application.id, {
               ai_status: 'Failed',
               ai_feedback: `Automated scoring failed: ${scoreErr.message}`,
@@ -77,7 +115,6 @@ export default function Apply() {
           })
           .finally(() => setScoringJobIds((prev) => prev.filter((id) => id !== job.id)));
       } else if (resumeExtractFailed) {
-        // We know upfront scoring can't run — record that immediately instead of leaving "Pending".
         updateApplicationScore(application.id, {
           ai_status: 'Failed',
           ai_feedback: 'Could not extract text from resume PDF (may be scanned/image-only).',
@@ -109,6 +146,16 @@ export default function Apply() {
     boxShadow: '0 8px 32px -8px rgba(10,12,18,0.12)',
   };
 
+  const filterSelectStyle = {
+    padding: '7px 10px',
+    borderRadius: 8,
+    border: '1px solid var(--line, #e5e5e5)',
+    fontSize: 12,
+    color: '#444',
+    background: 'white',
+    cursor: 'pointer',
+  };
+
   if (step === 1) {
     return (
       <div style={pageStyle}>
@@ -138,10 +185,11 @@ export default function Apply() {
             </div>
             <div className="field">
               <label>College</label>
-              <select value={form.college_id} onChange={(e) => setForm({ ...form, college_id: e.target.value })}>
-                <option value="">Select your college…</option>
-                {colleges.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <CollegeAutocomplete
+                colleges={colleges}
+                value={form.college_id}
+                onChange={(id) => setForm({ ...form, college_id: id })}
+              />
             </div>
             <div className="field">
               <label>Resume (PDF) *</label>
@@ -170,31 +218,117 @@ export default function Apply() {
           </div>
         </div>
         <h2 style={{ fontFamily: "'Fraunces',serif", fontSize: 20, marginBottom: 4 }}>Welcome, {form.name.split(' ')[0]}!</h2>
-        <p style={{ fontSize: 12.5, color: 'var(--slate-light)', marginBottom: 20 }}>Browse open roles and apply directly.</p>
+        <p style={{ fontSize: 12.5, color: 'var(--slate-light)', marginBottom: 18 }}>Browse open roles and apply directly.</p>
 
-        <div style={{ display: 'grid', gap: 12 }}>
-          {jobs.map((j) => {
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by role title…"
+          style={{ width: '100%', padding: '10px 13px', borderRadius: 8, border: '1px solid var(--line, #e5e5e5)', fontSize: 13, marginBottom: 10, boxSizing: 'border-box' }}
+        />
+
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)} style={filterSelectStyle}>
+            {locationOptions.map((l) => <option key={l} value={l}>{l === 'all' ? 'All locations' : l}</option>)}
+          </select>
+          <select value={experienceFilter} onChange={(e) => setExperienceFilter(e.target.value)} style={filterSelectStyle}>
+            <option value="all">All experience</option>
+            <option value="fresher">Freshers</option>
+            <option value="1">1+ yrs</option>
+            <option value="3">3+ yrs</option>
+            <option value="5">5+ yrs</option>
+          </select>
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={filterSelectStyle}>
+            {typeOptions.map((t) => <option key={t} value={t}>{t === 'all' ? 'All types' : t}</option>)}
+          </select>
+        </div>
+
+        <p style={{ fontSize: 11.5, color: 'var(--slate-light)', marginBottom: 10 }}>
+          {filteredJobs.length} role{filteredJobs.length !== 1 ? 's' : ''} found
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {filteredJobs.map((j) => {
             const applied = appliedJobIds.includes(j.id);
             const scoring = scoringJobIds.includes(j.id);
+            const isExpanded = expandedJobId === j.id;
+            const responsibilities = (j.responsibilities || '').split(';').map((r) => r.trim()).filter(Boolean);
+            const hasDetails = j.job_summary || responsibilities.length > 0 || j.qualification || (j.skills || []).length > 0;
+            const isBusy = applyingJobId === j.id;
+
             return (
-              <div key={j.id} style={{ border: '1px solid var(--line, #e5e5e5)', borderRadius: 10, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{j.title}</div>
-                  <div style={{ fontSize: 12, color: 'var(--slate-light)' }}>{j.company} · {j.location} · {j.salary_range}</div>
-                  {scoring && <div style={{ fontSize: 11, color: 'var(--gold, #b8894a)', marginTop: 4 }}>Analyzing your resume…</div>}
+              <div key={j.id} style={{ border: '1px solid #EEE', borderRadius: 12, padding: '16px 18px', background: '#fff' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                  <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: '#111', lineHeight: 1.3 }}>{j.title}</div>
+                    <div style={{ fontSize: 12, color: '#999', marginTop: 4, lineHeight: 1.6 }}>
+                      {j.company}{j.location ? ` · ${j.location}` : ''}{j.salary_range ? ` · ${j.salary_range}` : ''}
+                    </div>
+                    {scoring && <div style={{ fontSize: 11, color: '#B8894A', marginTop: 4 }}>Analyzing your resume…</div>}
+                    {hasDetails && (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedJobId(isExpanded ? null : j.id)}
+                        style={{ marginTop: 8, fontSize: 11.5, fontWeight: 600, color: '#8B5CF6', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      >
+                        <span style={{ display: 'inline-block', transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>▾</span>
+                        {isExpanded ? 'Hide details' : 'View details'}
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ flex: '0 0 auto' }}>
+                    <button
+                      type="button"
+                      disabled={applied || isBusy}
+                      onClick={() => handleApply(j)}
+                      style={{
+                        width: 120,
+                        padding: '10px 0',
+                        borderRadius: 10,
+                        border: applied ? '1px solid #EEE' : 'none',
+                        background: applied ? '#FAFAFA' : 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                        color: applied ? '#AAA' : '#fff',
+                        fontWeight: 700,
+                        fontSize: 13,
+                        cursor: applied || isBusy ? 'default' : 'pointer',
+                        boxShadow: applied ? 'none' : '0 4px 14px rgba(139,92,246,0.3)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {applied ? 'Applied ✓' : isBusy ? 'Applying…' : 'Apply'}
+                    </button>
+                  </div>
                 </div>
-                <button
-                  className={applied ? 'btn-outline' : 'btn-primary'}
-                  disabled={applied || applyingJobId === j.id}
-                  onClick={() => handleApply(j)}
-                  style={{ minWidth: 100 }}
-                >
-                  {applied ? 'Applied ✓' : applyingJobId === j.id ? 'Applying…' : 'Apply'}
-                </button>
+
+                {isExpanded && (
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #F0F0F0' }}>
+                    {j.job_summary && <p style={{ fontSize: 12.5, color: '#444', lineHeight: 1.6, marginBottom: 10 }}>{j.job_summary}</p>}
+                    {responsibilities.length > 0 && (
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={{ fontSize: 10.5, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 5 }}>Key responsibilities</div>
+                        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: '#444', lineHeight: 1.6 }}>
+                          {responsibilities.map((r, i) => <li key={i}>{r}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {j.qualification && (
+                      <div style={{ fontSize: 12, color: '#444', marginBottom: 8 }}><strong>Qualification: </strong>{j.qualification}</div>
+                    )}
+                    {(j.skills || []).length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                        {j.skills.map((s) => (
+                          <span key={s} style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: '#F5F0FF', color: '#8B5CF6', fontWeight: 600 }}>{s}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
-          {jobs.length === 0 && <p style={{ color: 'var(--slate-light)' }}>No open positions right now — check back later.</p>}
+          {jobs.length === 0 && <p style={{ color: '#999', textAlign: 'center', padding: '32px 0' }}>No open positions right now — check back later.</p>}
+          {jobs.length > 0 && filteredJobs.length === 0 && <p style={{ color: '#999', textAlign: 'center', padding: '32px 0' }}>No roles match your filters.</p>}
         </div>
       </div>
     </div>
