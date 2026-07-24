@@ -19,11 +19,14 @@ export default function GDAdmin() {
   };
 
   const fetchCandidates = async () => {
-    const { data } = await supabase
-      .from('candidates')
-      .select('id, name, email, college');
-    setCandidates(data || []);
-  };
+  const { data, error } = await supabase
+    .from('candidates')
+    .select('id, name, email, colleges(name)');
+  if (error) {
+    console.error('Failed to load candidates:', error);
+  }
+  setCandidates(data || []);
+};
 
   useEffect(() => {
     const load = async () => {
@@ -148,7 +151,7 @@ export default function GDAdmin() {
                 }}
               >
                 <div style={{ fontWeight: 600, color: 'var(--navy-deep)' }}>{c.name}</div>
-                <div style={{ color: 'var(--slate-light)', fontSize: 11 }}>{c.college}</div>
+                <div style={{ color: 'var(--slate-light)', fontSize: 11 }}>{c.colleges?.name || 'No college set'}</div>
               </div>
             ))}
           </div>
