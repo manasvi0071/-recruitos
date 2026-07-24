@@ -19,6 +19,7 @@ import GDAdmin from './pages/GDAdmin';
 import GDRoom from './pages/GDRoom';
 import AIInterview from './pages/AIInterview';
 import Landing from './pages/Landing';
+import ThemeToggle from './components/ThemeToggle';
 
 const pages = {
   dashboard: Dashboard,
@@ -94,6 +95,7 @@ export default function App() {
             <div><div className="brand-name">RecruitOS</div><div className="brand-sub">Campus Recruitment Platform</div></div>
           </div>
           <div className="top-actions">
+            <ThemeToggle />
             <span className="pill">Talent Corner Workspace</span>
             <span>{session.user.email}</span>
             <span className="logout-link" onClick={() => supabase.auth.signOut()}>Log out</span>

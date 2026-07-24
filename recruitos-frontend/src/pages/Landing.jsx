@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import ThemeToggle from '../components/ThemeToggle';
 
 const departments = [
   { icon: '🎯', name: 'Talent Acquisition (Recruitment)', color: '#10B981', path: ['HR Intern / Recruitment Trainee', 'Talent Acquisition Executive', 'Senior Talent Acquisition Executive', 'Team Leader – Recruitment', 'Recruitment Manager'] },
@@ -47,14 +48,17 @@ export default function Landing() {
             <div className="brand-sub">HR Services</div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 28, fontSize: 13.5, fontWeight: 600, color: 'var(--text-secondary)' }}>
-          <a href="#about">About</a>
-          <a href="#growth">Career Growth</a>
-          <a href="#contact">Contact</a>
-          <a href="/app" style={{ color: 'var(--text-secondary)' }}>Team Login</a>
+        <div style={{ display: 'flex', gap: 28, fontSize: 13.5, fontWeight: 600, color: 'var(--text-secondary)', alignItems: 'center' }}>
+        <a href="#about">About</a>
+        <a href="#growth">Career Growth</a>
+        <a href="#contact">Contact</a>
+        <a href="/app" style={{ color: 'var(--text-secondary)' }}>Team Login</a>
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <ThemeToggle />
         <button className="btn-gold" onClick={() => { window.location.href = '/app'; }}>Join Us</button>
-      </nav>
+        </div>
+        </nav>
 
       {/* ===== HERO ===== */}
       <section style={{
@@ -129,7 +133,7 @@ export default function Landing() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 36 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 44 }}>
           {departments.map((d) => (
             <span
               key={d.name}
@@ -142,64 +146,22 @@ export default function Landing() {
           ))}
         </div>
 
-        <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)' }}>
-            {levels.map((lvl, i) => (
-              <div key={lvl.n} style={{
-                padding: '16px 14px', textAlign: 'center',
-                background: i % 2 === 0 ? 'var(--bg-surface-2)' : 'var(--bg-surface)',
-                borderRight: i < 4 ? '1px solid var(--border-default)' : 'none',
-              }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: '50%', margin: '0 auto 8px',
-                  background: 'var(--gradient-brand-2)', color: 'white', fontWeight: 800,
-                  fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>{lvl.n}</div>
-                <div style={{ fontWeight: 700, fontSize: 12.5 }}>{lvl.label}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{lvl.sub}</div>
-              </div>
-            ))}
-          </div>
+        <AnimatedJourney activeDept={activeDept} levels={levels} />
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)' }}>
-            {activeDept.path.map((role, i) => (
-              <div key={role} style={{
-                padding: '20px 14px', textAlign: 'center', position: 'relative',
-                borderRight: i < 4 ? '1px solid var(--border-default)' : 'none',
-                borderTop: '1px solid var(--border-default)',
-              }}>
-                <div style={{
-                  width: 10, height: 10, borderRadius: '50%', margin: '0 auto 12px',
-                  background: activeDept.color,
-                }} />
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.4 }}>
-                  {role}
-                </div>
-                {i < 4 && (
-                  <div style={{
-                    position: 'absolute', top: '50%', right: -10, transform: 'translateY(-50%)',
-                    color: 'var(--text-muted)', fontSize: 14, zIndex: 2,
-                  }}>→</div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="panel" style={{ marginTop: 24 }}>
+        <div className="panel" style={{ marginTop: 40 }}>
           <div className="panel-title" style={{ marginBottom: 16 }}>Typical Growth Journey</div>
           <div className="email-flow">
-            <span className="email-step">🌱 Join as Intern / Executive</span>
+            <span className="email-step growth-float" style={{ animationDelay: '0s' }}>🌱 Join as Intern / Executive</span>
             <span className="email-sep">➜</span>
-            <span className="email-step">📖 Learn & Understand Processes</span>
+            <span className="email-step growth-float" style={{ animationDelay: '0.3s' }}>📖 Learn & Understand Processes</span>
             <span className="email-sep">➜</span>
-            <span className="email-step">🎯 Meet Targets & Improve Skills</span>
+            <span className="email-step growth-float" style={{ animationDelay: '0.6s' }}>🎯 Meet Targets & Improve Skills</span>
             <span className="email-sep">➜</span>
-            <span className="email-step">📈 Get Promoted to Senior Role</span>
+            <span className="email-step growth-float" style={{ animationDelay: '0.9s' }}>📈 Get Promoted to Senior Role</span>
             <span className="email-sep">➜</span>
-            <span className="email-step">👥 Lead a Team & Handle Key Clients</span>
+            <span className="email-step growth-float" style={{ animationDelay: '1.2s' }}>👥 Lead a Team & Handle Key Clients</span>
             <span className="email-sep">➜</span>
-            <span className="email-step">👑 Move to Managerial & Leadership Role</span>
+            <span className="email-step growth-float" style={{ animationDelay: '1.5s' }}>👑 Move to Managerial & Leadership Role</span>
           </div>
         </div>
       </section>
@@ -221,6 +183,102 @@ export default function Landing() {
       <footer style={{ padding: 24, textAlign: 'center', fontSize: 11.5, color: 'var(--text-muted)' }}>
         © {new Date().getFullYear()} Talent Corner HR Services. All rights reserved.
       </footer>
+    </div>
+  );
+}
+
+function AnimatedJourney({ activeDept, levels }) {
+  const containerRef = useRef(null);
+  const [visible, setVisible] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+    let step = -1;
+    const interval = setInterval(() => {
+      step += 1;
+      setActiveStep(step);
+      if (step >= 4) clearInterval(interval);
+    }, 400);
+    return () => clearInterval(interval);
+  }, [visible, activeDept]);
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative', padding: '20px 0 40px' }}>
+      {/* Connecting line */}
+      <div style={{
+        position: 'absolute', top: 44, left: '10%', right: '10%', height: 3,
+        background: 'var(--border-default)', borderRadius: 4, zIndex: 0,
+      }}>
+        <div
+          className={visible ? 'growth-line' : ''}
+          style={{
+            height: '100%', borderRadius: 4,
+            background: 'var(--gradient-brand-2)',
+            width: `${(activeStep / 4) * 100}%`,
+            transition: 'width 0.5s ease',
+          }}
+        />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8, position: 'relative', zIndex: 1 }}>
+        {levels.map((lvl, i) => {
+          const isActive = i <= activeStep && visible;
+          const isCurrent = i === activeStep && visible;
+          return (
+            <div
+              key={lvl.n}
+              className={visible ? 'growth-reveal' : ''}
+              style={{ textAlign: 'center', opacity: visible ? undefined : 0, animationDelay: `${i * 0.15}s` }}
+            >
+              <div
+                className={isCurrent ? 'growth-dot-active' : ''}
+                style={{
+                  width: 46, height: 46, borderRadius: '50%', margin: '0 auto 14px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 800, fontSize: 15,
+                  background: isActive ? 'var(--gradient-brand-2)' : 'var(--bg-surface)',
+                  color: isActive ? 'white' : 'var(--text-muted)',
+                  border: isActive ? 'none' : '2px solid var(--border-default)',
+                  transition: 'all 0.4s ease',
+                  boxShadow: isActive ? '0 6px 20px rgba(124,58,237,0.35)' : 'none',
+                }}
+              >
+                {lvl.n}
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 13, color: isActive ? 'var(--text-primary)' : 'var(--text-muted)', transition: 'color 0.3s ease' }}>
+                {lvl.label}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{lvl.sub}</div>
+
+              <div style={{
+                marginTop: 14, padding: '10px 8px', borderRadius: 'var(--radius-md)',
+                background: isActive ? 'var(--bg-surface)' : 'transparent',
+                border: isActive ? '1px solid var(--border-brand)' : '1px solid transparent',
+                fontSize: 12, fontWeight: 600, color: 'var(--text-primary)',
+                minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.4s ease',
+              }}>
+                {activeDept.path[i]}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
