@@ -15,12 +15,13 @@ const {
 require('dotenv').config();
 
 const aiInterviewRoutes = require('./aiInterviewRoutes');
+const aptitudeRoutes = require('./aptitudeRoutes');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/ai-interview', aiInterviewRoutes);
-
+app.use('/api/aptitude', aptitudeRoutes);
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
 // ---- COLLEGES ----
