@@ -472,3 +472,14 @@ export async function getCompanyNames() {
   // distinct, non-empty
   return [...new Set((data || []).map((j) => j.company).filter(Boolean))].sort();
 }
+
+export async function generateAptitudeTest({ job_id, difficulty, question_count }) {
+  const res = await fetch('http://localhost:5000/api/aptitude/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ job_id, difficulty, question_count }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to generate test');
+  return data;
+}

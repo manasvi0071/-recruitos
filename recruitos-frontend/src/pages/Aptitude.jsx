@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getAptitudeResults, addAptitudeResult, getCandidates, getJobs } from '../lib/api';
+import { getAptitudeResults, addAptitudeResult, getCandidates, getJobs, generateAptitudeTest } from '../lib/api';
 
 export default function Aptitude() {
   const [results, setResults] = useState([]);
@@ -12,6 +12,14 @@ export default function Aptitude() {
   const [form, setForm] = useState({ candidate_id: '', job_id: '', score: '', total: '40' });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
+
+  const [showGenForm, setShowGenForm] = useState(false);
+  const [genJobId, setGenJobId] = useState('');
+  const [genDifficulty, setGenDifficulty] = useState('auto');
+  const [genQCount, setGenQCount] = useState(20);
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState('');
+  const [generatedTest, setGeneratedTest] = useState(null);
 
   async function loadAll() {
     setLoading(true);
@@ -72,6 +80,28 @@ export default function Aptitude() {
     }
   }
 
+  async function handleGenerate(e) {
+    e.preventDefault();
+    setGenError('');
+    setGeneratedTest(null);
+    setGenerating(true);
+    try {
+      const test = await generateAptitudeTest({
+        job_id: genJobId || null,
+        difficulty: genDifficulty,
+        question_count: genQCount,
+      });
+      setGeneratedTest(test);
+      if (genJobId) {
+        setForm((f) => ({ ...f, job_id: genJobId, total: String(test.total) }));
+      }
+    } catch (err) {
+      setGenError(err.message);
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   const attempted = results.length;
   const passed = results.filter((r) => r.passed).length;
   const passRate = attempted ? Math.round((passed / attempted) * 100) : 0;
@@ -84,10 +114,80 @@ export default function Aptitude() {
     <div className="page active" id="page-aptitude">
       <div className="page-head">
         <div><h1>Aptitude Test</h1><p>Live results across all aptitude tests</p></div>
-        <button className="btn-gold" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? 'Cancel' : '+ Create Test'}
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn-outline" onClick={() => setShowGenForm((v) => !v)}>
+            {showGenForm ? 'Cancel' : '✨ Generate AI Test'}
+          </button>
+          <button className="btn-gold" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? 'Cancel' : '+ Add Result'}
+          </button>
+        </div>
       </div>
+
+      {showGenForm && (
+        <div className="panel">
+          <div className="panel-title">Generate AI-Tailored Aptitude Test</div>
+          <p className="panel-sub">
+            Pick a job so the AI matches question difficulty and topics to that role's level and skills —
+            or leave it blank for a general fresher-level test.
+          </p>
+          <form onSubmit={handleGenerate} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, alignItems: 'end' }}>
+            <div className="field">
+              <label>Job Profile</label>
+              <select value={genJobId} onChange={(e) => setGenJobId(e.target.value)}>
+                <option value="">General / no specific job</option>
+                {jobs.map((j) => (
+                  <option key={j.id} value={j.id}>{j.company} — {j.title}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label>Difficulty</label>
+              <select value={genDifficulty} onChange={(e) => setGenDifficulty(e.target.value)}>
+                <option value="auto">Auto (match job level)</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            <div className="field">
+              <label># Questions</label>
+              <input type="number" min={5} max={50} value={genQCount} onChange={(e) => setGenQCount(Number(e.target.value))} />
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              {genError && <p style={{ color: 'var(--danger)', fontSize: 12.5, marginBottom: 8 }}>{genError}</p>}
+              <button className="btn-primary" type="submit" disabled={generating}>
+                {generating ? 'Generating…' : 'Generate Test'}
+              </button>
+            </div>
+          </form>
+
+          {generatedTest && (
+            <div style={{ marginTop: 20 }}>
+              <div className="panel-title" style={{ fontSize: 14 }}>
+                Preview — {generatedTest.questions.length} questions ({generatedTest.difficulty} level)
+              </div>
+              <div style={{ maxHeight: 380, overflowY: 'auto', marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {generatedTest.questions.map((q, i) => (
+                  <div key={i} style={{ padding: '12px 14px', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)' }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>{i + 1}. {q.q}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, fontSize: 12.5, color: 'var(--text-secondary)' }}>
+                      {q.options.map((opt, oi) => (
+                        <div key={oi} style={{ color: opt === q.answer ? 'var(--success)' : 'var(--text-secondary)', fontWeight: opt === q.answer ? 700 : 400 }}>
+                          {String.fromCharCode(65 + oi)}. {opt} {opt === q.answer ? '✓' : ''}
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 6 }}>
+                      Topic: {q.topic} · Difficulty: {q.difficulty}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {showForm && (
         <div className="panel">
@@ -116,7 +216,7 @@ export default function Aptitude() {
               <input type="number" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} required />
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
-              {formError && <p style={{ color: 'var(--red, #d64545)', fontSize: 12.5, marginBottom: 8 }}>{formError}</p>}
+              {formError && <p style={{ color: 'var(--danger)', fontSize: 12.5, marginBottom: 8 }}>{formError}</p>}
               <button className="btn-primary" type="submit" disabled={saving}>
                 {saving ? 'Saving…' : 'Save Result'}
               </button>
@@ -132,13 +232,13 @@ export default function Aptitude() {
             <tbody>
               <tr><th>Rank</th><th>Candidate</th><th>Score</th><th>Result</th></tr>
               {loading && (
-                <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--slate-light)', padding: 24 }}>Loading…</td></tr>
+                <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24 }}>Loading…</td></tr>
               )}
               {error && (
-                <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--red, #d64545)', padding: 24 }}>{error}</td></tr>
+                <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--danger)', padding: 24 }}>{error}</td></tr>
               )}
               {!loading && !error && results.length === 0 && (
-                <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--slate-light)', padding: 24 }}>No aptitude results yet</td></tr>
+                <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24 }}>No aptitude results yet</td></tr>
               )}
               {!loading && !error && results.map((r, i) => (
                 <tr key={r.id}>
