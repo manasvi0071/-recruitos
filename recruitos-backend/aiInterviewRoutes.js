@@ -249,3 +249,34 @@ Respond with ONLY valid JSON, no other text, in exactly this shape:
 });
 
 module.exports = router;
+router.post('/send-invite', async (req, res) => {
+  try {
+    const { candidate_id, job_id } = req.body;
+    if (!candidate_id || !job_id) {
+      return res.status(400).json({ error: 'candidate_id and job_id are required' });
+    }
+
+    const { data: candidate, error: candErr } = await supabase
+      .from('candidates').select('name, email').eq('id', candidate_id).single();
+    if (candErr) throw candErr;
+
+    const { data: job, error: jobErr } = await supabase
+      .from('job_profiles').select('title, company').eq('id', job_id).single();
+    if (jobErr) throw jobErr;
+
+    const interviewLink = `${process.env.FRONTEND_URL}/interview/${candidate_id}/${job_id}`;
+
+    await sendAIInterviewInviteEmail({
+      studentName: candidate.name,
+      studentEmail: candidate.email,
+      jobTitle: job.title,
+      company: job.company,
+      interviewLink,
+    });
+
+    res.json({ success: true, message: 'Interview invite email sent.' });
+  } catch (err) {
+    console.error('Send interview invite error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});

@@ -1,8 +1,23 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = process.env.FROM_EMAIL;
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
+
+const FROM = process.env.GMAIL_USER;
+
+// Wraps nodemailer to look like resend.emails.send(), so the rest of this file doesn't need to change
+const resend = {
+  emails: {
+    send: ({ from, to, subject, html }) =>
+      transporter.sendMail({ from, to, subject, html }),
+  },
+};
 
 // ─── AI EMAIL GENERATION — used by the Communication CRM "Generate with AI" button ───
 // Calls the Claude API server-side (API key never touches the browser) to draft a
