@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import * as XLSX from 'xlsx';
+import { generateJD } from '../lib/api';
 
 const emptyForm = {
   title: '', company: '', location: '', salary_range: '', experience: '', skills: '',
@@ -116,6 +117,12 @@ export default function Jobs() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
+
+  const [showAIGen, setShowAIGen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiCompany, setAiCompany] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState('');
 
   const [importRows, setImportRows] = useState(null);
   const [importing, setImporting] = useState(false);
@@ -304,6 +311,39 @@ export default function Jobs() {
     await loadJobs();
   }
 
+  async function handleGenerateJD() {
+    if (!aiPrompt.trim()) {
+      setGenError('Please describe the role you need');
+      return;
+    }
+    setGenError('');
+    setGenerating(true);
+    try {
+      const jd = await generateJD({ prompt: aiPrompt, company: aiCompany });
+      setForm({
+        title: jd.title || '',
+        company: aiCompany || '',
+        location: jd.location || '',
+        salary_range: jd.salary_range || '',
+        experience: jd.experience || '',
+        skills: (jd.skills || []).join(', '),
+        job_summary: jd.job_summary || '',
+        responsibilities: jd.responsibilities || '',
+        qualification: jd.qualification || '',
+        employment_type: jd.employment_type || '',
+        reporting_to: '',
+      });
+      setShowAIGen(false);
+      setShowForm(true);
+      setAiPrompt('');
+      setAiCompany('');
+    } catch (err) {
+      setGenError(err.message);
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   function cancelImport() {
     setImportRows(null);
     setImportResult(null);
@@ -326,6 +366,9 @@ export default function Jobs() {
             onChange={handleFileSelect}
           />
           <button className="btn-outline" onClick={() => fileInputRef.current.click()}>Import Excel</button>
+          <button className="btn-outline" onClick={() => setShowAIGen((v) => !v)}>
+            {showAIGen ? 'Cancel' : '✨ Generate with AI'}
+          </button>
           <button className="btn-gold" onClick={() => (showForm ? cancelForm() : setShowForm(true))}>
             {showForm ? 'Cancel' : '+ Create Job Profile'}
           </button>
@@ -333,6 +376,38 @@ export default function Jobs() {
       </div>
 
       {error && <div className="panel" style={{ color: 'crimson' }}>{error}</div>}
+      {showAIGen && (
+        <div className="panel">
+          <div className="panel-title">✨ Generate Job Description with AI</div>
+          <p className="panel-sub">Describe the role in plain language, and AI will draft the full JD for you to review and edit.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
+            <div className="field" style={{ margin: 0 }}>
+              <label>Describe the role *</label>
+              <input
+                className="search-box"
+                style={{ width: '100%' }}
+                placeholder='e.g. "Requires Business Development Engineer for a leading pharmaceutical company"'
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+              />
+            </div>
+            <div className="field" style={{ margin: 0 }}>
+              <label>Company (optional)</label>
+              <input
+                className="search-box"
+                style={{ width: '100%' }}
+                placeholder="e.g. TCS"
+                value={aiCompany}
+                onChange={(e) => setAiCompany(e.target.value)}
+              />
+            </div>
+          </div>
+          {genError && <p style={{ color: 'var(--danger, crimson)', fontSize: 12.5, marginTop: 10 }}>{genError}</p>}
+          <button className="btn-primary" style={{ marginTop: 14 }} disabled={generating} onClick={handleGenerateJD}>
+            {generating ? 'Generating…' : 'Generate JD'}
+          </button>
+        </div>
+      )}
 
       {importResult && (
         <div className="panel">

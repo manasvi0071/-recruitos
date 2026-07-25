@@ -483,3 +483,14 @@ export async function generateAptitudeTest({ job_id, difficulty, question_count 
   if (!res.ok) throw new Error(data.error || 'Failed to generate test');
   return data;
 }
+
+export async function generateJD({ prompt, company }) {
+  const res = await fetch('http://localhost:5000/api/jd/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, company }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to generate JD');
+  return data.jd;
+}
