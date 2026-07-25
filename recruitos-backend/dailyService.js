@@ -14,16 +14,18 @@ async function createGDRoom(sessionId, durationMinutes) {
       name: `gd-${sessionId}`,
       privacy: 'private',
       properties: {
-        enable_recording: 'cloud',
-        exp: Math.floor(Date.now() / 1000) + durationMinutes * 60 + 600, // auto-expire buffer
+        exp: Math.floor(Date.now() / 1000) + durationMinutes * 60 + 600,
         enable_chat: false,
         max_participants: 10,
       },
     }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Could not create Daily room');
-  return data; // includes data.url
+  if (!res.ok) {
+    console.error('Daily.co room creation failed. Full response:', JSON.stringify(data, null, 2));
+    throw new Error(data.info || data.error || 'Could not create Daily room');
+  }
+  return data;
 }
 
 async function createMeetingToken(roomName, userName) {
