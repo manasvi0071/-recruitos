@@ -1652,3 +1652,73 @@ body, .panel, .stat-card, .jd-card, .sidebar, .topbar, .btn-outline, .search-box
 .growth-float {
   animation: floatBob 3s ease-in-out infinite;
 }
+
+/* ===== 3D / Premium landing effects ===== */
+
+.perspective-container {
+  perspective: 1400px;
+}
+
+.tilt-card {
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+  will-change: transform;
+}
+
+.floating-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(30px, -40px, 0) scale(1.1); }
+}
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-40px, 30px, 0) scale(0.9); }
+}
+@keyframes orbFloat3 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(20px, 20px, 0) scale(1.05); }
+}
+
+.orb-1 { animation: orbFloat1 8s ease-in-out infinite; }
+.orb-2 { animation: orbFloat2 10s ease-in-out infinite; }
+.orb-3 { animation: orbFloat3 9s ease-in-out infinite; }
+
+@keyframes heroTextFloat {
+  0%, 100% { transform: translateY(0) rotateX(0deg); }
+  50% { transform: translateY(-8px) rotateX(1deg); }
+}
+.hero-3d-text {
+  animation: heroTextFloat 6s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+
+.glass-3d {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 20px 60px -12px rgba(124,58,237,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.badge-3d {
+  transform: translateZ(20px);
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.shimmer-text {
+  background: linear-gradient(90deg, var(--text-primary) 0%, var(--brand-purple) 25%, var(--accent-pink) 50%, var(--brand-purple) 75%, var(--text-primary) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 5s linear infinite;
+}

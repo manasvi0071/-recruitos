@@ -33,84 +33,46 @@ export default function Landing() {
   const [activeDept, setActiveDept] = useState(departments[0]);
 
   return (
-    <div style={{ background: 'var(--bg-base)', minHeight: '100vh' }}>
+    <div style={{ background: 'var(--bg-base)', minHeight: '100vh', overflowX: 'hidden' }}>
       {/* ===== NAV ===== */}
       <nav style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '18px 48px', position: 'sticky', top: 0, zIndex: 100,
-        background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid var(--border-default)',
-      }}>
+      }} className="glass-3d">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div className="brand-mark">TC</div>
+          <div className="brand-mark" style={{ boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>TC</div>
           <div>
             <div className="brand-name">Talent Corner</div>
             <div className="brand-sub">HR Services</div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 28, fontSize: 13.5, fontWeight: 600, color: 'var(--text-secondary)', alignItems: 'center' }}>
-        <a href="#about">About</a>
-        <a href="#growth">Career Growth</a>
-        <a href="#contact">Contact</a>
-        <a href="/app" style={{ color: 'var(--text-secondary)' }}>Team Login</a>
+          <a href="#about">About</a>
+          <a href="#growth">Career Growth</a>
+          <a href="#contact">Contact</a>
+          <a href="/app" style={{ color: 'var(--text-secondary)' }}>Team Login</a>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <ThemeToggle />
-        <button className="btn-gold" onClick={() => { window.location.href = '/app'; }}>Join Us</button>
+          <ThemeToggle />
+          <button className="btn-gold" onClick={() => { window.location.href = '/app'; }}>Join Us</button>
         </div>
-        </nav>
+      </nav>
 
-      {/* ===== HERO ===== */}
-      <section style={{
-        background: 'var(--gradient-hero)', color: 'white', padding: '90px 48px 70px',
-        position: 'relative', overflow: 'hidden', textAlign: 'center',
-      }}>
-        <div style={{
-          position: 'absolute', width: 600, height: 600, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(124,58,237,0.3), transparent 70%)',
-          top: -200, left: '50%', transform: 'translateX(-50%)',
-        }} />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 780, margin: '0 auto' }}>
-          <span className="pill" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>
-            India's Leading HR Management Company
-          </span>
-          <h1 style={{
-            fontFamily: 'var(--font-display)', fontSize: 46, fontWeight: 700,
-            margin: '20px 0 16px', lineHeight: 1.15, color: 'white',
-          }}>
-            Connecting the <em style={{
-              fontStyle: 'italic', background: 'var(--gradient-brand-2)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-            }}>Right Talent</em> with the Right Opportunity
-          </h1>
-          <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, marginBottom: 32 }}>
-            Since 2002, Talent Corner has grown from a team of three into one of India's leading
-            HR Management companies — serving 900+ clients across 15 locations nationwide.
-          </p>
-          <div style={{ display: 'flex', gap: 14, justifyContent: 'center' }}>
-            <button className="btn-gold" style={{ padding: '13px 28px', fontSize: 14 }}>Explore Careers</button>
-            <button className="btn-outline" style={{ padding: '13px 28px', fontSize: 14, background: 'transparent', color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}>
-              Partner With Us
-            </button>
+      <Hero3D />
+
+      {/* ===== STATS ===== */}
+      <section style={{ padding: '0 48px', marginTop: -60, position: 'relative', zIndex: 2 }}>
+        <div className="perspective-container" style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div className="stat-row" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
+            {stats.map((s, i) => <TiltStatCard key={s.l} stat={s} index={i} />)}
           </div>
         </div>
       </section>
 
-      {/* ===== STATS ===== */}
-      <section style={{ padding: '0 48px', marginTop: -40, position: 'relative', zIndex: 2 }}>
-        <div className="stat-row" style={{ maxWidth: 1000, margin: '0 auto', gridTemplateColumns: 'repeat(4,1fr)' }}>
-          {stats.map((s) => (
-            <div className="stat-card" key={s.l} style={{ textAlign: 'center' }}>
-              <div className="num">{s.n}</div>
-              <div className="lbl">{s.l}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ===== ABOUT ===== */}
-      <section id="about" style={{ padding: '90px 48px 60px', maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
-        <h2 style={{ fontSize: 30, marginBottom: 18 }}>Who We Are</h2>
+      <section id="about" style={{ padding: '110px 48px 60px', maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
+        <span className="pill">Who We Are</span>
+        <h2 style={{ fontSize: 32, margin: '18px 0' }} className="shimmer-text">Two Decades of Connecting Talent</h2>
         <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.8 }}>
           We are a professional human resources organization providing innovative recruitment
           solutions to the corporate world. As India's recruitment industry grows at record pace,
@@ -148,7 +110,7 @@ export default function Landing() {
 
         <AnimatedJourney activeDept={activeDept} levels={levels} />
 
-        <div className="panel" style={{ marginTop: 40 }}>
+        <div className="panel glass-3d" style={{ marginTop: 40 }}>
           <div className="panel-title" style={{ marginBottom: 16 }}>Typical Growth Journey</div>
           <div className="email-flow">
             <span className="email-step growth-float" style={{ animationDelay: '0s' }}>🌱 Join as Intern / Executive</span>
@@ -169,20 +131,115 @@ export default function Landing() {
       {/* ===== CTA / CONTACT ===== */}
       <section id="contact" style={{
         background: 'var(--gradient-brand-2)', color: 'white', padding: '70px 48px',
-        textAlign: 'center',
+        textAlign: 'center', position: 'relative', overflow: 'hidden',
       }}>
-        <h2 style={{ fontSize: 28, marginBottom: 12, color: 'white' }}>Ready to Build Your Career With Us?</h2>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)', marginBottom: 28 }}>
-          Whether you're a candidate looking for growth or a company looking for talent — let's talk.
-        </p>
-        <button className="btn-outline" style={{ background: 'white', color: 'var(--brand-purple)', border: 'none', padding: '13px 30px', fontSize: 14 }}>
-          Get In Touch
-        </button>
+        <div className="floating-orb orb-1" style={{ width: 300, height: 300, background: 'rgba(255,255,255,0.15)', top: -100, left: -50 }} />
+        <div className="floating-orb orb-2" style={{ width: 200, height: 200, background: 'rgba(255,255,255,0.1)', bottom: -80, right: -40 }} />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <h2 style={{ fontSize: 28, marginBottom: 12, color: 'white' }}>Ready to Build Your Career With Us?</h2>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)', marginBottom: 28 }}>
+            Whether you're a candidate looking for growth or a company looking for talent — let's talk.
+          </p>
+          <button className="btn-outline" style={{ background: 'white', color: 'var(--brand-purple)', border: 'none', padding: '13px 30px', fontSize: 14 }}>
+            Get In Touch
+          </button>
+        </div>
       </section>
 
       <footer style={{ padding: 24, textAlign: 'center', fontSize: 11.5, color: 'var(--text-muted)' }}>
         © {new Date().getFullYear()} Talent Corner HR Services. All rights reserved.
       </footer>
+    </div>
+  );
+}
+
+// ===== 3D Hero with mouse-parallax =====
+function Hero3D() {
+  const heroRef = useRef(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+
+  function handleMouseMove(e) {
+    const rect = heroRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setTilt({ x, y });
+  }
+
+  return (
+    <section
+      ref={heroRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setTilt({ x: 0, y: 0 })}
+      className="perspective-container"
+      style={{
+        background: 'var(--gradient-hero)', color: 'white', padding: '110px 48px 90px',
+        position: 'relative', overflow: 'hidden', textAlign: 'center',
+      }}
+    >
+      <div className="floating-orb orb-1" style={{ width: 500, height: 500, background: 'rgba(124,58,237,0.35)', top: -150, right: -100 }} />
+      <div className="floating-orb orb-2" style={{ width: 350, height: 350, background: 'rgba(6,182,212,0.25)', bottom: 20, left: -80 }} />
+      <div className="floating-orb orb-3" style={{ width: 220, height: 220, background: 'rgba(236,72,153,0.2)', top: '40%', left: '15%' }} />
+
+      <div
+        className="hero-3d-text"
+        style={{
+          position: 'relative', zIndex: 1, maxWidth: 800, margin: '0 auto',
+          transform: `rotateY(${tilt.x * 6}deg) rotateX(${-tilt.y * 6}deg)`,
+          transition: 'transform 0.1s ease-out',
+        }}
+      >
+        <span className="pill badge-3d" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>
+          India's Leading HR Management Company
+        </span>
+        <h1 style={{
+          fontFamily: 'var(--font-display)', fontSize: 50, fontWeight: 700,
+          margin: '22px 0 16px', lineHeight: 1.15, color: 'white',
+        }}>
+          Connecting the <em style={{
+            fontStyle: 'italic', background: 'var(--gradient-brand-2)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          }}>Right Talent</em> with the Right Opportunity
+        </h1>
+        <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.7, marginBottom: 34 }}>
+          Since 2002, Talent Corner has grown from a team of three into one of India's leading
+          HR Management companies — serving 900+ clients across 15 locations nationwide.
+        </p>
+        <div style={{ display: 'flex', gap: 14, justifyContent: 'center' }}>
+          <button className="btn-gold" style={{ padding: '14px 30px', fontSize: 14.5, boxShadow: '0 12px 32px rgba(124,58,237,0.5)' }}>Explore Careers</button>
+          <button className="btn-outline" style={{ padding: '14px 30px', fontSize: 14.5, background: 'rgba(255,255,255,0.06)', color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}>
+            Partner With Us
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ===== 3D tilt stat card =====
+function TiltStatCard({ stat, index }) {
+  const cardRef = useRef(null);
+  const [style, setStyle] = useState({});
+
+  function handleMove(e) {
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setStyle({
+      transform: `rotateY(${x * 14}deg) rotateX(${-y * 14}deg) translateZ(10px) scale(1.03)`,
+      boxShadow: '0 20px 40px -10px rgba(124,58,237,0.4)',
+    });
+  }
+
+  return (
+    <div
+      ref={cardRef}
+      className="stat-card tilt-card growth-reveal"
+      style={{ textAlign: 'center', animationDelay: `${index * 0.1}s`, ...style }}
+      onMouseMove={handleMove}
+      onMouseLeave={() => setStyle({})}
+    >
+      <div className="num">{stat.n}</div>
+      <div className="lbl">{stat.l}</div>
     </div>
   );
 }
@@ -218,8 +275,7 @@ function AnimatedJourney({ activeDept, levels }) {
   }, [visible, activeDept]);
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', padding: '20px 0 40px' }}>
-      {/* Connecting line */}
+    <div ref={containerRef} className="perspective-container" style={{ position: 'relative', padding: '20px 0 40px' }}>
       <div style={{
         position: 'absolute', top: 44, left: '10%', right: '10%', height: 3,
         background: 'var(--border-default)', borderRadius: 4, zIndex: 0,
@@ -231,6 +287,7 @@ function AnimatedJourney({ activeDept, levels }) {
             background: 'var(--gradient-brand-2)',
             width: `${(activeStep / 4) * 100}%`,
             transition: 'width 0.5s ease',
+            boxShadow: '0 0 16px rgba(124,58,237,0.6)',
           }}
         />
       </div>
@@ -240,44 +297,74 @@ function AnimatedJourney({ activeDept, levels }) {
           const isActive = i <= activeStep && visible;
           const isCurrent = i === activeStep && visible;
           return (
-            <div
+            <TiltLevelCard
               key={lvl.n}
-              className={visible ? 'growth-reveal' : ''}
-              style={{ textAlign: 'center', opacity: visible ? undefined : 0, animationDelay: `${i * 0.15}s` }}
-            >
-              <div
-                className={isCurrent ? 'growth-dot-active' : ''}
-                style={{
-                  width: 46, height: 46, borderRadius: '50%', margin: '0 auto 14px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 800, fontSize: 15,
-                  background: isActive ? 'var(--gradient-brand-2)' : 'var(--bg-surface)',
-                  color: isActive ? 'white' : 'var(--text-muted)',
-                  border: isActive ? 'none' : '2px solid var(--border-default)',
-                  transition: 'all 0.4s ease',
-                  boxShadow: isActive ? '0 6px 20px rgba(124,58,237,0.35)' : 'none',
-                }}
-              >
-                {lvl.n}
-              </div>
-              <div style={{ fontWeight: 700, fontSize: 13, color: isActive ? 'var(--text-primary)' : 'var(--text-muted)', transition: 'color 0.3s ease' }}>
-                {lvl.label}
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{lvl.sub}</div>
-
-              <div style={{
-                marginTop: 14, padding: '10px 8px', borderRadius: 'var(--radius-md)',
-                background: isActive ? 'var(--bg-surface)' : 'transparent',
-                border: isActive ? '1px solid var(--border-brand)' : '1px solid transparent',
-                fontSize: 12, fontWeight: 600, color: 'var(--text-primary)',
-                minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'all 0.4s ease',
-              }}>
-                {activeDept.path[i]}
-              </div>
-            </div>
+              lvl={lvl}
+              isActive={isActive}
+              isCurrent={isCurrent}
+              visible={visible}
+              delay={i * 0.15}
+              roleText={activeDept.path[i]}
+            />
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function TiltLevelCard({ lvl, isActive, isCurrent, visible, delay, roleText }) {
+  const ref = useRef(null);
+  const [tiltStyle, setTiltStyle] = useState({});
+
+  function handleMove(e) {
+    if (!isActive) return;
+    const rect = ref.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setTiltStyle({ transform: `rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateZ(8px)` });
+  }
+
+  return (
+    <div
+      ref={ref}
+      className={`tilt-card ${visible ? 'growth-reveal' : ''}`}
+      style={{ textAlign: 'center', opacity: visible ? undefined : 0, animationDelay: `${delay}s`, ...tiltStyle }}
+      onMouseMove={handleMove}
+      onMouseLeave={() => setTiltStyle({})}
+    >
+      <div
+        className={isCurrent ? 'growth-dot-active' : ''}
+        style={{
+          width: 46, height: 46, borderRadius: '50%', margin: '0 auto 14px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontWeight: 800, fontSize: 15,
+          background: isActive ? 'var(--gradient-brand-2)' : 'var(--bg-surface)',
+          color: isActive ? 'white' : 'var(--text-muted)',
+          border: isActive ? 'none' : '2px solid var(--border-default)',
+          transition: 'all 0.4s ease',
+          boxShadow: isActive ? '0 10px 28px rgba(124,58,237,0.45)' : 'none',
+        }}
+      >
+        {lvl.n}
+      </div>
+      <div style={{ fontWeight: 700, fontSize: 13, color: isActive ? 'var(--text-primary)' : 'var(--text-muted)', transition: 'color 0.3s ease' }}>
+        {lvl.label}
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{lvl.sub}</div>
+
+      <div
+        className={isActive ? 'glass-3d' : ''}
+        style={{
+          marginTop: 14, padding: '10px 8px', borderRadius: 'var(--radius-md)',
+          background: isActive ? undefined : 'transparent',
+          border: isActive ? undefined : '1px solid transparent',
+          fontSize: 12, fontWeight: 600, color: 'var(--text-primary)',
+          minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 0.4s ease',
+        }}
+      >
+        {roleText}
       </div>
     </div>
   );
