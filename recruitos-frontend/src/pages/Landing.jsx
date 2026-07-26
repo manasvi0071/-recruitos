@@ -3,6 +3,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import MagneticButton from '../components/MagneticButton';
 import AnimatedCounter from '../components/AnimatedCounter';
 import { useScrollProgress, useScrollY } from '../hooks/useScrollReveal';
+import logoImg from '../assets/talentcorner-logo.png';
 
 const departments = [
   { icon: '🎯', name: 'Talent Acquisition (Recruitment)', color: '#10B981', path: ['HR Intern / Recruitment Trainee', 'Talent Acquisition Executive', 'Senior Talent Acquisition Executive', 'Team Leader – Recruitment', 'Recruitment Manager'] },
@@ -66,7 +67,7 @@ export default function Landing() {
           padding: '18px 48px', position: 'sticky', top: 0, zIndex: 100,
         }} className="glass-3d">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div className="brand-mark" style={{ boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>TC</div>
+            <img src={logoImg} alt="Talent Corner" style={{ width: 38, height: 38, objectFit: 'contain' }} />
             <div>
               <div className="brand-name">Talent Corner</div>
               <div className="brand-sub">HR Services</div>
@@ -199,6 +200,15 @@ function ScrollHero({ scrollY }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >
+     <div className="logo-3d-stage">
+        <img
+          src={logoImg}
+          alt=""
+          className="logo-3d-spin"
+          style={{ width: 340, height: 340, objectFit: 'contain' }}
+        />
+      </div>
+
       <div className="floating-orb orb-1" style={{
         width: 500, height: 500, background: 'rgba(124,58,237,0.35)', top: -150, right: -100,
         transform: `translate3d(0, ${scrollY * 0.15}px, 0)`,
