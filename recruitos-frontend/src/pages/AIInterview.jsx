@@ -1,107 +1,58 @@
-import { useEffect, useRef, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { useEffect, useState } from 'react';
+import { getAptitudeTestByToken, submitAptitudeTest } from '../lib/api';
 
-const BACKEND_URL = 'http://localhost:5000';
-
-export default function AIInterview() {
+export default function AptitudeTest() {
   const parts = window.location.pathname.split('/').filter(Boolean);
-  const candidateId = parts[1];
-  const jobId = parts[2];
+  const token = parts[1];
 
   const [phase, setPhase] = useState('loading');
-  const [candidate, setCandidate] = useState(null);
-  const [job, setJob] = useState(null);
-  const [sessionId, setSessionId] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
+  const [candidateName, setCandidateName] = useState('');
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState({});
   const [errorMsg, setErrorMsg] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
-  const chatEndRef = useRef(null);
 
   useEffect(() => {
-    async function loadInfo() {
-      if (!candidateId || !jobId) {
-        setErrorMsg('Invalid interview link. Please use the link exactly as shared with you.');
+    async function load() {
+      if (!token) {
+        setErrorMsg('Invalid test link. Please use the link exactly as shared with you.');
         setPhase('error');
         return;
       }
       try {
-        const [{ data: cand, error: candErr }, { data: jobRow, error: jobErr }] = await Promise.all([
-          supabase.from('candidates').select('name').eq('id', candidateId).single(),
-          supabase.from('job_profiles').select('title, company').eq('id', jobId).single(),
-        ]);
-        if (candErr || jobErr) throw candErr || jobErr;
-        setCandidate(cand);
-        setJob(jobRow);
+        const data = await getAptitudeTestByToken(token);
+        setCandidateName(data.candidateName);
+        setQuestions(data.questions);
         setPhase('intro');
       } catch (err) {
-        console.error('Failed to load interview info:', err);
-        setErrorMsg('Could not load your interview details. Please check the link or contact the recruiter.');
+        setErrorMsg(err.message);
         setPhase('error');
-   }
-    }
-    loadInfo();
-  }, [candidateId, jobId]);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  async function startInterview() {
-    setPhase('chatting');
-    setSending(true);
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/ai-interview/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ candidate_id: candidateId, job_id: jobId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Could not start interview');
-      setSessionId(data.sessionId);
-      setMessages([{ role: 'assistant', content: data.question }]);
-    } catch (err) {
-      setErrorMsg(err.message);
-      setPhase('error');
-    } finally {
-      setSending(false);
-    }
-  }
-
-  async function sendAnswer() {
-    if (!input.trim() || sending) return;
-    const answer = input.trim();
-    setInput('');
-    setMessages((prev) => [...prev, { role: 'user', content: answer }]);
-    setSending(true);
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/ai-interview/reply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, answer }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Something went wrong');
-
-      if (data.done) {
-        setResult(data.evaluation);
-        setPhase('done');
-      } else {
-        setMessages((prev) => [...prev, { role: 'assistant', content: data.question }]);
       }
-    } catch (err) {
-      setErrorMsg(err.message);
-      setPhase('error');
-    } finally {
-      setSending(false);
     }
+    load();
+  }, [token]);
+
+  function startTest() {
+    setPhase('test');
   }
 
-  function handleKeyDown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendAnswer();
+  function selectAnswer(qIndex, option) {
+    setAnswers((prev) => ({ ...prev, [qIndex]: option }));
+  }
+
+  async function handleSubmit() {
+    setSubmitting(true);
+    setErrorMsg('');
+    try {
+      const orderedAnswers = questions.map((q, i) => answers[i] || null);
+      const data = await submitAptitudeTest(token, orderedAnswers);
+      setResult(data);
+      setPhase('done');
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -118,14 +69,14 @@ export default function AIInterview() {
     background: 'var(--surface)',
     borderRadius: 'var(--radius-xl)',
     width: '100%',
-    maxWidth: 560,
+    maxWidth: 640,
     border: '1px solid var(--border)',
     boxShadow: 'var(--shadow-lg)',
     overflow: 'hidden',
   };
 
   if (phase === 'loading') {
-    return <div style={pageStyle}><p style={{ color: 'var(--text-muted)' }}>Loading your interview…</p></div>;
+    return <div style={pageStyle}><p style={{ color: 'var(--text-muted)' }}>Loading your test…</p></div>;
   }
 
   if (phase === 'error') {
@@ -145,16 +96,13 @@ export default function AIInterview() {
         <div style={{ ...cardStyle, padding: '40px 36px', textAlign: 'center' }}>
           <div className="brand-mark" style={{ margin: '0 auto 20px' }}>R</div>
           <h2 style={{ fontFamily: "'Fraunces',serif", fontSize: 21, marginBottom: 8, color: 'var(--text-primary)' }}>
-            Hi {candidate?.name?.split(' ')[0]}, ready for your AI interview?
+            Hi {candidateName?.split(' ')[0]}, ready for your aptitude test?
           </h2>
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', marginBottom: 4 }}>
-            for <strong style={{ color: 'var(--text-primary)' }}>{job?.title}</strong> {job?.company ? `at ${job.company}` : ''}
-          </p>
           <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '16px 0 28px', lineHeight: 1.6 }}>
-            This is a short, friendly text-based interview. Our AI will ask you a handful of questions —
-            answer honestly and take your time. It usually takes 5-10 minutes.
+            This test has {questions.length} questions. Take your time and answer honestly.
+            Once you submit, you cannot retake the test.
           </p>
-          <button className="btn-primary" onClick={startInterview}>Start Interview</button>
+          <button className="btn-primary" onClick={startTest}>Start Test</button>
         </div>
       </div>
     );
@@ -166,74 +114,63 @@ export default function AIInterview() {
         <div style={{ ...cardStyle, padding: '40px 36px', textAlign: 'center' }}>
           <div style={{ fontSize: 44, marginBottom: 12 }}>✅</div>
           <h2 style={{ fontFamily: "'Fraunces',serif", fontSize: 20, marginBottom: 8, color: 'var(--text-primary)' }}>
-            Thanks, {candidate?.name?.split(' ')[0]}!
+            Thanks, {candidateName?.split(' ')[0]}!
           </h2>
           <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-            Your interview has been submitted. Our recruitment team will review it and reach out
-            with next steps soon. Good luck!
+            Your test has been submitted. You scored {result?.score} out of {result?.total}.
+            Our recruitment team will review your result and reach out with next steps soon.
           </p>
-          {result?.summary && (
-             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 16, fontStyle: 'italic' }}>
-               {result.summary}
-             </p>
-           )}
         </div>
       </div>
     );
   }
 
+  const answeredCount = Object.keys(answers).length;
+
   return (
     <div style={pageStyle}>
-      <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', height: '80vh', maxHeight: 640 }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div className="brand-mark" style={{ width: 32, height: 32, fontSize: 14 }}>R</div>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--text-primary)' }}>AI Interview</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{job?.title}</div>
-          </div>
+      <div style={{ ...cardStyle, padding: '32px 32px 24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>Aptitude Test</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{answeredCount} / {questions.length} answered</div>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {messages.map((m, idx) => (
-            <div key={idx} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
-              <div style={{
-                maxWidth: '80%',
-                padding: '10px 14px',
-                borderRadius: m.role === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
-                background: m.role === 'user' ? 'var(--primary)' : 'var(--surface-2)',
-                color: m.role === 'user' ? 'white' : 'var(--text-primary)',
-                fontSize: 13.5,
-                lineHeight: 1.5,
-              }}>
-                {m.content}
+        <div style={{ maxHeight: '55vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 18, paddingRight: 6 }}>
+          {questions.map((q, i) => (
+            <div key={i} style={{ padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>
+              <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 10, color: 'var(--text-primary)' }}>
+                {i + 1}. {q.q}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {q.options.map((opt, oi) => (
+                  <label
+                    key={oi}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, fontSize: 13,
+                      padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
+                      background: answers[i] === opt ? 'var(--surface-2)' : 'transparent',
+                      border: '1px solid ' + (answers[i] === opt ? 'var(--primary)' : 'transparent'),
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name={`q-${i}`}
+                      checked={answers[i] === opt}
+                      onChange={() => selectAnswer(i, opt)}
+                    />
+                    {String.fromCharCode(65 + oi)}. {opt}
+                  </label>
+                ))}
               </div>
             </div>
           ))}
-          {sending && (
-            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-              <div style={{ padding: '10px 14px', borderRadius: '14px 14px 14px 2px', background: 'var(--surface-2)', color: 'var(--text-muted)', fontSize: 13 }}>
-                Thinking…
-              </div>
-            </div>
-          )}
-          <div ref={chatEndRef} />
         </div>
 
-        <div style={{ padding: 16, borderTop: '1px solid var(--border)', display: 'flex', gap: 10 }}>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type your answer…"
-            disabled={sending}
-            rows={1}
-            style={{
-              flex: 1, resize: 'none', padding: '10px 14px', border: '1.5px solid var(--border)',
-              borderRadius: 'var(--radius-sm)', fontSize: 13.5, fontFamily: 'inherit', background: 'var(--bg)',
-            }}
-          />
-          <button className="btn-primary" disabled={sending || !input.trim()} onClick={sendAnswer} style={{ width: 'auto', padding: '0 20px' }}>
-            Send
+        {errorMsg && <p style={{ color: 'var(--danger)', fontSize: 12.5, marginTop: 14 }}>{errorMsg}</p>}
+
+        <div style={{ marginTop: 20, textAlign: 'center' }}>
+          <button className="btn-primary" disabled={submitting} onClick={handleSubmit}>
+            {submitting ? 'Submitting…' : 'Submit Test'}
           </button>
         </div>
       </div>

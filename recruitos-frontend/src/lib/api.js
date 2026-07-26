@@ -484,6 +484,35 @@ export async function generateAptitudeTest({ job_id, difficulty, question_count 
   return data;
 }
 
+export async function sendAptitudeInvite({ candidate_id, job_id, questions, difficulty }) {
+  const res = await fetch('http://localhost:5000/api/aptitude/send-invite', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ candidate_id, job_id, questions, difficulty }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to send test invite');
+  return data;
+}
+
+export async function getAptitudeTestByToken(token) {
+  const res = await fetch(`http://localhost:5000/api/aptitude/take/${token}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to load test');
+  return data;
+}
+
+export async function submitAptitudeTest(token, answers) {
+  const res = await fetch(`http://localhost:5000/api/aptitude/submit/${token}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ answers }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to submit test');
+  return data;
+}
+
 export async function generateJD({ prompt, company }) {
   const res = await fetch('http://localhost:5000/api/jd/generate', {
     method: 'POST',

@@ -7,6 +7,8 @@ export default function GDAdmin() {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ topic: '', duration_minutes: 30 });
   const [selectedCandidates, setSelectedCandidates] = useState([]);
+  const [candidateSearch, setCandidateSearch] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
   const [activeSession, setActiveSession] = useState(null);
   const [sessionData, setSessionData] = useState(null);
 
@@ -19,14 +21,14 @@ export default function GDAdmin() {
   };
 
   const fetchCandidates = async () => {
-  const { data, error } = await supabase
-    .from('candidates')
-    .select('id, name, email, colleges(name)');
-  if (error) {
-    console.error('Failed to load candidates:', error);
-  }
-  setCandidates(data || []);
-};
+    const { data, error } = await supabase
+      .from('candidates')
+      .select('id, name, email, colleges(name)');
+    if (error) {
+      console.error('Failed to load candidates:', error);
+    }
+    setCandidates(data || []);
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -35,6 +37,7 @@ export default function GDAdmin() {
     };
     load();
   }, []);
+
   const fetchSessionData = async (sessionId) => {
     const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gd/${sessionId}`);
     const data = await res.json();
@@ -131,30 +134,137 @@ export default function GDAdmin() {
           </div>
         </div>
 
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 16, position: 'relative' }}>
           <div style={{ fontSize: 11.5, color: 'var(--slate-light)', marginBottom: 8 }}>
             Select Candidates ({selectedCandidates.length} selected)
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, maxHeight: 200, overflowY: 'auto' }}>
-            {candidates.map(c => (
-              <div
+
+          {/* Input box with selected candidates shown as chips */}
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 6,
+              alignItems: 'center',
+              width: '100%',
+              minHeight: 40,
+              padding: '6px 8px',
+              border: 'none',
+              borderRadius: 8,
+              background: 'var(--cream)',
+            }}
+          >
+            {selectedCandidates.map(c => (
+              <span
                 key={c.id}
-                onClick={() => toggleCandidate(c)}
                 style={{
-                  padding: '8px 12px',
-                  borderRadius: 7,
-                  border: '1px solid',
-                  borderColor: selectedCandidates.find(x => x.id === c.id) ? 'var(--gold)' : 'var(--line)',
-                  background: selectedCandidates.find(x => x.id === c.id) ? 'var(--gold-soft)' : 'var(--cream)',
-                  cursor: 'pointer',
-                  fontSize: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'var(--gold-soft)',
+                  border: '1px solid var(--gold)',
+                  borderRadius: 6,
+                  padding: '3px 8px',
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  color: 'var(--navy-deep)',
                 }}
               >
-                <div style={{ fontWeight: 600, color: 'var(--navy-deep)' }}>{c.name}</div>
-                <div style={{ color: 'var(--slate-light)', fontSize: 11 }}>{c.colleges?.name || 'No college set'}</div>
-              </div>
+                {c.name}
+                <span
+                  onClick={() => toggleCandidate(c)}
+                  style={{ cursor: 'pointer', color: 'var(--slate-light)', fontWeight: 700 }}
+                >
+                  ✕
+                </span>
+              </span>
             ))}
+            <input
+              style={{
+                flex: 1,
+                minWidth: 120,
+                border: 'none',
+                outline: 'none',
+                fontSize: 12.5,
+                padding: '4px 2px',
+              }}
+              placeholder={selectedCandidates.length ? 'Add more…' : 'Click to select candidates…'}
+              value={candidateSearch}
+              onChange={e => setCandidateSearch(e.target.value)}
+              onFocus={() => setShowDropdown(true)}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+            />
           </div>
+
+          {/* Dropdown suggestions — show on focus or while typing */}
+          {showDropdown && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                zIndex: 20,
+                marginTop: 6,
+                maxHeight: 240,
+                overflowY: 'auto',
+                border: '1px solid var(--line)',
+                borderRadius: 8,
+                background: '#fff',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+              }}
+            >
+              {candidates
+                .filter(c =>
+                  !selectedCandidates.find(x => x.id === c.id) &&
+                  (c.name?.toLowerCase().includes(candidateSearch.toLowerCase()) ||
+                    c.colleges?.name?.toLowerCase().includes(candidateSearch.toLowerCase()))
+                )
+                .slice(0, 20)
+                .map(c => (
+                  <div
+                    key={c.id}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => toggleCandidate(c)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 10,
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid var(--line)',
+                      fontSize: 12,
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--cream)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600, color: 'var(--navy-deep)' }}>{c.name}</div>
+                      <div style={{ color: 'var(--slate-light)', fontSize: 11 }}>
+                        {c.colleges?.name || 'No college set'} · {c.email || 'No email'}
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={false}
+                      onChange={() => toggleCandidate(c)}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ cursor: 'pointer', flexShrink: 0 }}
+                    />
+                  </div>
+                ))}
+              {candidates.filter(c =>
+                !selectedCandidates.find(x => x.id === c.id) &&
+                (c.name?.toLowerCase().includes(candidateSearch.toLowerCase()) ||
+                  c.colleges?.name?.toLowerCase().includes(candidateSearch.toLowerCase()))
+              ).length === 0 && (
+                <div style={{ padding: 12, textAlign: 'center', color: 'var(--slate-light)', fontSize: 12 }}>
+                  No candidates found
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <button className="btn-gold" onClick={handleCreate} disabled={creating}>

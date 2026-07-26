@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getAptitudeResults, addAptitudeResult, getCandidates, getJobs, generateAptitudeTest } from '../lib/api';
+import { getAptitudeResults, addAptitudeResult, getCandidates, getJobs, generateAptitudeTest, sendAptitudeInvite } from '../lib/api';
 
 export default function Aptitude() {
   const [results, setResults] = useState([]);
@@ -20,6 +20,10 @@ export default function Aptitude() {
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState('');
   const [generatedTest, setGeneratedTest] = useState(null);
+  const [sendCandidateId, setSendCandidateId] = useState('');
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const [sendError, setSendError] = useState('');
+  const [sendSuccess, setSendSuccess] = useState('');
 
   async function loadAll() {
     setLoading(true);
@@ -102,6 +106,27 @@ export default function Aptitude() {
     }
   }
 
+  async function handleSendInvite() {
+    if (!sendCandidateId || !generatedTest) return;
+    setSendError('');
+    setSendSuccess('');
+    setSendingInvite(true);
+    try {
+      await sendAptitudeInvite({
+        candidate_id: sendCandidateId,
+        job_id: genJobId || null,
+        questions: generatedTest.questions,
+        difficulty: generatedTest.difficulty,
+      });
+      setSendSuccess('Test link emailed successfully!');
+      setSendCandidateId('');
+    } catch (err) {
+      setSendError(err.message);
+    } finally {
+      setSendingInvite(false);
+    }
+  }
+
   const attempted = results.length;
   const passed = results.filter((r) => r.passed).length;
   const passRate = attempted ? Math.round((passed / attempted) * 100) : 0;
@@ -167,6 +192,23 @@ export default function Aptitude() {
               <div className="panel-title" style={{ fontSize: 14 }}>
                 Preview — {generatedTest.questions.length} questions ({generatedTest.difficulty} level)
               </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+                <select value={sendCandidateId} onChange={(e) => setSendCandidateId(e.target.value)} style={{ minWidth: 200 }}>
+                  <option value="">Select candidate to email…</option>
+                  {candidates.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                <button
+                  className="btn-primary"
+                  type="button"
+                  disabled={!sendCandidateId || sendingInvite}
+                  onClick={handleSendInvite}
+                  style={{ width: 'auto', padding: '0 18px', height: 36 }}
+                >
+                  {sendingInvite ? 'Sending…' : '📧 Send Test to Candidate'}
+                </button>
+              </div>
+              {sendError && <p style={{ color: 'var(--danger)', fontSize: 12.5, marginBottom: 8 }}>{sendError}</p>}
+              {sendSuccess && <p style={{ color: 'var(--success)', fontSize: 12.5, marginBottom: 8 }}>{sendSuccess}</p>}
               <div style={{ maxHeight: 380, overflowY: 'auto', marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {generatedTest.questions.map((q, i) => (
                   <div key={i} style={{ padding: '12px 14px', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)' }}>

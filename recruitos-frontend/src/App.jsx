@@ -20,6 +20,7 @@ import GDRoom from './pages/GDRoom';
 import AIInterview from './pages/AIInterview';
 import Landing from './pages/Landing';
 import ThemeToggle from './components/ThemeToggle';
+import AptitudeTest from './pages/Aptitude';
 
 const pages = {
   dashboard: Dashboard,
@@ -69,6 +70,10 @@ export default function App() {
   if (window.location.pathname.startsWith('/interview/')) {
   return <AIInterview />;
 }
+
+if (window.location.pathname.startsWith('/aptitude-test/')) {
+    return <AptitudeTest />;
+  }
 
   const isAppRoute = window.location.pathname.startsWith('/app');
 
