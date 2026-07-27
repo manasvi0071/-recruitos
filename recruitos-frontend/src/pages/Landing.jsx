@@ -248,7 +248,7 @@ function SplitHero({ scrollY }) {
             style={{
               width: 280, height: 280, objectFit: 'contain', opacity: 1,
               position: 'relative', zIndex: 2,
-              filter: 'drop-shadow(0 30px 70px rgba(124,58,237,0.6))',
+              filter: 'drop-shadow(0 30px 70px rgba(124,58,237,0.6)) brightness(1.25) contrast(1.15) saturate(1.2)',
             }}
           />
         </div>

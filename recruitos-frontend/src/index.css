@@ -1837,16 +1837,7 @@ body, .panel, .stat-card, .jd-card, .sidebar, .topbar, .btn-outline, .search-box
 .logo-3d-spin {
   animation: logoSpin3D 14s linear infinite;
   transform-style: preserve-3d;
-  filter: drop-shadow(0 20px 60px rgba(124,58,237,0.5));
-  opacity: 0.35;
-}
-
-@keyframes logoGlowPulse {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 0.45; }
-}
-.logo-3d-spin {
-  animation: logoSpin3D 14s linear infinite, logoGlowPulse 4s ease-in-out infinite;
+  opacity: 1;
 }
 /* ===== REDESIGN LAYER ===== */
 
