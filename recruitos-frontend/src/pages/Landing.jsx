@@ -33,6 +33,23 @@ const stats = [
   { n: '900+', l: 'Clients Served' },
 ];
 
+const marqueeItems = ['TCS', 'Infosys', 'Wipro', 'HCL', 'Cognizant', 'Tech Mahindra', 'Capgemini', 'Accenture', 'Pharma Leaders', '900+ Clients'];
+
+const features = [
+  { icon: '⚡', title: 'Fast-Track Hiring', desc: 'Streamlined process from application to offer letter — most candidates hear back within days, not weeks.' },
+  { icon: '🎯', title: 'Right-Fit Matching', desc: 'We match skills and ambition to real openings, not just keywords — so the role actually fits your career path.' },
+  { icon: '🤝', title: '900+ Trusted Clients', desc: 'From growing startups to industry leaders, our client network spans every major sector in India.' },
+  { icon: '📈', title: 'Real Growth Paths', desc: 'Every role comes with a visible career ladder — see exactly how you\'ll grow, not just where you\'ll start.' },
+  { icon: '🎓', title: 'Campus to Corporate', desc: 'Dedicated campus recruitment drives connecting fresh graduates directly with hiring companies.' },
+  { icon: '🛡️', title: '20+ Years Trusted', desc: 'Since 2002, we\'ve built our reputation on transparency, speed, and genuinely caring about outcomes.' },
+];
+
+const testimonials = [
+  { quote: 'Talent Corner placed me within three weeks of graduating. The process felt personal, not transactional.', name: 'Recent Graduate', role: 'Software Engineer, Pune' },
+  { quote: 'As a hiring partner, their shortlists are always relevant. It saves us weeks of screening time.', name: 'HR Manager', role: 'Mid-size IT Company' },
+  { quote: 'They didn\'t just find me a job — they helped me understand the actual growth path ahead of me.', name: 'Campus Hire', role: 'Business Development' },
+];
+
 export default function Landing() {
   const [activeDept, setActiveDept] = useState(departments[0]);
   const scrollY = useScrollY();
@@ -45,9 +62,7 @@ export default function Landing() {
       const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
       setScrollPct(pct || 0);
     }
-    function onMouseMove(e) {
-      setCursorPos({ x: e.clientX, y: e.clientY });
-    }
+    function onMouseMove(e) { setCursorPos({ x: e.clientX, y: e.clientY }); }
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('mousemove', onMouseMove);
     return () => {
@@ -64,10 +79,10 @@ export default function Landing() {
       <div style={{ background: 'var(--bg-base)', minHeight: '100vh', overflowX: 'hidden', position: 'relative', zIndex: 2 }}>
         <nav style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '18px 48px', position: 'sticky', top: 0, zIndex: 100,
+          padding: '16px 48px', position: 'sticky', top: 0, zIndex: 100,
         }} className="glass-3d">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src={logoImg} alt="Talent Corner" style={{ width: 38, height: 38, objectFit: 'contain' }} />
+            <img src={logoImg} alt="Talent Corner" style={{ width: 36, height: 36, objectFit: 'contain' }} />
             <div>
               <div className="brand-name">Talent Corner</div>
               <div className="brand-sub">HR Services</div>
@@ -75,6 +90,7 @@ export default function Landing() {
           </div>
           <div style={{ display: 'flex', gap: 28, fontSize: 13.5, fontWeight: 600, color: 'var(--text-secondary)', alignItems: 'center' }}>
             <a href="#about">About</a>
+            <a href="#features">Why Us</a>
             <a href="#growth">Career Growth</a>
             <a href="#contact">Contact</a>
             <a href="/app" style={{ color: 'var(--text-secondary)' }}>Team Login</a>
@@ -85,22 +101,24 @@ export default function Landing() {
           </div>
         </nav>
 
-        <ScrollHero scrollY={scrollY} />
-        <ScrollStats />
+        <SplitHero scrollY={scrollY} />
+        <MarqueeStrip />
+        <BentoStats />
         <ScrollAbout />
+        <FeatureShowcase />
 
-        <section id="growth" style={{ padding: '40px 48px 100px', maxWidth: 1100, margin: '0 auto' }}>
+        <section id="growth" style={{ padding: '60px 48px 100px', maxWidth: 900, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <span className="pill">Career Progression</span>
-            <h2 style={{ fontSize: 30, margin: '14px 0 10px' }}>
+            <span className="pill section-eyebrow">Career Progression</span>
+            <h2 style={{ fontSize: 32, margin: '14px 0 10px' }}>
               See <span className="gradient-text">How You'll Grow</span> With Us
             </h2>
             <p style={{ fontSize: 13.5, color: 'var(--text-muted)' }}>
-              Select a department to see the exact path from entry level to leadership.
+              Select a department, then scroll through their real climb — entry level to leadership.
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 44 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 56 }}>
             {departments.map((d) => (
               <span
                 key={d.name}
@@ -113,44 +131,34 @@ export default function Landing() {
             ))}
           </div>
 
-          <ScrollJourney activeDept={activeDept} levels={levels} />
+          <TimelineJourney activeDept={activeDept} levels={levels} />
+        </section>
 
-          <div className="panel glass-3d" style={{ marginTop: 40 }}>
-            <div className="panel-title" style={{ marginBottom: 16 }}>Typical Growth Journey</div>
-            <div className="email-flow">
-              <span className="email-step growth-float" style={{ animationDelay: '0s' }}>🌱 Join as Intern / Executive</span>
-              <span className="email-sep">➜</span>
-              <span className="email-step growth-float" style={{ animationDelay: '0.3s' }}>📖 Learn & Understand Processes</span>
-              <span className="email-sep">➜</span>
-              <span className="email-step growth-float" style={{ animationDelay: '0.6s' }}>🎯 Meet Targets & Improve Skills</span>
-              <span className="email-sep">➜</span>
-              <span className="email-step growth-float" style={{ animationDelay: '0.9s' }}>📈 Get Promoted to Senior Role</span>
-              <span className="email-sep">➜</span>
-              <span className="email-step growth-float" style={{ animationDelay: '1.2s' }}>👥 Lead a Team & Handle Key Clients</span>
-              <span className="email-sep">➜</span>
-              <span className="email-step growth-float" style={{ animationDelay: '1.5s' }}>👑 Move to Managerial & Leadership Role</span>
+        <TestimonialStrip />
+
+        <section id="contact" style={{
+          background: 'var(--gradient-brand-2)', color: 'white', padding: '90px 48px',
+          textAlign: 'center', position: 'relative', overflow: 'hidden',
+        }}>
+          <div className="floating-orb orb-1" style={{ width: 340, height: 340, background: 'rgba(255,255,255,0.15)', top: -120, left: -70 }} />
+          <div className="floating-orb orb-2" style={{ width: 240, height: 240, background: 'rgba(255,255,255,0.1)', bottom: -100, right: -60 }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <h2 style={{ fontSize: 32, marginBottom: 14, color: 'white' }}>Ready to Build Your Career With Us?</h2>
+            <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.85)', marginBottom: 32, maxWidth: 480, margin: '0 auto 32px' }}>
+              Whether you're a candidate looking for growth or a company looking for talent — let's talk.
+            </p>
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <MagneticButton className="btn-outline" style={{ background: 'white', color: 'var(--brand-purple)', border: 'none', padding: '14px 32px', fontSize: 14.5, fontWeight: 700 }}>
+                Get In Touch
+              </MagneticButton>
+              <MagneticButton className="btn-outline" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '14px 32px', fontSize: 14.5 }}>
+                Explore Open Roles
+              </MagneticButton>
             </div>
           </div>
         </section>
 
-        <section id="contact" style={{
-          background: 'var(--gradient-brand-2)', color: 'white', padding: '70px 48px',
-          textAlign: 'center', position: 'relative', overflow: 'hidden',
-        }}>
-          <div className="floating-orb orb-1" style={{ width: 300, height: 300, background: 'rgba(255,255,255,0.15)', top: -100, left: -50 }} />
-          <div className="floating-orb orb-2" style={{ width: 200, height: 200, background: 'rgba(255,255,255,0.1)', bottom: -80, right: -40 }} />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <h2 style={{ fontSize: 28, marginBottom: 12, color: 'white' }}>Ready to Build Your Career With Us?</h2>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)', marginBottom: 28 }}>
-              Whether you're a candidate looking for growth or a company looking for talent — let's talk.
-            </p>
-            <MagneticButton className="btn-outline" style={{ background: 'white', color: 'var(--brand-purple)', border: 'none', padding: '13px 30px', fontSize: 14 }}>
-              Get In Touch
-            </MagneticButton>
-          </div>
-        </section>
-
-        <footer style={{ padding: 24, textAlign: 'center', fontSize: 11.5, color: 'var(--text-muted)' }}>
+        <footer style={{ padding: 28, textAlign: 'center', fontSize: 11.5, color: 'var(--text-muted)' }}>
           © {new Date().getFullYear()} Talent Corner HR Services. All rights reserved.
         </footer>
       </div>
@@ -163,22 +171,13 @@ function RevealWords({ text, delay, gradient }) {
   return (
     <>
       {words.map((word, i) => (
-        <span
-          key={i}
-          className="letter-reveal"
-          style={{
-            animationDelay: `${delay + i * 0.08}s`,
-            marginRight: '0.28em',
-            ...(gradient
-              ? {
-                  background: 'var(--gradient-brand-2)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }
-              : {}),
-          }}
-        >
+        <span key={i} className="letter-reveal" style={{
+          animationDelay: `${delay + i * 0.08}s`, marginRight: '0.28em',
+          ...(gradient ? {
+            background: 'var(--gradient-brand-2)', WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          } : {}),
+        }}>
           {word}
         </span>
       ))}
@@ -186,264 +185,277 @@ function RevealWords({ text, delay, gradient }) {
   );
 }
 
-function ScrollHero({ scrollY }) {
+function SplitHero({ scrollY }) {
   const fade = Math.max(0, 1 - scrollY / 500);
-  const rise = Math.min(scrollY * 0.4, 150);
-  const scale = Math.max(0.85, 1 - scrollY / 2000);
+  const scale = Math.max(0.9, 1 - scrollY / 2500);
 
   return (
-    <section
-      className="scroll-3d-scene animated-mesh-bg"
-      style={{
-        background: 'var(--gradient-hero)', color: 'white', padding: '110px 48px 90px',
-        position: 'relative', overflow: 'hidden', textAlign: 'center', minHeight: '90vh',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}
-    >
-     <div className="logo-3d-stage">
-        <img
-          src={logoImg}
-          alt=""
-          className="logo-3d-spin"
-          style={{ width: 340, height: 340, objectFit: 'contain' }}
-        />
-      </div>
-
-      <div className="floating-orb orb-1" style={{
-        width: 500, height: 500, background: 'rgba(124,58,237,0.35)', top: -150, right: -100,
-        transform: `translate3d(0, ${scrollY * 0.15}px, 0)`,
-      }} />
-      <div className="floating-orb orb-2" style={{
-        width: 350, height: 350, background: 'rgba(6,182,212,0.25)', bottom: 20, left: -80,
-        transform: `translate3d(0, ${-scrollY * 0.1}px, 0)`,
-      }} />
-      <div className="floating-orb orb-3" style={{
-        width: 220, height: 220, background: 'rgba(236,72,153,0.2)', top: '40%', left: '15%',
-        transform: `translate3d(0, ${scrollY * 0.2}px, 0)`,
-      }} />
-
-      <div
-        className="scroll-3d-layer"
-        style={{
-          position: 'relative', zIndex: 1, maxWidth: 800, margin: '0 auto',
-          transform: `translateY(${rise}px) translateZ(0) scale(${scale})`,
-          opacity: fade,
-        }}
-      >
-        <span className="pill badge-3d" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>
-          India's Leading HR Management Company
-        </span>
-        <h1 style={{
-          fontFamily: 'var(--font-display)', fontSize: 50, fontWeight: 700,
-          margin: '22px 0 16px', lineHeight: 1.15, color: 'white',
-          }}>
-          <RevealWords text="Connecting the" delay={0} />{' '}
-          <em style={{ fontStyle: 'italic' }}>
-          <RevealWords text="Right Talent" delay={0.3} gradient />
-          </em>{' '}
-          <RevealWords text="with the Right Opportunity" delay={0.6} />
-          </h1>
-        <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.7, marginBottom: 34 }}>
-          Since 2002, Talent Corner has grown from a team of three into one of India's leading
-          HR Management companies — serving 900+ clients across 15 locations nationwide.
-        </p>
-        <div style={{ display: 'flex', gap: 14, justifyContent: 'center' }}>
-          <MagneticButton className="btn-gold" style={{ padding: '14px 30px', fontSize: 14.5, boxShadow: '0 12px 32px rgba(124,58,237,0.5)' }}>
-            Explore Careers
-          </MagneticButton>
-          <MagneticButton className="btn-outline" style={{ padding: '14px 30px', fontSize: 14.5, background: 'rgba(255,255,255,0.06)', color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}>
-            Partner With Us
-          </MagneticButton>
-        </div>
-      </div>
+    <section className="animated-mesh-bg" style={{
+      background: 'var(--gradient-hero)', color: 'white', minHeight: '92vh',
+      display: 'flex', alignItems: 'center', position: 'relative', overflow: 'hidden',
+      padding: '90px 48px',
+    }}>
+      <div className="floating-orb orb-1" style={{ width: 460, height: 460, background: 'rgba(124,58,237,0.3)', top: -140, left: -100, transform: `translate3d(0, ${scrollY * 0.12}px, 0)` }} />
+      <div className="floating-orb orb-3" style={{ width: 200, height: 200, background: 'rgba(236,72,153,0.2)', bottom: 40, left: '35%', transform: `translate3d(0, ${scrollY * 0.18}px, 0)` }} />
 
       <div style={{
-        position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-        fontSize: 22, opacity: fade, animation: 'floatBob 2s ease-in-out infinite',
+        display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 40, alignItems: 'center',
+        maxWidth: 1200, margin: '0 auto', width: '100%', position: 'relative', zIndex: 1,
+        opacity: fade, transform: `scale(${scale})`,
       }}>
-        ↓
-      </div>
-    </section>
-  );
-}
+        <div>
+          <span className="pill badge-3d" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>
+            India's Leading HR Management Company
+          </span>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 52, fontWeight: 700, margin: '22px 0 18px', lineHeight: 1.1, color: 'white', textAlign: 'left' }}>
+            <RevealWords text="Connecting the" delay={0} />{' '}
+            <em style={{ fontStyle: 'italic' }}><RevealWords text="Right Talent" delay={0.3} gradient /></em>{' '}
+            <RevealWords text="with the Right Opportunity" delay={0.6} />
+          </h1>
+          <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.7, marginBottom: 32, textAlign: 'left', maxWidth: 460 }}>
+            Since 2002, Talent Corner has grown from a team of three into one of India's leading
+            HR Management companies — serving 900+ clients across 15 locations nationwide.
+          </p>
+          <div style={{ display: 'flex', gap: 14 }}>
+            <MagneticButton className="btn-gold" style={{ padding: '14px 30px', fontSize: 14.5, boxShadow: '0 12px 32px rgba(124,58,237,0.5)' }}>
+              Explore Careers
+            </MagneticButton>
+            <MagneticButton className="btn-outline" style={{ padding: '14px 30px', fontSize: 14.5, background: 'rgba(255,255,255,0.06)', color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}>
+              Partner With Us
+            </MagneticButton>
+          </div>
+        </div>
 
-function ScrollStats() {
-  return (
-    <section className="scroll-3d-scene" style={{ padding: '60px 48px 0', position: 'relative', zIndex: 2 }}>
-      <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-        <div className="stat-row" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
-          {stats.map((s, i) => <DepthStatCard key={s.l} stat={s} index={i} />)}
+        <div style={{ position: 'relative', height: 560, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', width: 460, height: 460, borderRadius: '50%', border: '1px dashed rgba(255,255,255,0.12)' }} />
+          <div style={{ position: 'absolute', width: 340, height: 340, borderRadius: '50%', border: '1px dashed rgba(255,255,255,0.1)' }} />
+          <div style={{
+            position: 'absolute', width: 300, height: 300, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(124,58,237,0.35), transparent 70%)',
+            filter: 'blur(10px)',
+          }} />
+          <div style={{
+            position: 'absolute', width: 260, height: 260, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.04)',
+            backdropFilter: 'blur(2px)',
+            border: '1px solid rgba(255,255,255,0.12)',
+          }} />
+
+          <img
+            src={logoImg}
+            alt="Talent Corner"
+            className="logo-3d-spin"
+            style={{
+              width: 280, height: 280, objectFit: 'contain', opacity: 1,
+              position: 'relative', zIndex: 2,
+              filter: 'drop-shadow(0 30px 70px rgba(124,58,237,0.6))',
+            }}
+          />
         </div>
       </div>
+
+      <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', fontSize: 22, opacity: fade, animation: 'floatBob 2s ease-in-out infinite' }}>↓</div>
     </section>
   );
 }
 
-function DepthStatCard({ stat, index }) {
-  const [ref, progress] = useScrollProgress();
-  const clamped = Math.min(1, Math.max(0, (progress - index * 0.05) * 2.5));
-  const translateZ = (1 - clamped) * -300;
-  const rotateX = (1 - clamped) * 40;
-  const opacity = clamped;
-  const [hoverStyle, setHoverStyle] = useState({});
+function MarqueeStrip() {
+  const doubled = [...marqueeItems, ...marqueeItems];
+  return (
+    <div style={{ padding: '28px 0', borderBottom: '1px solid var(--border-default)', borderTop: '1px solid var(--border-default)' }}>
+      <div className="marquee-wrap">
+        <div className="marquee-track">
+          {doubled.map((item, i) => (
+            <span key={i} style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
+              {item} <span style={{ color: 'var(--brand-purple)', margin: '0 4px' }}>✦</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  function handleMove(e) {
-    const rect = ref.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setHoverStyle({ transform: `rotateY(${x * 14}deg) rotateX(${-y * 14}deg) translateZ(20px) scale(1.03)` });
-  }
+function BentoStats() {
+  const [ref, progress] = useScrollProgress();
+  const clamped = Math.min(1, Math.max(0, progress * 2));
 
   return (
-    <div
-      ref={ref}
-      className="stat-card tilt-card"
-      style={{
-        textAlign: 'center',
-        transform: hoverStyle.transform || `translateZ(${translateZ}px) rotateX(${rotateX}deg)`,
-        opacity,
-        transition: 'opacity 0.3s ease',
-        boxShadow: hoverStyle.transform ? '0 20px 40px -10px rgba(124,58,237,0.4)' : undefined,
-      }}
-      onMouseMove={handleMove}
-      onMouseLeave={() => setHoverStyle({})}
-    >
-      <div className="num"><AnimatedCounter value={stat.n} /></div>
-      <div className="lbl">{stat.l}</div>
-    </div>
+    <section ref={ref} style={{ padding: '70px 48px', maxWidth: 1000, margin: '0 auto' }}>
+      <div className="bento-grid" style={{ opacity: clamped, transform: `translateY(${(1 - clamped) * 30}px)`, transition: 'opacity 0.4s ease, transform 0.4s ease' }}>
+        <div className="panel glass-3d bento-lg tilt-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 32 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Since</div>
+          <div style={{ fontSize: 64, fontFamily: 'var(--font-display)', fontWeight: 700 }} className="shimmer-text">
+            <AnimatedCounter value={stats[0].n} />
+          </div>
+          <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.6 }}>
+            Two decades of building trust between candidates and companies across India.
+          </p>
+        </div>
+        {stats.slice(1).map((s) => (
+          <div key={s.l} className="panel bento-sm tilt-card" style={{ textAlign: 'center', padding: '26px 20px' }}>
+            <div className="num" style={{ fontSize: 30 }}><AnimatedCounter value={s.n} /></div>
+            <div className="lbl">{s.l}</div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
 function ScrollAbout() {
   const [ref, progress] = useScrollProgress();
   const clamped = Math.min(1, Math.max(0, (progress - 0.1) * 2));
-  const translateY = (1 - clamped) * 60;
-  const rotateX = (1 - clamped) * 15;
 
   return (
-    <section id="about" className="scroll-3d-scene" style={{ padding: '110px 48px 60px', maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
-      <div
-        ref={ref}
-        className="scroll-3d-layer"
-        style={{
-          transform: `translateY(${translateY}px) rotateX(${rotateX}deg)`,
-          opacity: clamped,
-          transition: 'opacity 0.3s ease',
-        }}
-      >
-        <span className="pill">Who We Are</span>
+    <section id="about" style={{ padding: '60px 48px 40px', maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
+      <div ref={ref} style={{
+        transform: `translateY(${(1 - clamped) * 50}px)`, opacity: clamped, transition: 'opacity 0.3s ease',
+      }}>
+        <span className="pill section-eyebrow">Who We Are</span>
         <h2 style={{ fontSize: 32, margin: '18px 0' }} className="shimmer-text">Two Decades of Connecting Talent</h2>
         <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.8 }}>
           We are a professional human resources organization providing innovative recruitment
-          solutions to the corporate world. As India's recruitment industry grows at record pace,
-          the need for skilled manpower becomes crucial — our mission is to match the right person
-          to the right job with the highest level of service. Our continuous endeavour is to make
-          the recruitment process easier, faster, and more transparent, reducing the gap between
-          candidate and client.
+          solutions to the corporate world. Our mission is to match the right person to the right
+          job with the highest level of service — making recruitment easier, faster, and more
+          transparent for every candidate and client we work with.
         </p>
       </div>
     </section>
   );
 }
 
-function ScrollJourney({ activeDept, levels }) {
-  const [ref, progress] = useScrollProgress();
-
+function FeatureShowcase() {
   return (
-    <div ref={ref} className="scroll-3d-scene" style={{ position: 'relative', padding: '20px 0 40px' }}>
-      <div style={{
-        position: 'absolute', top: 44, left: '10%', right: '10%', height: 3,
-        background: 'var(--border-default)', borderRadius: 4, zIndex: 0,
-      }}>
-        <div style={{
-          height: '100%', borderRadius: 4,
-          background: 'var(--gradient-brand-2)',
-          width: `${Math.min(1, Math.max(0, (progress - 0.15) * 2.2)) * 100}%`,
-          transition: 'width 0.2s ease',
-          boxShadow: '0 0 16px rgba(124,58,237,0.6)',
-        }} />
+    <section id="features" style={{ padding: '40px 48px 90px', maxWidth: 1200, margin: '0 auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: 44 }}>
+        <span className="pill section-eyebrow">Why Talent Corner</span>
+        <h2 style={{ fontSize: 32, margin: '14px 0 10px' }}>
+          Built for <span className="gradient-text">Real Outcomes</span>
+        </h2>
+        <p style={{ fontSize: 13.5, color: 'var(--text-muted)' }}>
+          Not just another recruitment agency — a partner invested in where you actually end up.
+        </p>
       </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8, position: 'relative', zIndex: 1 }}>
-        {levels.map((lvl, i) => {
-          const stepThreshold = 0.15 + i * 0.1;
-          const stepProgress = Math.min(1, Math.max(0, (progress - stepThreshold) * 4));
-          const isActive = stepProgress > 0.5;
-          return (
-            <ScrollLevelCard
-              key={lvl.n}
-              lvl={lvl}
-              stepProgress={stepProgress}
-              isActive={isActive}
-              roleText={activeDept.path[i]}
-            />
-          );
-        })}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18 }}>
+        {features.map((f, i) => <FeatureCard key={f.title} feature={f} index={i} />)}
       </div>
-    </div>
+    </section>
   );
 }
 
-function ScrollLevelCard({ lvl, stepProgress, isActive, roleText }) {
-  const ref = useRef(null);
-  const [hoverStyle, setHoverStyle] = useState({});
-
-  function handleMove(e) {
-    if (!isActive) return;
-    const rect = ref.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setHoverStyle({ transform: `rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateZ(8px)` });
-  }
-
-  const translateZ = (1 - stepProgress) * -200;
-  const translateY = (1 - stepProgress) * 40;
-  const rotateX = (1 - stepProgress) * 30;
+function FeatureCard({ feature, index }) {
+  const [ref, progress] = useScrollProgress();
+  const clamped = Math.min(1, Math.max(0, (progress - index * 0.04) * 2.5));
 
   return (
     <div
       ref={ref}
-      className="tilt-card"
+      className="feature-card"
       style={{
-        textAlign: 'center',
-        opacity: stepProgress,
-        transform: hoverStyle.transform || `translateZ(${translateZ}px) translateY(${translateY}px) rotateX(${rotateX}deg)`,
-        transition: 'opacity 0.2s ease',
+        opacity: clamped,
+        transform: `translateY(${(1 - clamped) * 24}px)`,
+        transition: 'opacity 0.4s ease, transform 0.4s ease',
       }}
-      onMouseMove={handleMove}
-      onMouseLeave={() => setHoverStyle({})}
     >
+      <div className="feature-icon">{feature.icon}</div>
+      <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8, color: 'var(--text-primary)' }}>{feature.title}</div>
+      <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{feature.desc}</p>
+    </div>
+  );
+}
+
+function TestimonialStrip() {
+  const [ref, progress] = useScrollProgress();
+  const clamped = Math.min(1, Math.max(0, (progress - 0.1) * 2));
+
+  return (
+    <section style={{ padding: '20px 48px 90px', maxWidth: 1100, margin: '0 auto' }}>
+      <div ref={ref} style={{ textAlign: 'center', marginBottom: 36, opacity: clamped, transition: 'opacity 0.4s ease' }}>
+        <span className="pill section-eyebrow">Trusted By People Like You</span>
+        <h2 style={{ fontSize: 28, margin: '14px 0 0' }}>What People Are Saying</h2>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18 }}>
+        {testimonials.map((t, i) => (
+          <div
+            key={i}
+            className="testimonial-card"
+            style={{ opacity: clamped, transform: `translateY(${(1 - clamped) * 20}px)`, transition: `opacity 0.4s ease ${i * 0.1}s, transform 0.4s ease ${i * 0.1}s` }}
+          >
+            <div style={{ fontSize: 24, color: 'var(--brand-purple)', marginBottom: 10, lineHeight: 1 }}>"</div>
+            <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16, fontStyle: 'italic' }}>{t.quote}</p>
+            <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>{t.name}</div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{t.role}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TimelineJourney({ activeDept, levels }) {
+  return (
+    <div className="timeline-rail">
+      <div className="timeline-spine" />
+      {levels.map((lvl, i) => (
+        <TimelineStep key={lvl.n} lvl={lvl} left={i % 2 === 0} roleText={activeDept.path[i]} />
+      ))}
+    </div>
+  );
+}
+
+function TimelineStep({ lvl, left, roleText }) {
+  const ref = useRef(null);
+  const [isActive, setIsActive] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsActive(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3, rootMargin: '0px 0px -10% 0px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const content = (
+    <div
+      className={isActive ? 'panel glass-3d tilt-card' : 'panel'}
+      style={{
+        padding: '16px 20px',
+        opacity: isActive ? 1 : 0,
+        transform: isActive ? 'translateX(0)' : `translateX(${left ? -40 : 40}px)`,
+        transition: 'opacity 0.5s ease, transform 0.5s ease',
+      }}
+    >
+      <div style={{ fontWeight: 700, fontSize: 14, color: isActive ? 'var(--text-primary)' : 'var(--text-muted)' }}>{roleText}</div>
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>{lvl.label} · {lvl.sub}</div>
+    </div>
+  );
+
+  return (
+    <div ref={ref} className="timeline-row">
+      {left ? content : <div />}
       <div
-        className={isActive ? 'growth-dot-active' : ''}
+        className={`timeline-node ${isActive ? 'growth-dot-active' : ''}`}
         style={{
-          width: 46, height: 46, borderRadius: '50%', margin: '0 auto 14px',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontWeight: 800, fontSize: 15,
           background: isActive ? 'var(--gradient-brand-2)' : 'var(--bg-surface)',
           color: isActive ? 'white' : 'var(--text-muted)',
           border: isActive ? 'none' : '2px solid var(--border-default)',
-          transition: 'all 0.3s ease',
           boxShadow: isActive ? '0 10px 28px rgba(124,58,237,0.45)' : 'none',
+          transform: isActive ? 'scale(1)' : 'scale(0.75)',
+          transition: 'all 0.4s ease',
         }}
       >
         {lvl.n}
       </div>
-      <div style={{ fontWeight: 700, fontSize: 13, color: isActive ? 'var(--text-primary)' : 'var(--text-muted)', transition: 'color 0.3s ease' }}>
-        {lvl.label}
-      </div>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{lvl.sub}</div>
-
-      <div
-        className={isActive ? 'glass-3d' : ''}
-        style={{
-          marginTop: 14, padding: '10px 8px', borderRadius: 'var(--radius-md)',
-          fontSize: 12, fontWeight: 600, color: 'var(--text-primary)',
-          minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 0.3s ease',
-        }}
-      >
-        {roleText}
-      </div>
+      {!left ? content : <div />}
     </div>
   );
 }
