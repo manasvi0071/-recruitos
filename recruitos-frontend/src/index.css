@@ -1978,3 +1978,71 @@ body, .panel, .stat-card, .jd-card, .sidebar, .topbar, .btn-outline, .search-box
   background: var(--brand-purple);
   display: inline-block;
 }
+/* ===== EDITORIAL POLISH LAYER ===== */
+
+.chapter-num {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 700;
+  color: var(--brand-purple);
+  opacity: 0.35;
+  display: block;
+  line-height: 1;
+}
+
+.eyebrow {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--brand-purple);
+  text-transform: uppercase;
+}
+
+@keyframes maskReveal {
+  from { transform: translateY(110%); }
+  to { transform: translateY(0%); }
+}
+.mask-line-outer {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+}
+.mask-line-inner {
+  display: block;
+  animation: maskReveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.orbit-ring-dotted {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed var(--glass-border);
+}
+
+@keyframes dotOrbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.dot-orbit-spin {
+  position: absolute;
+  inset: 0;
+  animation: dotOrbit linear infinite;
+}
+.orbit-dot {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 14px currentColor;
+}
+
+.feature-num {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 26px;
+  color: var(--brand-gold, var(--accent-orange));
+  margin-bottom: 12px;
+}
+
+@media (max-width: 900px) {
+  .split-hero-grid { grid-template-columns: 1fr !important; }
+  .about-grid-editorial { grid-template-columns: 1fr !important; }
+}
