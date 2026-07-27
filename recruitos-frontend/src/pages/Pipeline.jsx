@@ -168,7 +168,7 @@ export default function Pipeline() {
       </div>
  
       {loading && <div className="panel"><p style={{ color: 'var(--text-muted)' }}>Loading…</p></div>}
-      {error && <div className="panel"><p style={{ color: 'var(--red)' }}>{error}</p></div>}
+      {error && <div className="panel"><p style={{ color: 'var(--danger)' }}>{error}</p></div>}
  
       {!loading && !error && (
         <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 12 }}>
@@ -189,7 +189,7 @@ export default function Pipeline() {
                 {/* Column header */}
                 <div style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '10px 14px', borderRadius: 'var(--radius) var(--radius) 0 0',
+                  padding: '10px 14px', borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
                   background: STAGE_ACCENT[stage], color: 'white', fontSize: 12.5, fontWeight: 700,
                   letterSpacing: '0.02em',
                 }}>
@@ -201,10 +201,10 @@ export default function Pipeline() {
  
                 {/* Column body — drop target */}
                 <div style={{
-                  background: isDragOver ? 'var(--primary-soft)' : 'var(--surface-2)',
-                  border: isDragOver ? '2px dashed var(--primary)' : '1px solid var(--border)',
+                  background: isDragOver ? 'var(--gradient-brand-soft)' : 'var(--bg-surface-2)',
+                  border: isDragOver ? '2px dashed var(--brand-purple)' : '1px solid var(--border-default)',
                   borderTop: 'none',
-                  borderRadius: '0 0 var(--radius) var(--radius)',
+                  borderRadius: '0 0 var(--radius-md) var(--radius-md)',
                   minHeight: 220,
                   padding: 10,
                   display: 'flex',
@@ -213,7 +213,7 @@ export default function Pipeline() {
                   transition: 'background 0.15s, border-color 0.15s',
                 }}>
                   {groups.length === 0 && (
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '28px 0', border: '1.5px dashed var(--border)', borderRadius: 10 }}>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '28px 0', border: '1.5px dashed var(--border-default)', borderRadius: 10 }}>
                       {isDragOver ? 'Drop here' : 'No candidates'}
                     </div>
                   )}
@@ -226,8 +226,8 @@ export default function Pipeline() {
  
                     return (
                       <div key={g.key} style={{
-                        background: 'var(--surface)',
-                        border: '1px solid var(--border)',
+                        background: 'var(--bg-surface)',
+                        border: '1px solid var(--border-default)',
                         borderRadius: 'var(--radius-sm)',
                         boxShadow: 'var(--shadow-sm)',
                         overflow: 'hidden',
@@ -293,7 +293,7 @@ export default function Pipeline() {
                             )}
  
                             {isOpen && (
-                              <div style={{ borderTop: '1px solid var(--border)', background: 'var(--surface-2)', padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              <div style={{ borderTop: '1px solid var(--border-default)', background: 'var(--bg-surface-2)', padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 {g.applications.map((app) => (
                                   <div
                                     key={app.id}
@@ -301,7 +301,7 @@ export default function Pipeline() {
                                     onDragStart={(e) => handleDragStart(e, app)}
                                     onDragEnd={handleDragEnd}
                                     style={{
-                                      background: 'white', border: '1px solid var(--border)', borderRadius: 8, padding: 10,
+                                      background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 8, padding: 10,
                                       cursor: 'grab', opacity: draggedId === app.id ? 0.4 : movingId === app.id ? 0.6 : 1,
                                     }}
                                   >
@@ -355,14 +355,14 @@ function CardActions({ app, stage, next, movingId, moveCard, compact }) {
         </button>
       )}
       {stage === 'Interview' && (
-        <button disabled={isMoving} onClick={() => moveCard(app, 'Selected')} className="btn-gold" style={{ flex: 1, ...size, background: 'var(--green)', boxShadow: 'none' }}>
+        <button disabled={isMoving} onClick={() => moveCard(app, 'Selected')} className="btn-gold" style={{ flex: 1, ...size, background: 'var(--success)', boxShadow: 'none' }}>
           ✓ Select
         </button>
       )}
       <button
         disabled={isMoving}
         onClick={() => moveCard(app, 'Rejected')}
-        style={{ ...size, borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--red)', background: 'white', color: 'var(--red)', cursor: 'pointer', fontWeight: 600 }}
+        style={{ ...size, borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--danger)', background: 'var(--bg-surface)', color: 'var(--danger)', cursor: 'pointer', fontWeight: 600 }}
       >
         ✕
       </button>

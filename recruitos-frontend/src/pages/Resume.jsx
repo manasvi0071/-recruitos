@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { updateApplicationScore } from '../lib/api';
 import { supabase } from '../lib/supabaseClient';
@@ -139,7 +138,7 @@ export default function Resume() {
       </div>
 
       {error && (
-        <div style={{ background: 'var(--red-soft)', border: '1px solid var(--red)', borderRadius: 8, padding: '12px 16px', marginBottom: 16, color: '#DC2626', fontSize: 13 }}>
+        <div style={{ background: 'var(--danger-soft)', border: '1px solid var(--danger-border)', borderRadius: 8, padding: '12px 16px', marginBottom: 16, color: 'var(--danger)', fontSize: 13 }}>
           Error: {error}
         </div>
       )}
@@ -159,7 +158,7 @@ export default function Resume() {
         <div className="panel" style={{ textAlign: 'center', padding: 60 }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
           <div style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 12 }}>No resumes yet.</div>
-          <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 20px', display: 'inline-block', fontSize: 13, color: 'var(--text-primary)', fontWeight: 600 }}>
+          <div style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border-default)', borderRadius: 8, padding: '10px 20px', display: 'inline-block', fontSize: 13, color: 'var(--text-primary)', fontWeight: 600 }}>
             Share this link → {window.location.origin}/apply
           </div>
         </div>
@@ -202,7 +201,7 @@ export default function Resume() {
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-                    <div className={`score-ring ${hasAnyScore ? ringClass(bestScore) : ''}`} style={{ width: 46, height: 46, fontSize: 13, ...( !hasAnyScore && { background: 'var(--surface-2)', color: 'var(--text-muted)', border: '2px solid var(--border)' }) }}>
+                    <div className={`score-ring ${hasAnyScore ? ringClass(bestScore) : ''}`} style={{ width: 46, height: 46, fontSize: 13, ...( !hasAnyScore && { background: 'var(--bg-surface-2)', color: 'var(--text-muted)', border: '2px solid var(--border-default)' }) }}>
                       {hasAnyScore ? bestScore : '—'}
                     </div>
                     {candidate?.resume_url && (
@@ -222,7 +221,7 @@ export default function Resume() {
 
                 {/* Per-job applications */}
                 {isCandidateOpen && (
-                  <div style={{ borderTop: '1px solid var(--border)', background: 'var(--surface-2)', padding: '4px 22px 8px' }}>
+                  <div style={{ borderTop: '1px solid var(--border-default)', background: 'var(--bg-surface-2)', padding: '4px 22px 8px' }}>
                     {apps.map((r) => {
                       const { score, isAI } = getScore(r);
                       const hasScore = score != null;
@@ -232,8 +231,8 @@ export default function Resume() {
                       const isExpanded = expandedId === r.id;
 
                       return (
-                        <div key={r.id} className="resume-row" style={{ borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
-                          <div className={`score-ring ${hasScore ? ringClass(score) : ''}`} style={{ width: 44, height: 44, fontSize: 13, ...(!hasScore && { background: 'white', color: 'var(--text-muted)', border: '2px solid var(--border)' }) }}>
+                        <div key={r.id} className="resume-row" style={{ borderBottom: '1px solid var(--border-default)', flexWrap: 'wrap' }}>
+                          <div className={`score-ring ${hasScore ? ringClass(score) : ''}`} style={{ width: 44, height: 44, fontSize: 13, ...(!hasScore && { background: 'var(--bg-surface)', color: 'var(--text-muted)', border: '2px solid var(--border-default)' }) }}>
                             {hasScore ? score : r.ai_status === 'Pending' ? '···' : '—'}
                           </div>
 
@@ -247,7 +246,7 @@ export default function Resume() {
                             </div>
                             {hasScore && (
                               <div className="progress-bar" style={{ maxWidth: 240 }}>
-                                <div style={{ width: `${score}%`, background: score >= 85 ? 'var(--green)' : score >= 70 ? 'var(--gold)' : 'var(--red)' }} />
+                                <div style={{ width: `${score}%`, background: score >= 85 ? 'var(--success)' : score >= 70 ? 'var(--warning)' : 'var(--danger)' }} />
                               </div>
                             )}
                           </div>
@@ -266,24 +265,24 @@ export default function Resume() {
                           </div>
 
                           {isExpanded && !isEditing && (
-                            <div style={{ width: '100%', background: 'white', borderRadius: 10, border: '1px solid var(--border)', padding: '16px 18px', margin: '4px 0 12px' }}>
+                            <div style={{ width: '100%', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--border-default)', padding: '16px 18px', margin: '4px 0 12px' }}>
                               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: r.ai_feedback ? 16 : 0 }}>
                                 <div>
                                   <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>✅ Matched skills</div>
                                   {matched.length > 0 ? (
-                                    <div>{matched.map((s) => <span key={s} className="course-chip" style={{ cursor: 'default', borderColor: '#A7F3D0', color: '#059669' }}>{s}</span>)}</div>
+                                    <div>{matched.map((s) => <span key={s} className="course-chip" style={{ cursor: 'default', background: 'var(--bg-surface-2)', borderColor: '#34D399', color: 'var(--text-primary)' }}>{s}</span>)}</div>
                                   ) : <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>None recorded</div>}
                                 </div>
                                 <div>
                                   <div style={{ fontSize: 11, fontWeight: 700, color: '#DC2626', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>❌ Missing skills</div>
                                   {missing.length > 0 ? (
-                                    <div>{missing.map((s) => <span key={s} className="course-chip" style={{ cursor: 'default', borderColor: '#FECACA', color: '#DC2626' }}>{s}</span>)}</div>
+                                    <div>{missing.map((s) => <span key={s} className="course-chip" style={{ cursor: 'default', background: 'var(--bg-surface-2)', borderColor: '#F87171', color: 'var(--text-primary)' }}>{s}</span>)}</div>
                                   ) : <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>None recorded</div>}
                                 </div>
                               </div>
                               {r.ai_feedback && (
-                                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
-                                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>🤖 AI feedback</div>
+                                <div style={{ borderTop: '1px solid var(--border-default)', paddingTop: 14 }}>
+                                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--info)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>🤖 AI feedback</div>
                                   <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.7 }}>{r.ai_feedback}</div>
                                 </div>
                               )}
@@ -294,7 +293,7 @@ export default function Resume() {
                           )}
 
                           {isEditing && (
-                            <div style={{ width: '100%', background: 'white', borderRadius: 10, border: '1px solid var(--border)', padding: '16px 18px', margin: '4px 0 12px' }}>
+                            <div style={{ width: '100%', background: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--border-default)', padding: '16px 18px', margin: '4px 0 12px' }}>
                               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>
                                 Edit score — {r.job_profiles?.title} at {r.job_profiles?.company}
                               </div>

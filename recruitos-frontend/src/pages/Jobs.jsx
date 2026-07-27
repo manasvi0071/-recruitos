@@ -29,32 +29,32 @@ function JobCard({ job, onEdit, onDelete }) {
 
       <h3 style={{ fontWeight: 700, margin: '8px 0 2px' }}>{job.title}</h3>
       {job.location && (
-        <div style={{ fontSize: 13, color: '#8a8a8a' }}>{job.location}</div>
+        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{job.location}</div>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 3, margin: '10px 0' }}>
         {job.salary_range && (
           <div style={{ fontSize: 13, lineHeight: 1.4 }}>
-            <span style={{ fontWeight: 600, color: '#222', marginRight: 6 }}>Salary:-</span>
-            <span style={{ color: '#555' }}>{job.salary_range}</span>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)', marginRight: 6 }}>Salary:-</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{job.salary_range}</span>
           </div>
         )}
         {job.experience && (
           <div style={{ fontSize: 13, lineHeight: 1.4 }}>
-            <span style={{ fontWeight: 600, color: '#222', marginRight: 6 }}>Experience:-</span>
-            <span style={{ color: '#555' }}>{job.experience}</span>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)', marginRight: 6 }}>Experience:-</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{job.experience}</span>
           </div>
         )}
         {job.qualification && (
           <div style={{ fontSize: 13, lineHeight: 1.4 }}>
-            <span style={{ fontWeight: 600, color: '#222', marginRight: 6 }}>Qualification:-</span>
-            <span style={{ color: '#555' }}>{job.qualification}</span>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)', marginRight: 6 }}>Qualification:-</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{job.qualification}</span>
           </div>
         )}
         {job.reporting_to && (
           <div style={{ fontSize: 13, lineHeight: 1.4 }}>
-            <span style={{ fontWeight: 600, color: '#222', marginRight: 6 }}>Reporting To:-</span>
-            <span style={{ color: '#555' }}>{job.reporting_to}</span>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)', marginRight: 6 }}>Reporting To:-</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{job.reporting_to}</span>
           </div>
         )}
       </div>
@@ -78,16 +78,16 @@ function JobCard({ job, onEdit, onDelete }) {
           </button>
 
           {expanded && (
-            <div style={{ marginTop: 8, fontSize: 13, color: '#444', lineHeight: 1.5 }}>
+            <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               {job.job_summary && (
                 <div style={{ marginBottom: 8 }}>
-                  <div style={{ fontWeight: 600, color: '#222', marginBottom: 2 }}>Job Summary</div>
+                  <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Job Summary</div>
                   <div>{job.job_summary}</div>
                 </div>
               )}
               {job.responsibilities && (
                 <div>
-                  <div style={{ fontWeight: 600, color: '#222', marginBottom: 4 }}>Key Responsibilities</div>
+                  <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>Key Responsibilities</div>
                   <ol style={{ margin: 0, paddingLeft: 20 }}>
                     {job.responsibilities.split(';').map((r) => r.trim()).filter(Boolean).map((r, i) => (
                       <li key={i} style={{ marginBottom: 4 }}>{r}</li>

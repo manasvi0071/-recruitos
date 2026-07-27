@@ -155,10 +155,10 @@ export default function Interview() {
             {linkGroups.map((g) => {
               const isOpen = openLinkGroup === g.key;
               return (
-                <div key={g.key} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                <div key={g.key} style={{ border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
                   <div
                     onClick={() => setOpenLinkGroup(isOpen ? null : g.key)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--surface-2)', cursor: 'pointer' }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--bg-surface-2)', cursor: 'pointer' }}
                   >
                     <strong style={{ fontSize: 13, color: 'var(--text-primary)' }}>{g.candidate?.name}</strong>
                     <span className="pill">{g.items.length} job{g.items.length > 1 ? 's' : ''} {isOpen ? '▲' : '▼'}</span>
@@ -166,7 +166,7 @@ export default function Interview() {
                   {isOpen && (
                     <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {g.items.map((app) => (
-                        <div key={app.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: 'white', border: '1px solid var(--border)', borderRadius: 8 }}>
+                        <div key={app.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 8 }}>
                           <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>
                             {app.job_profiles?.title} {app.job_profiles?.company ? `at ${app.job_profiles.company}` : ''}
                           </span>
@@ -229,7 +229,7 @@ export default function Interview() {
               </>
             )}
             <div style={{ gridColumn: '1 / -1' }}>
-              {formError && <p style={{ color: 'var(--red)', fontSize: 12.5, marginBottom: 8 }}>{formError}</p>}
+              {formError && <p style={{ color: 'var(--danger)', fontSize: 12.5, marginBottom: 8 }}>{formError}</p>}
               <button className="btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Interview'}</button>
             </div>
           </form>
@@ -237,7 +237,7 @@ export default function Interview() {
       )}
 
       {loading && <div className="panel"><p style={{ color: 'var(--text-muted)' }}>Loading…</p></div>}
-      {error && <div className="panel"><p style={{ color: 'var(--red)' }}>{error}</p></div>}
+      {error && <div className="panel"><p style={{ color: 'var(--danger)' }}>{error}</p></div>}
 
       <div className="grid2">
         <div className="panel">
@@ -248,10 +248,10 @@ export default function Interview() {
             const isOpen = openResultGroup === `mock-${g.key}`;
             const best = Math.max(...g.items.map((i) => i.overall ?? 0));
             return (
-              <div key={g.key} style={{ marginBottom: 12, border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-                <div onClick={() => setOpenResultGroup(isOpen ? null : `mock-${g.key}`)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--surface-2)', cursor: 'pointer' }}>
+              <div key={g.key} style={{ marginBottom: 12, border: '1px solid var(--border-default)', borderRadius: 10, overflow: 'hidden' }}>
+                <div onClick={() => setOpenResultGroup(isOpen ? null : `mock-${g.key}`)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg-surface-2)', cursor: 'pointer' }}>
                   <div>
-                    <strong style={{ fontSize: 13 }}>{g.candidate?.name}</strong>
+                    <strong style={{ fontSize: 13, color: 'var(--text-primary)' }}>{g.candidate?.name}</strong>
                     {g.candidate?.colleges?.name && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}> · {g.candidate.colleges.name}</span>}
                   </div>
                   <span className="pill">{g.items.length} interview{g.items.length > 1 ? 's' : ''} · best {best}/10 {isOpen ? '▲' : '▼'}</span>
@@ -259,14 +259,14 @@ export default function Interview() {
                 {isOpen && (
                   <div style={{ padding: '4px 14px 14px' }}>
                     {g.items.map((i) => (
-                      <div key={i.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                      <div key={i.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--border-default)' }}>
                         <p style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
                           {i.job_profiles?.title || 'Role not linked'} {i.job_profiles?.company ? `· ${i.job_profiles.company}` : ''}
                         </p>
                         <div className="rating-row"><span>Confidence</span><strong>{i.confidence} / 10</strong></div>
                         <div className="rating-row"><span>Technical Knowledge</span><strong>{i.technical} / 10</strong></div>
                         <div className="rating-row"><span>Grammar & Communication</span><strong>{i.communication} / 10</strong></div>
-                        <div className="rating-row"><strong>Overall Score</strong><strong style={{ color: 'var(--gold)' }}>{i.overall} / 10</strong></div>
+                        <div className="rating-row"><strong>Overall Score</strong><strong style={{ color: 'var(--brand-gold, var(--warning))' }}>{i.overall} / 10</strong></div>
                         {i.notes && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8, lineHeight: 1.5 }}>{i.notes}</p>}
                         {i.recommendation && <span className={`badge ${i.recommendation === 'Recommended' ? 'green' : 'red'}`} style={{ marginTop: 8, display: 'inline-block' }}>{i.recommendation}</span>}
                       </div>
@@ -285,10 +285,10 @@ export default function Interview() {
           {personalGroups.map((g) => {
             const isOpen = openResultGroup === `personal-${g.key}`;
             return (
-              <div key={g.key} style={{ marginBottom: 12, border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-                <div onClick={() => setOpenResultGroup(isOpen ? null : `personal-${g.key}`)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--surface-2)', cursor: 'pointer' }}>
+              <div key={g.key} style={{ marginBottom: 12, border: '1px solid var(--border-default)', borderRadius: 10, overflow: 'hidden' }}>
+                <div onClick={() => setOpenResultGroup(isOpen ? null : `personal-${g.key}`)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg-surface-2)', cursor: 'pointer' }}>
                   <div>
-                    <strong style={{ fontSize: 13 }}>{g.candidate?.name}</strong>
+                    <strong style={{ fontSize: 13, color: 'var(--text-primary)' }}>{g.candidate?.name}</strong>
                     {g.candidate?.colleges?.name && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}> · {g.candidate.colleges.name}</span>}
                   </div>
                   <span className="pill">{g.items.length} interview{g.items.length > 1 ? 's' : ''} {isOpen ? '▲' : '▼'}</span>
@@ -296,7 +296,7 @@ export default function Interview() {
                 {isOpen && (
                   <div style={{ padding: '4px 14px 14px' }}>
                     {g.items.map((i) => (
-                      <div key={i.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                      <div key={i.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--border-default)' }}>
                         <p style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
                           {i.job_profiles?.title || 'Role not linked'} {i.job_profiles?.company ? `· ${i.job_profiles.company}` : ''}
                         </p>

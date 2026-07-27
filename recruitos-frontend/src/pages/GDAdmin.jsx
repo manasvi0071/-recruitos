@@ -108,7 +108,7 @@ export default function GDAdmin() {
       </div>
 
       {/* Create Session */}
-      <div className="panel">
+      <div className="panel" style={{ position: 'relative', zIndex: 10 }}>
         <div className="panel-title">Create New GD Session</div>
         <div className="panel-sub">Students will receive an email with their personal join link</div>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 16 }}>
@@ -135,7 +135,7 @@ export default function GDAdmin() {
         </div>
 
         <div style={{ marginBottom: 16, position: 'relative' }}>
-          <div style={{ fontSize: 11.5, color: 'var(--slate-light)', marginBottom: 8 }}>
+          <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 8 }}>
             Select Candidates ({selectedCandidates.length} selected)
           </div>
 
@@ -149,9 +149,9 @@ export default function GDAdmin() {
               width: '100%',
               minHeight: 40,
               padding: '6px 8px',
-              border: 'none',
+              border: '1.5px solid var(--border-default)',
               borderRadius: 8,
-              background: 'var(--cream)',
+              background: 'var(--bg-surface-2)',
             }}
           >
             {selectedCandidates.map(c => (
@@ -161,19 +161,19 @@ export default function GDAdmin() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
-                  background: 'var(--gold-soft)',
-                  border: '1px solid var(--gold)',
+                  background: 'var(--warning-soft)',
+                  border: '1px solid var(--warning-border)',
                   borderRadius: 6,
                   padding: '3px 8px',
                   fontSize: 11.5,
                   fontWeight: 600,
-                  color: 'var(--navy-deep)',
+                  color: 'var(--text-primary)',
                 }}
               >
                 {c.name}
                 <span
                   onClick={() => toggleCandidate(c)}
-                  style={{ cursor: 'pointer', color: 'var(--slate-light)', fontWeight: 700 }}
+                  style={{ cursor: 'pointer', color: 'var(--text-muted)', fontWeight: 700 }}
                 >
                   ✕
                 </span>
@@ -187,6 +187,8 @@ export default function GDAdmin() {
                 outline: 'none',
                 fontSize: 12.5,
                 padding: '4px 2px',
+                background: 'transparent',
+                color: 'var(--text-primary)',
               }}
               placeholder={selectedCandidates.length ? 'Add more…' : 'Click to select candidates…'}
               value={candidateSearch}
@@ -208,10 +210,10 @@ export default function GDAdmin() {
                 marginTop: 6,
                 maxHeight: 240,
                 overflowY: 'auto',
-                border: '1px solid var(--line)',
+                border: '1px solid var(--border-default)',
                 borderRadius: 8,
-                background: '#fff',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                background: 'var(--bg-surface)',
+                boxShadow: 'var(--shadow-md)',
               }}
             >
               {candidates
@@ -233,25 +235,18 @@ export default function GDAdmin() {
                       gap: 10,
                       padding: '8px 12px',
                       cursor: 'pointer',
-                      borderBottom: '1px solid var(--line)',
+                      borderBottom: '1px solid var(--border-default)',
                       fontSize: 12,
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--cream)'}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-surface-2)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
                     <div>
-                      <div style={{ fontWeight: 600, color: 'var(--navy-deep)' }}>{c.name}</div>
-                      <div style={{ color: 'var(--slate-light)', fontSize: 11 }}>
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>
                         {c.colleges?.name || 'No college set'} · {c.email || 'No email'}
                       </div>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={false}
-                      onChange={() => toggleCandidate(c)}
-                      onClick={(e) => e.stopPropagation()}
-                      style={{ cursor: 'pointer', flexShrink: 0 }}
-                    />
                   </div>
                 ))}
               {candidates.filter(c =>
@@ -259,7 +254,7 @@ export default function GDAdmin() {
                 (c.name?.toLowerCase().includes(candidateSearch.toLowerCase()) ||
                   c.colleges?.name?.toLowerCase().includes(candidateSearch.toLowerCase()))
               ).length === 0 && (
-                <div style={{ padding: 12, textAlign: 'center', color: 'var(--slate-light)', fontSize: 12 }}>
+                <div style={{ padding: 12, textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
                   No candidates found
                 </div>
               )}
@@ -276,14 +271,14 @@ export default function GDAdmin() {
       <div className="panel">
         <div className="panel-title">GD Sessions</div>
         {sessions.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 32, color: 'var(--slate-light)' }}>No sessions yet</div>
+          <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No sessions yet</div>
         ) : (
           sessions.map(session => (
-            <div key={session.id} style={{ padding: '16px 0', borderBottom: '1px solid var(--line)' }}>
+            <div key={session.id} style={{ padding: '16px 0', borderBottom: '1px solid var(--border-default)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <div style={{ fontWeight: 600, color: 'var(--navy-deep)', fontSize: 14 }}>{session.topic}</div>
-                  <div style={{ fontSize: 11.5, color: 'var(--slate-light)', marginTop: 3 }}>
+                  <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 14 }}>{session.topic}</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 3 }}>
                     {session.duration_minutes} mins · Created {new Date(session.created_at).toLocaleDateString()}
                   </div>
                 </div>
@@ -297,7 +292,7 @@ export default function GDAdmin() {
                     </button>
                   )}
                   {session.status === 'Active' && (
-                    <button className="btn-outline" style={{ fontSize: 11.5, padding: '6px 12px', color: 'var(--red)', borderColor: 'var(--red)' }} onClick={() => handleEnd(session.id)}>
+                    <button className="btn-outline" style={{ fontSize: 11.5, padding: '6px 12px', color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={() => handleEnd(session.id)}>
                       End GD
                     </button>
                   )}
@@ -310,24 +305,24 @@ export default function GDAdmin() {
 
               {/* Results panel */}
               {activeSession === session.id && sessionData && (
-                <div style={{ marginTop: 16, background: 'var(--cream)', borderRadius: 10, padding: 16 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 12 }}>
+                <div style={{ marginTop: 16, background: 'var(--bg-surface-2)', borderRadius: 10, padding: 16 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 12, color: 'var(--text-primary)' }}>
                     AI Scores {session.status !== 'Ended' ? '(available after GD ends)' : ''}
                   </div>
                   {sessionData.participants && sessionData.participants.map(p => (
-                    <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
+                    <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border-default)' }}>
                       <div className={`score-ring ${p.ai_score >= 70 ? 'high' : p.ai_score >= 50 ? 'mid' : 'low'}`} style={{ fontSize: p.ai_score ? 12 : 10 }}>
                         {p.ai_score || '...'}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>{p.candidate_name}</div>
+                        <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{p.candidate_name}</div>
                         {p.ai_score && (
-                          <div style={{ fontSize: 11, color: 'var(--slate-light)', marginTop: 2 }}>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
                             Participation: {p.participation_score} · Communication: {p.communication_score} · Leadership: {p.leadership_score}
                           </div>
                         )}
                         {p.ai_feedback && (
-                          <div style={{ fontSize: 11.5, color: 'var(--slate-light)', marginTop: 4, fontStyle: 'italic' }}>{p.ai_feedback}</div>
+                          <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 4, fontStyle: 'italic' }}>{p.ai_feedback}</div>
                         )}
                       </div>
                       {p.shortlisted ? (
