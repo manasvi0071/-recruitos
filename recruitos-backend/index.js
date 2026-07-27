@@ -25,7 +25,7 @@ app.use(express.json());
 app.use('/api/ai-interview', aiInterviewRoutes);
 app.use('/api/aptitude', aptitudeRoutes);
 app.use('/api/jd', jdRoutes);
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 // ---- COLLEGES ----
 app.get('/api/colleges', async (req, res) => {
@@ -275,19 +275,28 @@ app.post('/api/gd/create', async (req, res) => {
       candidate_email: c.email,
     }));
 
-    const { data: parts } = await supabase
+    const { data: parts, error: partsError } = await supabase
       .from('gd_participants')
       .insert(participants)
       .select();
 
+    if (partsError) {
+      console.error('GD participants insert error:', partsError);
+      return res.status(500).json({ error: partsError.message || partsError });
+    }
+
     for (const p of parts) {
-      await sendGDInviteEmail({
-        studentName: p.candidate_name,
-        studentEmail: p.candidate_email,
-        topic: session.topic,
-        duration: duration_minutes,
-        joinLink: `${process.env.FRONTEND_URL}/gd/${session.id}?token=${p.join_token}`,
-      });
+      try {
+        await sendGDInviteEmail({
+          studentName: p.candidate_name,
+          studentEmail: p.candidate_email,
+          topic: session.topic,
+          duration: duration_minutes,
+          joinLink: `${process.env.FRONTEND_URL}/gd/${session.id}?token=${p.join_token}`,
+        });
+      } catch (emailErr) {
+        console.error(`Failed to send GD invite email to ${p.candidate_email}:`, emailErr);
+      }
     }
 
     res.json({ success: true, session });
@@ -396,6 +405,63 @@ app.post('/api/gd/:id/shortlist', async (req, res) => {
   }
 
   res.json({ success: true });
+});
+
+// Save/update Sir's manual rating for a GD participant
+app.post('/api/gd/participant/:participantId/manual-rating', async (req, res) => {
+  try {
+    const { participantId } = req.params;
+    const {
+      confidence,
+      communication,
+      content_knowledge,
+      leadership,
+      teamwork,
+      comment,
+    } = req.body;
+
+    const scoreFields = { confidence, communication, content_knowledge, leadership, teamwork };
+
+    // Validate each score is an integer between 1 and 5
+    for (const [key, value] of Object.entries(scoreFields)) {
+      if (value === undefined || value === null) continue; // allow partial updates
+      const num = Number(value);
+      if (!Number.isInteger(num) || num < 1 || num > 5) {
+        return res.status(400).json({ error: `${key} must be an integer between 1 and 5` });
+      }
+    }
+
+    const updatePayload = {
+      manual_confidence: confidence,
+      manual_communication: communication,
+      manual_content_knowledge: content_knowledge,
+      manual_leadership: leadership,
+      manual_teamwork: teamwork,
+      manual_comment: comment || null,
+      manual_rated_at: new Date(),
+    };
+
+    const { data, error } = await supabase
+      .from('gd_participants')
+      .update(updatePayload)
+      .eq('id', participantId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Manual rating update error:', error);
+      return res.status(500).json({ error: error.message || error });
+    }
+
+    if (!data) {
+      return res.status(404).json({ error: 'Participant not found' });
+    }
+
+    res.json({ success: true, participant: data });
+  } catch (err) {
+    console.error('Manual rating error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/api/gd/:id/token', async (req, res) => {
