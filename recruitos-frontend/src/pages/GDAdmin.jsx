@@ -433,10 +433,10 @@ export default function GDAdmin() {
               {ratingSession === session.id && (
                 <div style={{ marginTop: 16, background: 'var(--bg-surface-2)', borderRadius: 10, padding: 16, border: '1px solid var(--warning-border)' }}>
                   <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, color: 'var(--text-primary)' }}>
-                    Sir's Rating
+                    Manual Evaluation
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 14 }}>
-                    Manually rate each participant on the criteria below. You can rate before, during, or after the GD.
+                    Rate each participant on the criteria below. Ratings can be submitted before, during, or after the GD.
                   </div>
 
                   {!sessionData || activeSession !== session.id ? (
