@@ -199,7 +199,8 @@ export default function GDAdmin() {
               cursor: 'pointer',
               fontSize: 17,
               lineHeight: 1,
-              color: n <= value ? 'var(--warning)' : 'var(--border-default)',
+              color: n <= value ? 'var(--warning)' : 'var(--text-muted)',
+              opacity: n <= value ? 1 : 0.5,
               userSelect: 'none',
             }}
           >
@@ -431,7 +432,7 @@ export default function GDAdmin() {
 
               {/* NEW: Sir's Rating collapsible panel */}
               {ratingSession === session.id && (
-                <div style={{ marginTop: 16, background: 'var(--bg-surface-2)', borderRadius: 10, padding: 16, border: '1px solid var(--warning-border)' }}>
+                <div style={{ marginTop: 16, background: 'rgba(0,0,0,0.22)', borderRadius: 10, padding: 16, border: '1px solid rgba(245,158,11,0.3)' }}>
                   <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, color: 'var(--text-primary)' }}>
                     Manual Evaluation
                   </div>
