@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
@@ -12,7 +14,6 @@ const {
   sendGDInviteEmail,
   sendGDShortlistEmail,
 } = require('./emailService');
-require('dotenv').config();
 
 const aiInterviewRoutes = require('./aiInterviewRoutes');
 const aptitudeRoutes = require('./aptitudeRoutes');
@@ -25,7 +26,7 @@ app.use(express.json());
 app.use('/api/ai-interview', aiInterviewRoutes);
 app.use('/api/aptitude', aptitudeRoutes);
 app.use('/api/jd', jdRoutes);
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
 // ---- COLLEGES ----
 app.get('/api/colleges', async (req, res) => {
