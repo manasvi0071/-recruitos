@@ -3,7 +3,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import MagneticButton from '../components/MagneticButton';
 import AnimatedCounter from '../components/AnimatedCounter';
 import { useScrollProgress, useScrollY } from '../hooks/useScrollReveal';
-import logoImg from '../assets/talentcorner-logo.png';
+import { logoDataUrl } from '../assets/logoData';
 
 const departments = [
   { icon: '🎯', name: 'Talent Acquisition', path: ['HR Intern / Recruitment Trainee', 'Talent Acquisition Executive', 'Senior Talent Acquisition Executive', 'Team Leader – Recruitment', 'Recruitment Manager'] },
@@ -106,7 +106,7 @@ export default function Landing() {
 
         <nav className="glass-3d" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px clamp(20px,4vw,48px)', position: 'sticky', top: 0, zIndex: 100 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src={logoImg} alt="Talent Corner" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+            <img src={logoDataUrl} alt="Talent Corner" style={{ width: 36, height: 36, objectFit: 'contain' }} />
             <div>
               <div className="brand-name">Talent Corner</div>
               <div className="brand-sub">HR Services</div>
@@ -240,16 +240,16 @@ function SplitHero({ scrollY }) {
             </div>
           ))}
 
-          <img
-            src={logoImg}
-            alt="Talent Corner"
-            className="logo-3d-spin"
-            style={{
-              width: 240, height: 240, objectFit: 'contain', opacity: 1,
-              position: 'relative', zIndex: 2,
-              filter: 'drop-shadow(0 30px 70px rgba(124,58,237,0.6)) brightness(1.25) contrast(1.15) saturate(1.2)',
-            }}
-          />
+       <img
+  src={logoDataUrl}
+  alt="Talent Corner"
+  className="logo-3d-spin"
+  style={{
+    width: 240, height: 240, objectFit: 'contain', opacity: 1,
+    position: 'relative', zIndex: 2,
+    filter: 'drop-shadow(0 30px 70px rgba(124,58,237,0.6)) brightness(1.25) contrast(1.15) saturate(1.2)',
+  }}
+/>
         </div>
       </div>
 
