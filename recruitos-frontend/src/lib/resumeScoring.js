@@ -17,12 +17,8 @@ export async function extractPdfText(file) {
   return text;
 }
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function scoreResume(resumeText, jobSkills, jobTitle) {
-  const BACKEND_URL = 'http://localhost:5000'; // same as AIInterview.jsx — update together if you deploy
+ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // same as AIInterview.jsx — update together if you deploy
 
   const response = await fetch(`${BACKEND_URL}/api/ai-interview/score-resume`, {
     method: 'POST',

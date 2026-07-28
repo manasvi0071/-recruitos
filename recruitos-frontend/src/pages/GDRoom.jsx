@@ -21,7 +21,7 @@ export default function GDRoom() {
       }
 
       try {
-        const res = await fetch(`http://localhost:5000/api/gd/${sessionId}/token?token=${token}`);
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gd/${sessionId}/token?token=${token}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Could not join session');
 

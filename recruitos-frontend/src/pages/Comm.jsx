@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getCommunications, addCommunication, getColleges, getCompanies } from '../lib/api';
 
 async function generateEmailNote({ entityType, entityName, hint }) {
-  const res = await fetch('http://localhost:5000/api/generate-email', {
+  const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/generate-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ entityType, entityName, hint }),
