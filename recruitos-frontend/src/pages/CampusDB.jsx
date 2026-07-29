@@ -34,50 +34,62 @@ export default function CampusDB() {
   const [importResult, setImportResult] = useState(null);
   const fileInputRef = useRef(null);
 
+  // Fetches ALL rows, paging through Supabase's per-request row cap (default 1000)
+  // instead of stopping at a single hardcoded range. Without this, no matter how
+  // many colleges get imported, only the first page would ever be shown.
+  async function fetchAllColleges() {
+    const pageSize = 1000;
+    let from = 0;
+    let allRows = [];
+    while (true) {
+      const { data, error } = await supabase
+        .from('colleges')
+        .select('*')
+        .order('name', { ascending: true })
+        .range(from, from + pageSize - 1);
+
+      if (error) throw error;
+      allRows = allRows.concat(data ?? []);
+      if (!data || data.length < pageSize) break;
+      from += pageSize;
+    }
+    return allRows;
+  }
+
   async function loadColleges() {
     setLoading(true);
     setError(null);
-    const { data, error } = await supabase
-      .from('colleges')
-      .select('*')
-      .order('name', { ascending: true })
-      .range(0, 4999);
-
-    if (error) {
+    try {
+      const data = await fetchAllColleges();
+      setColleges(data);
+    } catch (error) {
       console.error('Failed to load colleges:', error);
       setError('Could not load colleges. Check your Supabase connection.');
-    } else {
-      setColleges(data ?? []);
     }
     setLoading(false);
   }
 
   useEffect(() => {
-  let ignore = false;
+    let ignore = false;
 
-  async function init() {
-    setLoading(true);
-    setError(null);
-    const { data, error } = await supabase
-      .from('colleges')
-      .select('*')
-      .order('name', { ascending: true })
-      .range(0, 4999);
-
-    if (ignore) return;
-
-    if (error) {
-      console.error('Failed to load colleges:', error);
-      setError('Could not load colleges. Check your Supabase connection.');
-    } else {
-      setColleges(data ?? []);
+    async function init() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchAllColleges();
+        if (ignore) return;
+        setColleges(data);
+      } catch (error) {
+        if (ignore) return;
+        console.error('Failed to load colleges:', error);
+        setError('Could not load colleges. Check your Supabase connection.');
+      }
+      setLoading(false);
     }
-    setLoading(false);
-  }
 
-  init();
-  return () => { ignore = true; };
-}, []);
+    init();
+    return () => { ignore = true; };
+  }, []);
 
 const filtered = colleges.filter((c) => {
   const courseValue = (c.course ?? '').toLowerCase().trim();
@@ -176,6 +188,16 @@ const filtered = colleges.filter((c) => {
     }
   }
 
+  // The colleges table only allows these 3 status values (DB check constraint).
+  // Imported files often have different status labels (e.g. "Active"), so
+  // anything that doesn't match gets mapped to a safe default instead of
+  // failing the insert.
+  const VALID_STATUSES = ['Interested', 'Follow-up Due', 'Not Interested'];
+  function normalizeStatus(raw) {
+    const trimmed = (raw || '').toString().trim();
+    return VALID_STATUSES.includes(trimmed) ? trimmed : 'Interested';
+  }
+
   function handleFileSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -191,7 +213,7 @@ const mapped = rows.map((r) => ({
   course: r.course || r.Course || '',
   tpo: r.tpo || r.TPO || r.Tpo || '',
   strength: r.strength || r.Strength || '',
-  status: r.status || r.Status || 'Interested',
+  status: normalizeStatus(r.status || r.Status),
   country: r.country || r.Country || '',
   state: r.state || r.State || '',
   website: r.website || r.Website || '',
@@ -208,25 +230,40 @@ const mapped = rows.map((r) => ({
     setImporting(true);
     let success = 0;
     let failed = 0;
-    for (const row of importRows) {
-      const { error } = await supabase.from('colleges').insert([{
-        name: row.name,
-        city: row.city || null,
-        // FIX 4 (continued): store null instead of a fake 'Engineering' default
-        course: row.course || null,
-        tpo: row.tpo || null,
-        strength: row.strength ? parseInt(row.strength, 10) : null,
-        status: row.status || 'Interested',
-        country: row.country || null,
-        institution_type: row.institution_type || null,
-        courses_available: row.courses_available || null,
-        state: row.state || null,
-        website: row.website || null,
-      }]);
-      if (error) failed += 1; else success += 1;
+    const firstErrors = [];
+
+    const records = importRows.map((row) => ({
+      name: row.name,
+      city: row.city || null,
+      course: row.course || null,
+      tpo: row.tpo || null,
+      strength: row.strength ? parseInt(row.strength, 10) : null,
+      status: row.status || 'Interested',
+      country: row.country || null,
+      institution_type: row.institution_type || null,
+      courses_available: row.courses_available || null,
+      state: row.state || null,
+      website: row.website || null,
+    }));
+
+    // Insert in chunks instead of one row per request - far fewer network
+    // round-trips, so 70,000 rows imports in seconds/minutes instead of
+    // potentially timing out the browser tab.
+    const chunkSize = 500;
+    for (let i = 0; i < records.length; i += chunkSize) {
+      const chunk = records.slice(i, i + chunkSize);
+      const { error } = await supabase.from('colleges').insert(chunk);
+      if (error) {
+        failed += chunk.length;
+        if (firstErrors.length < 3) firstErrors.push(error.message);
+        console.error('Failed to import chunk:', error);
+      } else {
+        success += chunk.length;
+      }
     }
+
     setImporting(false);
-    setImportResult({ success, failed });
+    setImportResult({ success, failed, firstErrors });
     setImportRows(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
     await loadColleges();
@@ -265,6 +302,14 @@ const mapped = rows.map((r) => ({
       {importResult && (
         <div className="panel">
           <p>Import done: {importResult.success} added, {importResult.failed} failed.</p>
+          {importResult.failed > 0 && importResult.firstErrors?.length > 0 && (
+            <div style={{ color: 'crimson', fontSize: 13, marginTop: 8 }}>
+              <p>Error details (likely a Supabase permissions/RLS issue):</p>
+              <ul>
+                {importResult.firstErrors.map((msg, i) => <li key={i}>{msg}</li>)}
+              </ul>
+            </div>
+          )}
           <button className="btn-outline" onClick={() => setImportResult(null)}>Dismiss</button>
         </div>
       )}
