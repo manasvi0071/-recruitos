@@ -307,6 +307,40 @@ app.post('/api/gd/create', async (req, res) => {
   }
 });
 
+// Create an OFFLINE GD session — no video room, no emails, just a shell for manual ratings
+app.post('/api/gd/create-offline', async (req, res) => {
+  try {
+    const { topic, candidates } = req.body;
+
+    if (!topic || !candidates || candidates.length === 0) {
+      return res.status(400).json({ error: 'Topic and at least one candidate are required' });
+    }
+
+    const { data: session, error } = await supabase
+      .from('gd_sessions')
+      .insert([{ topic, duration_minutes: null, mode: 'offline', status: 'Ended' }])
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    const participants = candidates.map(c => ({
+      session_id: session.id,
+      candidate_id: c.id,
+      candidate_name: c.name,
+      candidate_email: c.email,
+    }));
+
+    const { error: partErr } = await supabase.from('gd_participants').insert(participants);
+    if (partErr) return res.status(500).json({ error: partErr.message });
+
+    res.json({ success: true, session });
+  } catch (err) {
+    console.error('Offline GD create error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Manually add a GD result (for offline/in-person GD sessions)
 app.post('/api/gd/manual', async (req, res) => {
   try {

@@ -1,21 +1,22 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 const RATING_CRITERIA = [
-  { key: 'confidence', label: 'Confidence' },
-  { key: 'communication', label: 'Communication' },
-  { key: 'content_knowledge', label: 'Content Knowledge' },
-  { key: 'leadership', label: 'Leadership' },
-  { key: 'teamwork', label: 'Teamwork' },
+  { key: "confidence", label: "Confidence" },
+  { key: "communication", label: "Communication" },
+  { key: "content_knowledge", label: "Content Knowledge" },
+  { key: "leadership", label: "Leadership" },
+  { key: "teamwork", label: "Teamwork" },
 ];
 
 export default function GDAdmin() {
   const [sessions, setSessions] = useState([]);
   const [candidates, setCandidates] = useState([]);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ topic: '', duration_minutes: 30 });
+  const [form, setForm] = useState({ topic: "", duration_minutes: 30 });
+  const [sessionMode, setSessionMode] = useState("online"); // 'online' | 'offline'
   const [selectedCandidates, setSelectedCandidates] = useState([]);
-  const [candidateSearch, setCandidateSearch] = useState('');
+  const [candidateSearch, setCandidateSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeSession, setActiveSession] = useState(null);
   const [sessionData, setSessionData] = useState(null);
@@ -27,18 +28,18 @@ export default function GDAdmin() {
 
   const fetchSessions = async () => {
     const { data } = await supabase
-      .from('gd_sessions')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("gd_sessions")
+      .select("*")
+      .order("created_at", { ascending: false });
     setSessions(data || []);
   };
 
   const fetchCandidates = async () => {
     const { data, error } = await supabase
-      .from('candidates')
-      .select('id, name, email, colleges(name)');
+      .from("candidates")
+      .select("id, name, email, colleges(name)");
     if (error) {
-      console.error('Failed to load candidates:', error);
+      console.error("Failed to load candidates:", error);
     }
     setCandidates(data || []);
   };
@@ -52,7 +53,9 @@ export default function GDAdmin() {
   }, []);
 
   const fetchSessionData = async (sessionId) => {
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gd/${sessionId}`);
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/gd/${sessionId}`,
+    );
     const data = await res.json();
     setSessionData(data);
     return data;
@@ -60,62 +63,102 @@ export default function GDAdmin() {
 
   const handleCreate = async () => {
     if (!form.topic || selectedCandidates.length === 0) {
-      alert('Please enter a topic and select at least 2 candidates');
+      alert("Please enter a topic and select at least 1 candidate");
       return;
     }
-    if (!form.duration_minutes || isNaN(form.duration_minutes)) {
-      alert('Please enter a valid duration');
-      return;
+
+    if (sessionMode === "online") {
+      if (!form.duration_minutes || isNaN(form.duration_minutes)) {
+        alert("Please enter a valid duration");
+        return;
+      }
+      setCreating(true);
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/gd/create`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            topic: form.topic,
+            duration_minutes: form.duration_minutes,
+            candidates: selectedCandidates,
+          }),
+        },
+      );
+      const data = await res.json();
+      if (data.success) {
+        alert("GD Session created! Invite emails sent to all students.");
+        setForm({ topic: "", duration_minutes: 30 });
+        setSelectedCandidates([]);
+        await fetchSessions();
+      }
+      setCreating(false);
+    } else {
+      setCreating(true);
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/gd/create-offline`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            topic: form.topic,
+            candidates: selectedCandidates,
+          }),
+        },
+      );
+      const data = await res.json();
+      if (data.success) {
+        alert("Offline GD session created! You can now rate participants.");
+        setForm({ topic: "", duration_minutes: 30 });
+        setSelectedCandidates([]);
+        await fetchSessions();
+        setRatingSession(data.session.id);
+        setActiveSession(data.session.id);
+        await fetchSessionData(data.session.id);
+      }
+      setCreating(false);
     }
-    setCreating(true);
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gd/create`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        topic: form.topic,
-        duration_minutes: form.duration_minutes,
-        candidates: selectedCandidates,
-      }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      alert('GD Session created! Invite emails sent to all students.');
-      setForm({ topic: '', duration_minutes: 30 });
-      setSelectedCandidates([]);
-      await fetchSessions();
-    }
-    setCreating(false);
   };
 
   const handleStart = async (sessionId) => {
-    await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gd/${sessionId}/start`, { method: 'POST' });
+    await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/gd/${sessionId}/start`,
+      { method: "POST" },
+    );
     await fetchSessions();
     setActiveSession(sessionId);
     await fetchSessionData(sessionId);
   };
 
   const handleEnd = async (sessionId) => {
-    await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gd/${sessionId}/end`, { method: 'POST' });
-    alert('GD ended! AI is scoring all participants. Check back in 30 seconds.');
+    await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gd/${sessionId}/end`, {
+      method: "POST",
+    });
+    alert(
+      "GD ended! AI is scoring all participants. Check back in 30 seconds.",
+    );
     await fetchSessions();
     await fetchSessionData(sessionId);
   };
 
   const handleShortlist = async (sessionId, participantIds) => {
-    await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gd/${sessionId}/shortlist`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ participantIds }),
-    });
-    alert('Shortlisted! Emails sent to selected students.');
+    await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/gd/${sessionId}/shortlist`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ participantIds }),
+      },
+    );
+    alert("Shortlisted! Emails sent to selected students.");
     await fetchSessionData(sessionId);
   };
 
   const toggleCandidate = (c) => {
-    setSelectedCandidates(prev =>
-      prev.find(x => x.id === c.id)
-        ? prev.filter(x => x.id !== c.id)
-        : [...prev, c]
+    setSelectedCandidates((prev) =>
+      prev.find((x) => x.id === c.id)
+        ? prev.filter((x) => x.id !== c.id)
+        : [...prev, c],
     );
   };
 
@@ -141,14 +184,14 @@ export default function GDAdmin() {
         content_knowledge: p.manual_content_knowledge || 0,
         leadership: p.manual_leadership || 0,
         teamwork: p.manual_teamwork || 0,
-        comment: p.manual_comment || '',
+        comment: p.manual_comment || "",
       }
     );
   };
 
   // NEW: update a single field in a participant's draft
   const setRatingDraft = (p, key, value) => {
-    setRatingDrafts(prev => ({
+    setRatingDrafts((prev) => ({
       ...prev,
       [p.id]: { ...getOrInitDraft(p), [key]: value },
     }));
@@ -162,25 +205,25 @@ export default function GDAdmin() {
       const res = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/gd/participant/${p.id}/manual-rating`,
         {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(draft),
-        }
+        },
       );
       const data = await res.json();
       if (data.success) {
         await fetchSessionData(sessionId);
-        setRatingDrafts(prev => {
+        setRatingDrafts((prev) => {
           const copy = { ...prev };
           delete copy[p.id];
           return copy;
         });
       } else {
-        alert(data.error || 'Failed to save rating');
+        alert(data.error || "Failed to save rating");
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to save rating');
+      alert("Failed to save rating");
     }
     setSavingRatingId(null);
   };
@@ -190,18 +233,18 @@ export default function GDAdmin() {
     const draft = getOrInitDraft(p);
     const value = draft[critKey] || 0;
     return (
-      <div style={{ display: 'flex', gap: 3 }}>
-        {[1, 2, 3, 4, 5].map(n => (
+      <div style={{ display: "flex", gap: 3 }}>
+        {[1, 2, 3, 4, 5].map((n) => (
           <span
             key={n}
             onClick={() => setRatingDraft(p, critKey, n)}
             style={{
-              cursor: 'pointer',
+              cursor: "pointer",
               fontSize: 17,
               lineHeight: 1,
-              color: n <= value ? 'var(--warning)' : 'var(--text-muted)',
+              color: n <= value ? "var(--warning)" : "var(--text-muted)",
               opacity: n <= value ? 1 : 0.5,
-              userSelect: 'none',
+              userSelect: "none",
             }}
           >
             ★
@@ -214,79 +257,124 @@ export default function GDAdmin() {
   return (
     <div className="page active">
       <div className="page-head">
-        <div><h1>Group Discussion</h1><p>Create sessions, invite students, AI auto-scores after GD ends</p></div>
+        <div>
+          <h1>Group Discussion</h1>
+          <p>Create sessions, invite students, AI auto-scores after GD ends</p>
+        </div>
       </div>
 
       {/* Create Session */}
-      <div className="panel" style={{ position: 'relative', zIndex: 10 }}>
+      <div className="panel" style={{ position: "relative", zIndex: 10 }}>
         <div className="panel-title">Create New GD Session</div>
-        <div className="panel-sub">Students will receive an email with their personal join link</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 16 }}>
+
+        <div className="mode-toggle" style={{ marginBottom: 16 }}>
+          <button
+            className={`mode-btn ${sessionMode === "online" ? "active" : ""}`}
+            onClick={() => setSessionMode("online")}
+          >
+            🎥 Online (Video Call)
+          </button>
+          <button
+            className={`mode-btn ${sessionMode === "offline" ? "active" : ""}`}
+            onClick={() => setSessionMode("offline")}
+          >
+            🤝 Offline (In-Person)
+          </button>
+        </div>
+
+        <div className="panel-sub">
+          {sessionMode === "online"
+            ? "Students will receive an email with their personal video call join link"
+            : "No emails sent — record ratings directly for an in-person discussion that already happened"}
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: sessionMode === "online" ? "2fr 1fr" : "1fr",
+            gap: 12,
+            marginBottom: 16,
+          }}
+        >
           <div className="field" style={{ margin: 0 }}>
             <label>GD Topic</label>
             <input
               className="search-box"
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
               placeholder="e.g. AI vs Human Intelligence"
               value={form.topic}
-              onChange={e => setForm({ ...form, topic: e.target.value })}
+              onChange={(e) => setForm({ ...form, topic: e.target.value })}
             />
           </div>
-          <div className="field" style={{ margin: 0 }}>
-            <label>Duration (minutes)</label>
-            <input
-              type="number"
-              className="search-box"
-              style={{ width: '100%' }}
-              value={form.duration_minutes}
-              onChange={e => {
-                const val = e.target.value;
-                setForm({ ...form, duration_minutes: val === '' ? '' : parseInt(val) || '' });
-              }}
-            />
-          </div>
+          {sessionMode === "online" && (
+            <div className="field" style={{ margin: 0 }}>
+              <label>Duration (minutes)</label>
+              <input
+                type="number"
+                className="search-box"
+                style={{ width: "100%" }}
+                value={form.duration_minutes}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setForm({
+                    ...form,
+                    duration_minutes: val === "" ? "" : parseInt(val) || "",
+                  });
+                }}
+              />
+            </div>
+          )}
         </div>
 
-        <div style={{ marginBottom: 16, position: 'relative' }}>
-          <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 8 }}>
+        <div style={{ marginBottom: 16, position: "relative" }}>
+          <div
+            style={{
+              fontSize: 11.5,
+              color: "var(--text-muted)",
+              marginBottom: 8,
+            }}
+          >
             Select Candidates ({selectedCandidates.length} selected)
           </div>
 
           {/* Input box with selected candidates shown as chips */}
           <div
             style={{
-              display: 'flex',
-              flexWrap: 'wrap',
+              display: "flex",
+              flexWrap: "wrap",
               gap: 6,
-              alignItems: 'center',
-              width: '100%',
+              alignItems: "center",
+              width: "100%",
               minHeight: 40,
-              padding: '6px 8px',
-              border: '1.5px solid var(--border-default)',
+              padding: "6px 8px",
+              border: "1.5px solid var(--border-default)",
               borderRadius: 8,
-              background: 'var(--bg-surface-2)',
+              background: "var(--bg-surface-2)",
             }}
           >
-            {selectedCandidates.map(c => (
+            {selectedCandidates.map((c) => (
               <span
                 key={c.id}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: "flex",
+                  alignItems: "center",
                   gap: 6,
-                  background: 'var(--warning-soft)',
-                  border: '1px solid var(--warning-border)',
+                  background: "var(--warning-soft)",
+                  border: "1px solid var(--warning-border)",
                   borderRadius: 6,
-                  padding: '3px 8px',
+                  padding: "3px 8px",
                   fontSize: 11.5,
                   fontWeight: 600,
-                  color: 'var(--text-primary)',
+                  color: "var(--text-primary)",
                 }}
               >
                 {c.name}
                 <span
                   onClick={() => toggleCandidate(c)}
-                  style={{ cursor: 'pointer', color: 'var(--text-muted)', fontWeight: 700 }}
+                  style={{
+                    cursor: "pointer",
+                    color: "var(--text-muted)",
+                    fontWeight: 700,
+                  }}
                 >
                   ✕
                 </span>
@@ -296,16 +384,20 @@ export default function GDAdmin() {
               style={{
                 flex: 1,
                 minWidth: 120,
-                border: 'none',
-                outline: 'none',
+                border: "none",
+                outline: "none",
                 fontSize: 12.5,
-                padding: '4px 2px',
-                background: 'transparent',
-                color: 'var(--text-primary)',
+                padding: "4px 2px",
+                background: "transparent",
+                color: "var(--text-primary)",
               }}
-              placeholder={selectedCandidates.length ? 'Add more…' : 'Click to select candidates…'}
+              placeholder={
+                selectedCandidates.length
+                  ? "Add more…"
+                  : "Click to select candidates…"
+              }
               value={candidateSearch}
-              onChange={e => setCandidateSearch(e.target.value)}
+              onChange={(e) => setCandidateSearch(e.target.value)}
               onFocus={() => setShowDropdown(true)}
               onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
             />
@@ -315,59 +407,88 @@ export default function GDAdmin() {
           {showDropdown && (
             <div
               style={{
-                position: 'absolute',
-                top: '100%',
+                position: "absolute",
+                top: "100%",
                 left: 0,
                 right: 0,
                 zIndex: 20,
                 marginTop: 6,
                 maxHeight: 240,
-                overflowY: 'auto',
-                border: '1px solid var(--border-default)',
+                overflowY: "auto",
+                border: "1px solid var(--border-default)",
                 borderRadius: 8,
-                background: 'var(--bg-surface)',
-                boxShadow: 'var(--shadow-md)',
+                background: "var(--bg-surface)",
+                boxShadow: "var(--shadow-md)",
               }}
             >
               {candidates
-                .filter(c =>
-                  !selectedCandidates.find(x => x.id === c.id) &&
-                  (c.name?.toLowerCase().includes(candidateSearch.toLowerCase()) ||
-                    c.colleges?.name?.toLowerCase().includes(candidateSearch.toLowerCase()))
+                .filter(
+                  (c) =>
+                    !selectedCandidates.find((x) => x.id === c.id) &&
+                    (c.name
+                      ?.toLowerCase()
+                      .includes(candidateSearch.toLowerCase()) ||
+                      c.colleges?.name
+                        ?.toLowerCase()
+                        .includes(candidateSearch.toLowerCase())),
                 )
                 .slice(0, 20)
-                .map(c => (
+                .map((c) => (
                   <div
                     key={c.id}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => toggleCandidate(c)}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
                       gap: 10,
-                      padding: '8px 12px',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid var(--border-default)',
+                      padding: "8px 12px",
+                      cursor: "pointer",
+                      borderBottom: "1px solid var(--border-default)",
                       fontSize: 12,
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-surface-2)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "var(--bg-surface-2)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "transparent")
+                    }
                   >
                     <div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</div>
-                      <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>
-                        {c.colleges?.name || 'No college set'} · {c.email || 'No email'}
+                      <div
+                        style={{
+                          fontWeight: 600,
+                          color: "var(--text-primary)",
+                        }}
+                      >
+                        {c.name}
+                      </div>
+                      <div style={{ color: "var(--text-muted)", fontSize: 11 }}>
+                        {c.colleges?.name || "No college set"} ·{" "}
+                        {c.email || "No email"}
                       </div>
                     </div>
                   </div>
                 ))}
-              {candidates.filter(c =>
-                !selectedCandidates.find(x => x.id === c.id) &&
-                (c.name?.toLowerCase().includes(candidateSearch.toLowerCase()) ||
-                  c.colleges?.name?.toLowerCase().includes(candidateSearch.toLowerCase()))
+              {candidates.filter(
+                (c) =>
+                  !selectedCandidates.find((x) => x.id === c.id) &&
+                  (c.name
+                    ?.toLowerCase()
+                    .includes(candidateSearch.toLowerCase()) ||
+                    c.colleges?.name
+                      ?.toLowerCase()
+                      .includes(candidateSearch.toLowerCase())),
               ).length === 0 && (
-                <div style={{ padding: 12, textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
+                <div
+                  style={{
+                    padding: 12,
+                    textAlign: "center",
+                    color: "var(--text-muted)",
+                    fontSize: 12,
+                  }}
+                >
                   No candidates found
                 </div>
               )}
@@ -376,7 +497,13 @@ export default function GDAdmin() {
         </div>
 
         <button className="btn-gold" onClick={handleCreate} disabled={creating}>
-          {creating ? 'Creating & Sending Emails...' : '+ Create GD Session'}
+          {creating
+            ? sessionMode === "online"
+              ? "Creating & Sending Emails..."
+              : "Creating Session..."
+            : sessionMode === "online"
+              ? "+ Create GD Session"
+              : "+ Create Offline Session & Rate Now"}
         </button>
       </div>
 
@@ -384,28 +511,87 @@ export default function GDAdmin() {
       <div className="panel">
         <div className="panel-title">GD Sessions</div>
         {sessions.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No sessions yet</div>
+          <div
+            style={{
+              textAlign: "center",
+              padding: 32,
+              color: "var(--text-muted)",
+            }}
+          >
+            No sessions yet
+          </div>
         ) : (
-          sessions.map(session => (
-            <div key={session.id} style={{ padding: '16px 0', borderBottom: '1px solid var(--border-default)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+          sessions.map((session) => (
+            <div
+              key={session.id}
+              style={{
+                padding: "16px 0",
+                borderBottom: "1px solid var(--border-default)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  flexWrap: "wrap",
+                  gap: 8,
+                }}
+              >
                 <div>
-                  <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 14 }}>{session.topic}</div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 3 }}>
-                    {session.duration_minutes} mins · Created {new Date(session.created_at).toLocaleDateString()}
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      color: "var(--text-primary)",
+                      fontSize: 14,
+                    }}
+                  >
+                    {session.topic}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11.5,
+                      color: "var(--text-muted)",
+                      marginTop: 3,
+                    }}
+                  >
+                    {session.duration_minutes} mins · Created{" "}
+                    {new Date(session.created_at).toLocaleDateString()}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span className={`badge ${session.status === 'Active' ? 'green' : session.status === 'Ended' ? 'gray' : 'gold'}`}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span
+                    className={`badge ${session.status === "Active" ? "green" : session.status === "Ended" ? "gray" : "gold"}`}
+                  >
                     {session.status}
                   </span>
-                  {session.status === 'Pending' && (
-                    <button className="btn-gold" style={{ fontSize: 11.5, padding: '6px 12px' }} onClick={() => handleStart(session.id)}>
+                  {session.status === "Pending" && (
+                    <button
+                      className="btn-gold"
+                      style={{ fontSize: 11.5, padding: "6px 12px" }}
+                      onClick={() => handleStart(session.id)}
+                    >
                       Start GD
                     </button>
                   )}
-                  {session.status === 'Active' && (
-                    <button className="btn-outline" style={{ fontSize: 11.5, padding: '6px 12px', color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={() => handleEnd(session.id)}>
+                  {session.status === "Active" && (
+                    <button
+                      className="btn-outline"
+                      style={{
+                        fontSize: 11.5,
+                        padding: "6px 12px",
+                        color: "var(--danger)",
+                        borderColor: "var(--danger)",
+                      }}
+                      onClick={() => handleEnd(session.id)}
+                    >
                       End GD
                     </button>
                   )}
@@ -414,17 +600,29 @@ export default function GDAdmin() {
                     className="btn-outline"
                     style={{
                       fontSize: 11.5,
-                      padding: '6px 12px',
-                      color: 'var(--warning)',
-                      borderColor: 'var(--warning-border)',
-                      background: ratingSession === session.id ? 'var(--warning-soft)' : 'transparent',
+                      padding: "6px 12px",
+                      color: "var(--warning)",
+                      borderColor: "var(--warning-border)",
+                      background:
+                        ratingSession === session.id
+                          ? "var(--warning-soft)"
+                          : "transparent",
                     }}
                     onClick={() => handleToggleRating(session.id)}
                   >
-                    ★ {ratingSession === session.id ? 'Hide Rating' : 'Rate Participants'}
+                    ★{" "}
+                    {ratingSession === session.id
+                      ? "Hide Rating"
+                      : "Rate Participants"}
                   </button>
-                  <button className="btn-outline" style={{ fontSize: 11.5, padding: '6px 12px' }}
-                    onClick={async () => { setActiveSession(session.id); await fetchSessionData(session.id); }}>
+                  <button
+                    className="btn-outline"
+                    style={{ fontSize: 11.5, padding: "6px 12px" }}
+                    onClick={async () => {
+                      setActiveSession(session.id);
+                      await fetchSessionData(session.id);
+                    }}
+                  >
                     View Results
                   </button>
                 </div>
@@ -432,37 +630,101 @@ export default function GDAdmin() {
 
               {/* NEW: Sir's Rating collapsible panel */}
               {ratingSession === session.id && (
-                <div style={{ marginTop: 16, background: 'rgba(0,0,0,0.22)', borderRadius: 10, padding: 16, border: '1px solid rgba(245,158,11,0.3)' }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, color: 'var(--text-primary)' }}>
+                <div
+                  style={{
+                    marginTop: 16,
+                    background: "rgba(0,0,0,0.22)",
+                    borderRadius: 10,
+                    padding: 16,
+                    border: "1px solid rgba(245,158,11,0.3)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 13,
+                      marginBottom: 4,
+                      color: "var(--text-primary)",
+                    }}
+                  >
                     Manual Evaluation
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 14 }}>
-                    Rate each participant on the criteria below. Ratings can be submitted before, during, or after the GD.
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--text-muted)",
+                      marginBottom: 14,
+                    }}
+                  >
+                    Rate each participant on the criteria below. Ratings can be
+                    submitted before, during, or after the GD.
                   </div>
 
                   {!sessionData || activeSession !== session.id ? (
-                    <div style={{ textAlign: 'center', padding: 16, color: 'var(--text-muted)', fontSize: 12 }}>Loading participants…</div>
-                  ) : !sessionData.participants || sessionData.participants.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: 16, color: 'var(--text-muted)', fontSize: 12 }}>No participants found</div>
+                    <div
+                      style={{
+                        textAlign: "center",
+                        padding: 16,
+                        color: "var(--text-muted)",
+                        fontSize: 12,
+                      }}
+                    >
+                      Loading participants…
+                    </div>
+                  ) : !sessionData.participants ||
+                    sessionData.participants.length === 0 ? (
+                    <div
+                      style={{
+                        textAlign: "center",
+                        padding: 16,
+                        color: "var(--text-muted)",
+                        fontSize: 12,
+                      }}
+                    >
+                      No participants found
+                    </div>
                   ) : (
-                    sessionData.participants.map(p => {
+                    sessionData.participants.map((p) => {
                       const draft = getOrInitDraft(p);
                       return (
                         <div
                           key={p.id}
                           style={{
-                            padding: '14px 0',
-                            borderBottom: '1px solid var(--border-default)',
+                            padding: "14px 0",
+                            borderBottom: "1px solid var(--border-default)",
                           }}
                         >
-                          <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)', marginBottom: 10 }}>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              fontSize: 13,
+                              color: "var(--text-primary)",
+                              marginBottom: 10,
+                            }}
+                          >
                             {p.candidate_name}
                           </div>
 
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 10 }}>
-                            {RATING_CRITERIA.map(c => (
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                "repeat(auto-fit, minmax(150px, 1fr))",
+                              gap: 10,
+                              marginBottom: 10,
+                            }}
+                          >
+                            {RATING_CRITERIA.map((c) => (
                               <div key={c.key}>
-                                <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: 4 }}>{c.label}</div>
+                                <div
+                                  style={{
+                                    fontSize: 10.5,
+                                    color: "var(--text-muted)",
+                                    marginBottom: 4,
+                                  }}
+                                >
+                                  {c.label}
+                                </div>
                                 <StarRow p={p} critKey={c.key} />
                               </div>
                             ))}
@@ -472,17 +734,27 @@ export default function GDAdmin() {
                             className="search-box"
                             placeholder="Comment (optional)"
                             value={draft.comment}
-                            onChange={e => setRatingDraft(p, 'comment', e.target.value)}
-                            style={{ width: '100%', minHeight: 56, fontSize: 12, resize: 'vertical', marginBottom: 10 }}
+                            onChange={(e) =>
+                              setRatingDraft(p, "comment", e.target.value)
+                            }
+                            style={{
+                              width: "100%",
+                              minHeight: 56,
+                              fontSize: 12,
+                              resize: "vertical",
+                              marginBottom: 10,
+                            }}
                           />
 
                           <button
                             className="btn-gold"
-                            style={{ fontSize: 11.5, padding: '6px 14px' }}
+                            style={{ fontSize: 11.5, padding: "6px 14px" }}
                             disabled={savingRatingId === p.id}
                             onClick={() => saveRating(session.id, p)}
                           >
-                            {savingRatingId === p.id ? 'Saving...' : 'Save Rating'}
+                            {savingRatingId === p.id
+                              ? "Saving..."
+                              : "Save Rating"}
                           </button>
                         </div>
                       );
@@ -493,47 +765,117 @@ export default function GDAdmin() {
 
               {/* Results panel */}
               {activeSession === session.id && sessionData && (
-                <div style={{ marginTop: 16, background: 'var(--bg-surface-2)', borderRadius: 10, padding: 16 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 12, color: 'var(--text-primary)' }}>
-                    AI Scores {session.status !== 'Ended' ? '(available after GD ends)' : ''}
+                <div
+                  style={{
+                    marginTop: 16,
+                    background: "var(--bg-surface-2)",
+                    borderRadius: 10,
+                    padding: 16,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 13,
+                      marginBottom: 12,
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    AI Scores{" "}
+                    {session.status !== "Ended"
+                      ? "(available after GD ends)"
+                      : ""}
                   </div>
-                  {sessionData.participants && sessionData.participants.map(p => (
-                    <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border-default)' }}>
-                      <div className={`score-ring ${p.ai_score >= 70 ? 'high' : p.ai_score >= 50 ? 'mid' : 'low'}`} style={{ fontSize: p.ai_score ? 12 : 10 }}>
-                        {p.ai_score || '...'}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{p.candidate_name}</div>
-                        {p.ai_score && (
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                            Participation: {p.participation_score} · Communication: {p.communication_score} · Leadership: {p.leadership_score}
+                  {sessionData.participants &&
+                    sessionData.participants.map((p) => (
+                      <div
+                        key={p.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          padding: "10px 0",
+                          borderBottom: "1px solid var(--border-default)",
+                        }}
+                      >
+                        <div
+                          className={`score-ring ${p.ai_score >= 70 ? "high" : p.ai_score >= 50 ? "mid" : "low"}`}
+                          style={{ fontSize: p.ai_score ? 12 : 10 }}
+                        >
+                          {p.ai_score || "..."}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              fontSize: 13,
+                              color: "var(--text-primary)",
+                            }}
+                          >
+                            {p.candidate_name}
                           </div>
-                        )}
-                        {p.ai_feedback && (
-                          <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 4, fontStyle: 'italic' }}>{p.ai_feedback}</div>
+                          {p.ai_score && (
+                            <div
+                              style={{
+                                fontSize: 11,
+                                color: "var(--text-muted)",
+                                marginTop: 2,
+                              }}
+                            >
+                              Participation: {p.participation_score} ·
+                              Communication: {p.communication_score} ·
+                              Leadership: {p.leadership_score}
+                            </div>
+                          )}
+                          {p.ai_feedback && (
+                            <div
+                              style={{
+                                fontSize: 11.5,
+                                color: "var(--text-muted)",
+                                marginTop: 4,
+                                fontStyle: "italic",
+                              }}
+                            >
+                              {p.ai_feedback}
+                            </div>
+                          )}
+                        </div>
+                        {p.shortlisted ? (
+                          <span className="badge green">Shortlisted</span>
+                        ) : (
+                          p.ai_score && (
+                            <button
+                              className="btn-gold"
+                              style={{ fontSize: 11, padding: "5px 10px" }}
+                              onClick={() =>
+                                handleShortlist(session.id, [p.id])
+                              }
+                            >
+                              Shortlist
+                            </button>
+                          )
                         )}
                       </div>
-                      {p.shortlisted ? (
-                        <span className="badge green">Shortlisted</span>
-                      ) : p.ai_score && (
-                        <button className="btn-gold" style={{ fontSize: 11, padding: '5px 10px' }}
-                          onClick={() => handleShortlist(session.id, [p.id])}>
-                          Shortlist
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                    ))}
 
-                  {sessionData.participants && sessionData.participants.filter(p => p.ai_score && !p.shortlisted).length > 0 && (
-                    <button className="btn-gold" style={{ marginTop: 12 }}
-                      onClick={() => {
-                        const top = sessionData.participants.filter(p => p.ai_score >= 70 && !p.shortlisted).map(p => p.id);
-                        if (top.length) handleShortlist(session.id, top);
-                        else alert('No candidates scored 70 or above');
-                      }}>
-                      Shortlist All Above 70
-                    </button>
-                  )}
+                  {sessionData.participants &&
+                    sessionData.participants.filter(
+                      (p) => p.ai_score && !p.shortlisted,
+                    ).length > 0 && (
+                      <button
+                        className="btn-gold"
+                        style={{ marginTop: 12 }}
+                        onClick={() => {
+                          const top = sessionData.participants
+                            .filter((p) => p.ai_score >= 70 && !p.shortlisted)
+                            .map((p) => p.id);
+                          if (top.length) handleShortlist(session.id, top);
+                          else alert("No candidates scored 70 or above");
+                        }}
+                      >
+                        Shortlist All Above 70
+                      </button>
+                    )}
                 </div>
               )}
             </div>
