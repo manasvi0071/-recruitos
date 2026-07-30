@@ -307,6 +307,47 @@ app.post('/api/gd/create', async (req, res) => {
   }
 });
 
+// Manually add a GD result (for offline/in-person GD sessions)
+app.post('/api/gd/manual', async (req, res) => {
+  try {
+    const { candidate_name, candidate_email, topic, confidence, communication, leadership, participation, knowledge, teamwork, notes } = req.body;
+
+    if (!candidate_name || confidence == null || communication == null) {
+      return res.status(400).json({ error: 'Candidate name and at least confidence/communication scores are required' });
+    }
+
+    const scores = [confidence, communication, leadership, participation, knowledge, teamwork].filter((s) => s != null);
+    const overall = scores.length ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)) : null;
+
+    const { data, error } = await supabase
+      .from('gd_participants')
+      .insert([{
+        candidate_name,
+        candidate_email: candidate_email || null,
+        topic: topic || 'Offline GD Round',
+        confidence,
+        communication,
+        leadership,
+        participation,
+        knowledge,
+        teamwork,
+        overall,
+        ai_feedback: notes || null,
+        is_manual: true,
+        joined_at: new Date(),
+      }])
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json({ success: true, participant: data });
+  } catch (err) {
+    console.error('Manual GD entry error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start GD Session
 app.post('/api/gd/:id/start', async (req, res) => {
   const { data, error } = await supabase
