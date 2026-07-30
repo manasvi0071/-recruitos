@@ -4,7 +4,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 
-export default function CollegeAutocomplete({ colleges, value, onChange }) {
+export default function CollegeAutocomplete({ colleges, value, onChange, onCantFind }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
@@ -133,6 +133,26 @@ export default function CollegeAutocomplete({ colleges, value, onChange }) {
           {colleges.length > 50 && filtered.length === 50 && (
             <div style={{ padding: '8px 12px', fontSize: 11, color: '#BBB', borderTop: '1px solid #F2F2F5', marginTop: 4 }}>
               Showing first 50 results — keep typing to narrow it down.
+            </div>
+          )}
+
+          {onCantFind && (
+            <div
+              onClick={() => { onCantFind(); setQuery(''); setOpen(false); }}
+              style={{
+                padding: '10px 12px',
+                fontSize: 12.5,
+                fontWeight: 600,
+                color: '#8B5CF6',
+                cursor: 'pointer',
+                borderTop: '1px solid #F2F2F5',
+                marginTop: 4,
+                textAlign: 'center',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#FAF7FF'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+            >
+              Can't find your college? Enter it manually →
             </div>
           )}
         </div>

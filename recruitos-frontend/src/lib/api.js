@@ -399,7 +399,7 @@ export async function uploadResume(file) {
   return data.publicUrl;
 }
 
-export async function createCandidate({ name, email, phone, college_id, resume_url }) {
+export async function createCandidate({ name, email, phone, college_id, college_other, resume_url }) {
   const { data: existing, error: lookupError } = await supabase
     .from('candidates')
     .select('id')
@@ -410,7 +410,7 @@ export async function createCandidate({ name, email, phone, college_id, resume_u
   if (existing) {
     const { data, error } = await supabase
       .from('candidates')
-      .update({ name, phone, college_id: college_id || null, resume_url })
+      .update({ name, phone, college_id: college_id || null, college_other: college_other || null, resume_url })
       .eq('id', existing.id)
       .select()
       .single();
@@ -420,7 +420,7 @@ export async function createCandidate({ name, email, phone, college_id, resume_u
 
   const { data, error } = await supabase
     .from('candidates')
-    .insert([{ name, email, phone, college_id: college_id || null, resume_url }])
+    .insert([{ name, email, phone, college_id: college_id || null, college_other: college_other || null, resume_url }])
     .select()
     .single();
   if (error) throw error;

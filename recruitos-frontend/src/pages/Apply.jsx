@@ -26,7 +26,8 @@ export default function Apply() {
   const [appliedJobIds, setAppliedJobIds] = useState([]);
   const [scoringJobIds, setScoringJobIds] = useState([]);
 
-  const [form, setForm] = useState({ name: '', email: '', phone: '', college_id: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', college_id: '', college_other: '' });
+  const [collegeMode, setCollegeMode] = useState('search'); // 'search' | 'manual'
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -185,11 +186,39 @@ export default function Apply() {
             </div>
             <div className="field">
               <label>College</label>
-              <CollegeAutocomplete
-                colleges={colleges}
-                value={form.college_id}
-                onChange={(id) => setForm({ ...form, college_id: id })}
-              />
+              {collegeMode === 'search' ? (
+                <CollegeAutocomplete
+                  colleges={colleges}
+                  value={form.college_id}
+                  onChange={(id) => setForm({ ...form, college_id: id, college_other: '' })}
+                  onCantFind={() => {
+                    setCollegeMode('manual');
+                    setForm({ ...form, college_id: '' });
+                  }}
+                />
+              ) : (
+                <div>
+                  <input
+                    value={form.college_other}
+                    onChange={(e) => setForm({ ...form, college_other: e.target.value })}
+                    placeholder="Type your college name"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCollegeMode('search');
+                      setForm({ ...form, college_other: '' });
+                    }}
+                    style={{
+                      background: 'none', border: 'none', color: '#8B5CF6',
+                      fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                      padding: '6px 0 0', display: 'block',
+                    }}
+                  >
+                    ← Back to search
+                  </button>
+                </div>
+              )}
             </div>
             <div className="field">
               <label>Resume (PDF) *</label>
