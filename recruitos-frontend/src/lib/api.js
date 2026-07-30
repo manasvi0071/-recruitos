@@ -523,3 +523,14 @@ export async function generateJD({ prompt, company }) {
   if (!res.ok) throw new Error(data.error || 'Failed to generate JD');
   return data.jd;
 }
+
+export async function addManualGDResult(data) {
+  const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gd/manual`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.error || 'Failed to save GD result');
+  return result;
+}
