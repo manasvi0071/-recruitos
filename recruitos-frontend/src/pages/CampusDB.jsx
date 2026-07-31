@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import * as XLSX from 'xlsx';
 
@@ -11,7 +11,7 @@ const badgeForStatus = {
 };
 
 const emptyForm = {
-  name: '', city: '', course: '', tpo: '',
+  name: '', city: '', course: '', tpo: '', website: '',
   strength: '', last_contact: '', status: 'Interested',
 };
 
@@ -33,6 +33,14 @@ export default function CampusDB() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const fileInputRef = useRef(null);
+
+  // Placement coordinators: a college can have multiple (current + past).
+  // Keyed by college_id -> array of coordinator rows for that college.
+  const [expandedCollegeId, setExpandedCollegeId] = useState(null);
+  const [coordinatorsByCollege, setCoordinatorsByCollege] = useState({});
+  const [loadingCoordinators, setLoadingCoordinators] = useState(false);
+  const [coordForm, setCoordForm] = useState({ name: '', phone: '', email: '' });
+  const [savingCoord, setSavingCoord] = useState(false);
 
   // Fetches ALL rows, paging through Supabase's per-request row cap (default 1000)
   // instead of stopping at a single hardcoded range. Without this, no matter how
@@ -120,6 +128,7 @@ const filtered = colleges.filter((c) => {
       // FIX 3: don't silently default an empty course to 'Engineering'
       course: c.course || '',
       tpo: c.tpo || '',
+      website: c.website || '',
       strength: c.strength ?? '',
       last_contact: c.last_contact || '',
       status: c.status || 'Interested',
@@ -143,6 +152,7 @@ const filtered = colleges.filter((c) => {
         city: form.city,
         course: form.course || null,
         tpo: form.tpo,
+        website: form.website || null,
         strength: form.strength ? parseInt(form.strength, 10) : null,
         last_contact: form.last_contact || null,
         status: form.status,
@@ -161,6 +171,7 @@ const filtered = colleges.filter((c) => {
         city: form.city,
         course: form.course || null,
         tpo: form.tpo,
+        website: form.website || null,
         strength: form.strength ? parseInt(form.strength, 10) : null,
         last_contact: form.last_contact || null,
         status: form.status,
@@ -269,6 +280,91 @@ const mapped = rows.map((r) => ({
     await loadColleges();
   }
 
+  async function toggleCoordinators(collegeId) {
+    if (expandedCollegeId === collegeId) {
+      setExpandedCollegeId(null);
+      return;
+    }
+    setExpandedCollegeId(collegeId);
+    setCoordForm({ name: '', phone: '', email: '' });
+    if (!coordinatorsByCollege[collegeId]) {
+      setLoadingCoordinators(true);
+      const { data, error } = await supabase
+        .from('placement_coordinators')
+        .select('*')
+        .eq('college_id', collegeId)
+        .order('is_current', { ascending: false })
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error('Failed to load coordinators:', error);
+        alert('Could not load placement coordinators. Check console for details.');
+      } else {
+        setCoordinatorsByCollege((prev) => ({ ...prev, [collegeId]: data ?? [] }));
+      }
+      setLoadingCoordinators(false);
+    }
+  }
+
+  async function reloadCoordinators(collegeId) {
+    const { data, error } = await supabase
+      .from('placement_coordinators')
+      .select('*')
+      .eq('college_id', collegeId)
+      .order('is_current', { ascending: false })
+      .order('created_at', { ascending: false });
+    if (!error) {
+      setCoordinatorsByCollege((prev) => ({ ...prev, [collegeId]: data ?? [] }));
+    }
+  }
+
+  async function handleAddCoordinator(e, collegeId) {
+    e.preventDefault();
+    if (!coordForm.name.trim()) return;
+    setSavingCoord(true);
+    const { error } = await supabase.from('placement_coordinators').insert([{
+      college_id: collegeId,
+      name: coordForm.name.trim(),
+      phone: coordForm.phone || null,
+      email: coordForm.email || null,
+      is_current: true,
+    }]);
+    if (error) {
+      console.error('Failed to add coordinator:', error);
+      alert('Could not add placement coordinator. Check console for details.');
+    } else {
+      setCoordForm({ name: '', phone: '', email: '' });
+      await reloadCoordinators(collegeId);
+    }
+    setSavingCoord(false);
+  }
+
+  // Marks a coordinator as no longer current (e.g. they left) instead of
+  // deleting them, so the full history of who covered a college is preserved.
+  async function handleRetireCoordinator(coord) {
+    if (!window.confirm(`Mark "${coord.name}" as no longer the current coordinator?`)) return;
+    const { error } = await supabase.from('placement_coordinators').update({
+      is_current: false,
+      ended_at: new Date().toISOString(),
+    }).eq('id', coord.id);
+    if (error) {
+      console.error('Failed to retire coordinator:', error);
+      alert('Could not update coordinator. Check console for details.');
+    } else {
+      await reloadCoordinators(coord.college_id);
+    }
+  }
+
+  async function handleDeleteCoordinator(coord) {
+    if (!window.confirm(`Permanently delete "${coord.name}" from records? This cannot be undone.`)) return;
+    const { error } = await supabase.from('placement_coordinators').delete().eq('id', coord.id);
+    if (error) {
+      console.error('Failed to delete coordinator:', error);
+      alert('Could not delete coordinator. Check console for details.');
+    } else {
+      await reloadCoordinators(coord.college_id);
+    }
+  }
+
   function cancelImport() {
     setImportRows(null);
     setImportResult(null);
@@ -361,6 +457,10 @@ const mapped = rows.map((r) => ({
               value={form.tpo} onChange={(e) => setForm({ ...form, tpo: e.target.value })}
             />
             <input
+              className="search-box" placeholder="Website (https://...)"
+              value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })}
+            />
+            <input
               className="search-box" placeholder="Strength" type="number"
               value={form.strength} onChange={(e) => setForm({ ...form, strength: e.target.value })}
             />
@@ -420,7 +520,8 @@ const mapped = rows.map((r) => ({
               <tr><td colSpan={8} style={{ textAlign: 'center', padding: 24 }}>Loading…</td></tr>
             ) : filtered.length > 0 ? (
               filtered.map((c) => (
-<tr key={c.id}>
+<React.Fragment key={c.id}>
+<tr>
   <td>{c.name}</td>
   <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{c.institution_type || '—'}</td>
   <td>{c.city ?? '—'}</td>
@@ -432,11 +533,95 @@ const mapped = rows.map((r) => ({
     {c.courses_available ? (c.courses_available.length > 60 ? c.courses_available.slice(0, 60) + '…' : c.courses_available) : '—'}
   </td>
   <td><span className={`badge ${badgeForStatus[c.status] ?? 'gray'}`}>{c.status}</span></td>
-  <td style={{ display: 'flex', gap: 6 }}>
+  <td style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <button className="btn-outline" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => startEdit(c)}>Edit</button>
+                    <button className="btn-outline" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => toggleCoordinators(c.id)}>
+                      {expandedCollegeId === c.id ? 'Hide Coordinators' : 'Coordinators'}
+                    </button>
                     <button className="btn-outline" style={{ padding: '4px 10px', fontSize: 12, color: 'crimson' }} onClick={() => handleDeleteCollege(c.id, c.name)}>Delete</button>
                   </td>
                 </tr>
+                {expandedCollegeId === c.id && (
+                  <tr>
+                    <td colSpan={8} style={{ background: 'var(--bg-soft, #FAFAFC)', padding: 16 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10 }}>
+                        Placement Coordinators — {c.name}
+                      </div>
+
+                      {loadingCoordinators ? (
+                        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Loading…</div>
+                      ) : (
+                        <>
+                          {(coordinatorsByCollege[c.id] ?? []).length === 0 ? (
+                            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+                              No coordinators added yet.
+                            </div>
+                          ) : (
+                            <table style={{ marginBottom: 12 }}>
+                              <tbody>
+                                <tr><th>Name</th><th>Phone</th><th>Email</th><th>Status</th><th>Actions</th></tr>
+                                {(coordinatorsByCollege[c.id] ?? []).map((coord) => (
+                                  <tr key={coord.id}>
+                                    <td>{coord.name}</td>
+                                    <td>{coord.phone || '—'}</td>
+                                    <td>{coord.email || '—'}</td>
+                                    <td>
+                                      {coord.is_current ? (
+                                        <span className="badge green">Current</span>
+                                      ) : (
+                                        <span className="badge gray">Past</span>
+                                      )}
+                                    </td>
+                                    <td style={{ display: 'flex', gap: 6 }}>
+                                      {coord.is_current && (
+                                        <button
+                                          className="btn-outline"
+                                          style={{ padding: '3px 8px', fontSize: 11.5 }}
+                                          onClick={() => handleRetireCoordinator(coord)}
+                                        >
+                                          Mark as Left
+                                        </button>
+                                      )}
+                                      <button
+                                        className="btn-outline"
+                                        style={{ padding: '3px 8px', fontSize: 11.5, color: 'crimson' }}
+                                        onClick={() => handleDeleteCoordinator(coord)}
+                                      >
+                                        Delete
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+
+                          <form
+                            onSubmit={(e) => handleAddCoordinator(e, c.id)}
+                            style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}
+                          >
+                            <input
+                              className="search-box" placeholder="Name" required style={{ maxWidth: 180 }}
+                              value={coordForm.name} onChange={(e) => setCoordForm({ ...coordForm, name: e.target.value })}
+                            />
+                            <input
+                              className="search-box" placeholder="Phone" style={{ maxWidth: 160 }}
+                              value={coordForm.phone} onChange={(e) => setCoordForm({ ...coordForm, phone: e.target.value })}
+                            />
+                            <input
+                              className="search-box" placeholder="Email" type="email" style={{ maxWidth: 220 }}
+                              value={coordForm.email} onChange={(e) => setCoordForm({ ...coordForm, email: e.target.value })}
+                            />
+                            <button className="btn-gold" type="submit" disabled={savingCoord} style={{ padding: '6px 14px', fontSize: 13 }}>
+                              {savingCoord ? 'Adding…' : '+ Add Coordinator'}
+                            </button>
+                          </form>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                )}
+</React.Fragment>
               ))
             ) : (
               <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--slate-light)', padding: 24 }}>No colleges found</td></tr>

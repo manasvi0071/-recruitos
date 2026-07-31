@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 
 const emptyForm = {
   name: '', sector: '', hr_name: '', hq_location: '', hiring_status: 'Active',
+  city: '', hr_phone: '', hr_email: '', website: '', gst_no: '', industry: '', sub_industry: '',
 };
 
 export default function CorpDB() {
@@ -72,6 +73,13 @@ export default function CorpDB() {
       hr_name: c.hr_name || '',
       hq_location: c.hq_location || '',
       hiring_status: c.hiring_status || 'Active',
+      city: c.city || '',
+      hr_phone: c.hr_phone || '',
+      hr_email: c.hr_email || '',
+      website: c.website || '',
+      gst_no: c.gst_no || '',
+      industry: c.industry || '',
+      sub_industry: c.sub_industry || '',
     });
     setShowForm(true);
   }
@@ -93,6 +101,13 @@ export default function CorpDB() {
         hr_name: form.hr_name,
         hq_location: form.hq_location,
         hiring_status: form.hiring_status,
+        city: form.city || null,
+        hr_phone: form.hr_phone || null,
+        hr_email: form.hr_email || null,
+        website: form.website || null,
+        gst_no: form.gst_no || null,
+        industry: form.industry || null,
+        sub_industry: form.sub_industry || null,
       }).eq('id', editingId);
 
       if (error) {
@@ -109,6 +124,13 @@ export default function CorpDB() {
         hr_name: form.hr_name,
         hq_location: form.hq_location,
         hiring_status: form.hiring_status,
+        city: form.city || null,
+        hr_phone: form.hr_phone || null,
+        hr_email: form.hr_email || null,
+        website: form.website || null,
+        gst_no: form.gst_no || null,
+        industry: form.industry || null,
+        sub_industry: form.sub_industry || null,
       }]);
 
       if (error) {
@@ -148,6 +170,13 @@ export default function CorpDB() {
         hr_name: r.hr_name || r['HR Name'] || r.hr || '',
         hq_location: r.hq_location || r['HQ Location'] || r.hq || '',
         hiring_status: r.hiring_status || r['Hiring Status'] || 'Active',
+        city: r.city || r.City || '',
+        hr_phone: r.hr_phone || r['HR Phone'] || r['Mobile No'] || r.mobile || '',
+        hr_email: r.hr_email || r['HR Email'] || r.email || '',
+        website: r.website || r.Website || '',
+        gst_no: r.gst_no || r['GST No'] || r.GST || '',
+        industry: r.industry || r.Industry || '',
+        sub_industry: r.sub_industry || r['Sub Industry'] || '',
       })).filter((r) => r.name);
       setImportRows(mapped);
     };
@@ -166,6 +195,13 @@ export default function CorpDB() {
         hr_name: row.hr_name || null,
         hq_location: row.hq_location || null,
         hiring_status: row.hiring_status || 'Active',
+        city: row.city || null,
+        hr_phone: row.hr_phone || null,
+        hr_email: row.hr_email || null,
+        website: row.website || null,
+        gst_no: row.gst_no || null,
+        industry: row.industry || null,
+        sub_industry: row.sub_industry || null,
       }]);
       if (error) failed += 1; else success += 1;
     }
@@ -249,12 +285,40 @@ export default function CorpDB() {
               value={form.sector} onChange={(e) => setForm({ ...form, sector: e.target.value })}
             />
             <input
-              className="search-box" placeholder="HR contact name"
-              value={form.hr_name} onChange={(e) => setForm({ ...form, hr_name: e.target.value })}
+              className="search-box" placeholder="Industry"
+              value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })}
+            />
+            <input
+              className="search-box" placeholder="Sub Industry"
+              value={form.sub_industry} onChange={(e) => setForm({ ...form, sub_industry: e.target.value })}
+            />
+            <input
+              className="search-box" placeholder="City"
+              value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
             />
             <input
               className="search-box" placeholder="HQ location"
               value={form.hq_location} onChange={(e) => setForm({ ...form, hq_location: e.target.value })}
+            />
+            <input
+              className="search-box" placeholder="HR Manager name"
+              value={form.hr_name} onChange={(e) => setForm({ ...form, hr_name: e.target.value })}
+            />
+            <input
+              className="search-box" placeholder="HR mobile no."
+              value={form.hr_phone} onChange={(e) => setForm({ ...form, hr_phone: e.target.value })}
+            />
+            <input
+              className="search-box" placeholder="HR email ID" type="email"
+              value={form.hr_email} onChange={(e) => setForm({ ...form, hr_email: e.target.value })}
+            />
+            <input
+              className="search-box" placeholder="Website (https://...)"
+              value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })}
+            />
+            <input
+              className="search-box" placeholder="GST No."
+              value={form.gst_no} onChange={(e) => setForm({ ...form, gst_no: e.target.value })}
             />
             <select
               className="search-box"
@@ -282,7 +346,20 @@ export default function CorpDB() {
                 <span className="co">{c.sector ?? '—'}</span>
                 <h3>{c.name}</h3>
                 <div className="meta">
-                  HR: {c.hr_name ?? '—'} · {c.hq_location ?? '—'} HQ
+                  HR: {c.hr_name ?? '—'} · {c.city || c.hq_location ? [c.city, c.hq_location].filter(Boolean).join(', ') : '—'}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 3, margin: '8px 0', fontSize: 12.5, color: 'var(--text-secondary)' }}>
+                  {c.hr_phone && <div>📞 {c.hr_phone}</div>}
+                  {c.hr_email && <div>✉️ {c.hr_email}</div>}
+                  {c.website && (
+                    <div>
+                      <a href={c.website} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)' }}>Visit website ↗</a>
+                    </div>
+                  )}
+                  {(c.industry || c.sub_industry) && (
+                    <div>Industry: {[c.industry, c.sub_industry].filter(Boolean).join(' / ')}</div>
+                  )}
+                  {c.gst_no && <div>GST: {c.gst_no}</div>}
                 </div>
                 <div className="skills">
                   <span>Hiring: {c.hiring_status ?? '—'}</span>

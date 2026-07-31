@@ -119,8 +119,13 @@ export default function Jobs() {
   const [editingId, setEditingId] = useState(null);
 
   const [showAIGen, setShowAIGen] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiTitle, setAiTitle] = useState('');
   const [aiCompany, setAiCompany] = useState('');
+  const [aiSkills, setAiSkills] = useState('');
+  const [aiExperience, setAiExperience] = useState('');
+  const [aiLocation, setAiLocation] = useState('');
+  const [aiEmploymentType, setAiEmploymentType] = useState('');
+  const [aiSalaryRange, setAiSalaryRange] = useState('');
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState('');
 
@@ -312,31 +317,47 @@ export default function Jobs() {
   }
 
   async function handleGenerateJD() {
-    if (!aiPrompt.trim()) {
-      setGenError('Please describe the role you need');
+    if (!aiTitle.trim()) {
+      setGenError('Please enter a job title');
       return;
     }
     setGenError('');
     setGenerating(true);
     try {
-      const jd = await generateJD({ prompt: aiPrompt, company: aiCompany });
+      // Backend still takes a single prompt string, so we compose one from
+      // the structured fields the user filled in - AI drafts the rest
+      // (summary, responsibilities, qualification) from these details.
+      const parts = [`Job title: ${aiTitle.trim()}`];
+      if (aiSkills.trim()) parts.push(`Key skills required: ${aiSkills.trim()}`);
+      if (aiExperience.trim()) parts.push(`Experience level: ${aiExperience.trim()}`);
+      if (aiLocation.trim()) parts.push(`Location: ${aiLocation.trim()}`);
+      if (aiEmploymentType.trim()) parts.push(`Employment type: ${aiEmploymentType.trim()}`);
+      if (aiSalaryRange.trim()) parts.push(`Salary range: ${aiSalaryRange.trim()}`);
+      const composedPrompt = parts.join('. ') + '.';
+
+      const jd = await generateJD({ prompt: composedPrompt, company: aiCompany });
       setForm({
-        title: jd.title || '',
+        title: jd.title || aiTitle.trim(),
         company: aiCompany || '',
-        location: jd.location || '',
-        salary_range: jd.salary_range || '',
-        experience: jd.experience || '',
-        skills: (jd.skills || []).join(', '),
+        location: jd.location || aiLocation || '',
+        salary_range: jd.salary_range || aiSalaryRange || '',
+        experience: jd.experience || aiExperience || '',
+        skills: (jd.skills || []).join(', ') || aiSkills,
         job_summary: jd.job_summary || '',
         responsibilities: jd.responsibilities || '',
         qualification: jd.qualification || '',
-        employment_type: jd.employment_type || '',
+        employment_type: jd.employment_type || aiEmploymentType || '',
         reporting_to: '',
       });
       setShowAIGen(false);
       setShowForm(true);
-      setAiPrompt('');
+      setAiTitle('');
       setAiCompany('');
+      setAiSkills('');
+      setAiExperience('');
+      setAiLocation('');
+      setAiEmploymentType('');
+      setAiSalaryRange('');
     } catch (err) {
       setGenError(err.message);
     } finally {
@@ -379,26 +400,67 @@ export default function Jobs() {
       {showAIGen && (
         <div className="panel">
           <div className="panel-title">✨ Generate Job Description with AI</div>
-          <p className="panel-sub">Describe the role in plain language, and AI will draft the full JD for you to review and edit.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
+          <p className="panel-sub">Fill in the key details, and AI will draft the full JD (summary, responsibilities, qualification) for you to review and edit.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
             <div className="field" style={{ margin: 0 }}>
-              <label>Describe the role *</label>
+              <label>Job Title *</label>
               <input
-                className="search-box"
-                style={{ width: '100%' }}
-                placeholder='e.g. "Requires Business Development Engineer for a leading pharmaceutical company"'
-                value={aiPrompt}
-                onChange={(e) => setAiPrompt(e.target.value)}
+                className="search-box" style={{ width: '100%' }}
+                placeholder="e.g. Business Development Engineer"
+                value={aiTitle} onChange={(e) => setAiTitle(e.target.value)}
               />
             </div>
             <div className="field" style={{ margin: 0 }}>
               <label>Company (optional)</label>
               <input
-                className="search-box"
-                style={{ width: '100%' }}
+                className="search-box" style={{ width: '100%' }}
                 placeholder="e.g. TCS"
-                value={aiCompany}
-                onChange={(e) => setAiCompany(e.target.value)}
+                value={aiCompany} onChange={(e) => setAiCompany(e.target.value)}
+              />
+            </div>
+            <div className="field" style={{ margin: 0 }}>
+              <label>Key Skills</label>
+              <input
+                className="search-box" style={{ width: '100%' }}
+                placeholder="e.g. Sales, Communication, CRM"
+                value={aiSkills} onChange={(e) => setAiSkills(e.target.value)}
+              />
+            </div>
+            <div className="field" style={{ margin: 0 }}>
+              <label>Experience</label>
+              <input
+                className="search-box" style={{ width: '100%' }}
+                placeholder="e.g. 2-4 years"
+                value={aiExperience} onChange={(e) => setAiExperience(e.target.value)}
+              />
+            </div>
+            <div className="field" style={{ margin: 0 }}>
+              <label>Location</label>
+              <input
+                className="search-box" style={{ width: '100%' }}
+                placeholder="e.g. Mumbai"
+                value={aiLocation} onChange={(e) => setAiLocation(e.target.value)}
+              />
+            </div>
+            <div className="field" style={{ margin: 0 }}>
+              <label>Employment Type</label>
+              <select
+                className="search-box" style={{ width: '100%' }}
+                value={aiEmploymentType} onChange={(e) => setAiEmploymentType(e.target.value)}
+              >
+                <option value="">— Select —</option>
+                <option value="Full-Time">Full-Time</option>
+                <option value="Internship">Internship</option>
+                <option value="Part-Time">Part-Time</option>
+                <option value="Contract">Contract</option>
+              </select>
+            </div>
+            <div className="field" style={{ margin: 0 }}>
+              <label>Salary Range</label>
+              <input
+                className="search-box" style={{ width: '100%' }}
+                placeholder="e.g. 4-6 LPA"
+                value={aiSalaryRange} onChange={(e) => setAiSalaryRange(e.target.value)}
               />
             </div>
           </div>
