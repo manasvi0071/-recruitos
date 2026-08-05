@@ -2046,3 +2046,16 @@ body, .panel, .stat-card, .jd-card, .sidebar, .topbar, .btn-outline, .search-box
   .split-hero-grid { grid-template-columns: 1fr !important; }
   .about-grid-editorial { grid-template-columns: 1fr !important; }
 }
+.chart-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 20px 20px 8px;
+  margin-bottom: 20px;
+}
+.recharts-cartesian-axis-tick text {
+  fill: var(--text-muted) !important;
+}
+.recharts-legend-item-text {
+  color: var(--text-secondary) !important;
+}

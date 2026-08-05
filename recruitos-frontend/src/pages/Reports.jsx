@@ -226,9 +226,12 @@ export default function Reports() {
       {active === "campus" && (
         <div className="panel">
           <div className="panel-title">Campus-wise Report</div>
-          <div style={{ width: "100%", height: 360, marginBottom: 20 }}>
+          <div className="chart-card" style={{ width: "100%", height: 360 }}>
             <ResponsiveContainer>
-              <BarChart data={campusRows.slice(0, 10)}>
+              <BarChart
+                data={campusRows.slice(0, 10)}
+                margin={{ top: 10, right: 10, left: -10, bottom: 10 }}
+              >
                 <CartesianGrid
                   strokeDasharray="3 3"
                   stroke="var(--border-default)"
@@ -297,9 +300,12 @@ export default function Reports() {
       {active === "company" && (
         <div className="panel">
           <div className="panel-title">Company-wise Report</div>
-          <div style={{ width: "100%", height: 360, marginBottom: 20 }}>
+          <div className="chart-card" style={{ width: "100%", height: 360 }}>
             <ResponsiveContainer>
-              <BarChart data={companyRows.slice(0, 10)}>
+              <BarChart
+                data={companyRows.slice(0, 10)}
+                margin={{ top: 10, right: 10, left: -10, bottom: 10 }}
+              >
                 <CartesianGrid
                   strokeDasharray="3 3"
                   stroke="var(--border-default)"
