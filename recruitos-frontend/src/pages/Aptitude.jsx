@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getAptitudeResults, addAptitudeResult, getCandidates, getJobs, generateAptitudeTest, sendAptitudeInvite } from '../lib/api';
+import { getAptitudeResults, addAptitudeResult, getCandidatesByStage, getJobs, generateAptitudeTest, sendAptitudeInvite } from '../lib/api';
 
 export default function Aptitude() {
   const [results, setResults] = useState([]);
@@ -25,10 +25,12 @@ export default function Aptitude() {
   const [sendError, setSendError] = useState('');
   const [sendSuccess, setSendSuccess] = useState('');
 
+  // Only candidates the Pipeline board has moved into the "Aptitude" column
+  // show up here — keeps this module in sync with the pipeline stage.
   async function loadAll() {
     setLoading(true);
     try {
-      const [r, c, j] = await Promise.all([getAptitudeResults(), getCandidates(), getJobs()]);
+      const [r, c, j] = await Promise.all([getAptitudeResults(), getCandidatesByStage('Aptitude'), getJobs()]);
       setResults(r);
       setCandidates(c);
       setJobs(j);
@@ -46,7 +48,7 @@ export default function Aptitude() {
     async function init() {
       setLoading(true);
       try {
-        const [r, c, j] = await Promise.all([getAptitudeResults(), getCandidates(), getJobs()]);
+        const [r, c, j] = await Promise.all([getAptitudeResults(), getCandidatesByStage('Aptitude'), getJobs()]);
         if (!ignore) {
           setResults(r);
           setCandidates(c);

@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { getInterviews, addInterview, getCandidates, getAllApplications } from '../lib/api';
+import { getInterviews, addInterview, getAllApplications } from '../lib/api';
 
 export default function Interview() {
   const [interviews, setInterviews] = useState([]);
-  const [candidates, setCandidates] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,8 +24,8 @@ export default function Interview() {
 
   function loadAll() {
     setLoading(true);
-    Promise.all([getInterviews(), getCandidates(), getAllApplications()])
-      .then(([i, c, a]) => { setInterviews(i); setCandidates(c); setApplications(a); })
+    Promise.all([getInterviews(), getAllApplications()])
+      .then(([i, a]) => { setInterviews(i); setApplications(a); })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }
@@ -36,8 +35,8 @@ export default function Interview() {
     async function init() {
       setLoading(true);
       try {
-        const [i, c, a] = await Promise.all([getInterviews(), getCandidates(), getAllApplications()]);
-        if (!ignore) { setInterviews(i); setCandidates(c); setApplications(a); setError(''); }
+        const [i, a] = await Promise.all([getInterviews(), getAllApplications()]);
+        if (!ignore) { setInterviews(i); setApplications(a); setError(''); }
       } catch (err) {
         if (!ignore) setError(err.message);
       } finally {
@@ -120,6 +119,13 @@ export default function Interview() {
   }
 
   const linkGroups = groupByCandidate(applications, (a) => a.candidates);
+  // Only candidates the Pipeline board has moved into the "Interview" column
+  // are offered in the "Add Interview" form — keeps this module in sync
+  // with the pipeline stage.
+  const interviewStageCandidates = groupByCandidate(
+    applications.filter((a) => a.stage === 'Interview'),
+    (a) => a.candidates
+  ).map((g) => g.candidate).filter(Boolean);
   const mockGroups = groupByCandidate(mockInterviews, (i) => i.candidates);
   const personalGroups = groupByCandidate(personalInterviews, (i) => i.candidates);
 
@@ -197,7 +203,7 @@ export default function Interview() {
               <label>Candidate *</label>
               <select value={form.candidate_id} onChange={(e) => setForm({ ...form, candidate_id: e.target.value })} required>
                 <option value="">Select candidate…</option>
-                {candidates.map((c) => (
+                {interviewStageCandidates.map((c) => (
                   <option key={c.id} value={c.id}>{c.name} {c.colleges?.name ? `— ${c.colleges.name} (In-house)` : '(Corporate)'}</option>
                 ))}
               </select>

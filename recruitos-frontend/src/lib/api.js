@@ -285,6 +285,24 @@ export async function getCandidates() {
   return data;
 }
 
+// Only candidates who currently have an application sitting in the given
+// Pipeline stage (e.g. 'Aptitude', 'GD', 'Interview'). Used to keep the
+// candidate dropdowns in those modules in sync with the Hiring Pipeline board.
+export async function getCandidatesByStage(stage) {
+  const { data, error } = await supabase
+    .from('applications')
+    .select('job_id, candidates ( id, name, email, college_id, colleges ( name ) )')
+    .eq('stage', stage);
+  if (error) throw error;
+
+  const seen = new Map();
+  (data || []).forEach((row) => {
+    const c = row.candidates;
+    if (c && !seen.has(c.id)) seen.set(c.id, { ...c, job_id: row.job_id });
+  });
+  return Array.from(seen.values());
+}
+
 export async function addOffer({ candidate_id, job_id, ctc, status, sent_on }) {
   const { data, error } = await supabase
     .from('offers')

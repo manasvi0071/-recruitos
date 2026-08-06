@@ -2,6 +2,7 @@ const express = require('express');
 const Groq = require('groq-sdk');
 const { createClient } = require('@supabase/supabase-js');
 const { sendAIInterviewInviteEmail } = require('./emailService');
+const { moveApplicationStage } = require('./pipelineSync');
 
 const router = express.Router();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -187,6 +188,16 @@ router.post('/submit/:token', async (req, res) => {
       .select()
       .single();
     if (resultErr) throw resultErr;
+
+    // Pipeline sync: passing auto-moves the candidate from Aptitude to GD.
+    if (passed) {
+      await moveApplicationStage(supabase, {
+        candidateId: invite.candidate_id,
+        jobId: invite.job_id,
+        fromStage: 'Aptitude',
+        toStage: 'GD',
+      });
+    }
 
     res.json({ success: true, score, total, passed, result });
   } catch (err) {

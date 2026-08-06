@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { getCandidatesByStage } from "../lib/api";
 
 const RATING_CRITERIA = [
   { key: "confidence", label: "Confidence" },
@@ -34,14 +35,16 @@ export default function GDAdmin() {
     setSessions(data || []);
   };
 
+  // Only candidates the Pipeline board has moved into the "GD" column show
+  // up here — keeps this module in sync with the pipeline stage.
   const fetchCandidates = async () => {
-    const { data, error } = await supabase
-      .from("candidates")
-      .select("id, name, email, colleges(name)");
-    if (error) {
-      console.error("Failed to load candidates:", error);
+    try {
+      const data = await getCandidatesByStage("GD");
+      setCandidates(data || []);
+    } catch (err) {
+      console.error("Failed to load candidates:", err);
+      setCandidates([]);
     }
-    setCandidates(data || []);
   };
 
   useEffect(() => {

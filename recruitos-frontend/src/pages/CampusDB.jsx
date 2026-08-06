@@ -543,7 +543,7 @@ const mapped = rows.map((r) => ({
                 </tr>
                 {expandedCollegeId === c.id && (
                   <tr>
-                    <td colSpan={8} style={{ background: 'var(--bg-soft, #FAFAFC)', padding: 16 }}>
+                    <td colSpan={8} style={{ background: 'var(--bg-surface-2)', padding: 16 }}>
                       <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10 }}>
                         Placement Coordinators — {c.name}
                       </div>

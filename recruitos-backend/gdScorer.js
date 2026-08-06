@@ -1,5 +1,6 @@
 const Groq = require('groq-sdk');
 const { createClient } = require('@supabase/supabase-js');
+const { moveApplicationStage } = require('./pipelineSync');
 require('dotenv').config();
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -12,7 +13,7 @@ async function scoreGDSession(sessionId) {
     // Get session topic
     const { data: session } = await supabase
       .from('gd_sessions')
-      .select('topic')
+      .select('topic, job_id')
       .eq('id', sessionId)
       .single();
 
@@ -108,6 +109,19 @@ Score this participant and respond ONLY in this exact JSON format:
           ai_feedback: result.feedback,
         })
         .eq('id', participant.id);
+
+      // Pipeline sync: fallback trigger for candidates sir hasn't manually
+      // rated yet — a strong AI score also moves them GD → Interview.
+      // (If sir later gives a manual rating ≥3/5, that check in index.js
+      // runs independently — harmless here since stage won't be 'GD' anymore.)
+      if (result.overall_score >= 70 && participant.candidate_id) {
+        await moveApplicationStage(supabase, {
+          candidateId: participant.candidate_id,
+          jobId: session.job_id,
+          fromStage: 'GD',
+          toStage: 'Interview',
+        });
+      }
 
       console.log(`✅ Scored ${participant.candidate_name}: ${result.overall_score}/100`);
     }

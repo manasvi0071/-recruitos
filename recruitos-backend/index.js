@@ -19,6 +19,7 @@ const aiInterviewRoutes = require('./aiInterviewRoutes');
 const aptitudeRoutes = require('./aptitudeRoutes');
 const { createGDRoom, createMeetingToken } = require('./dailyService');
 const jdRoutes = require('./jdRoutes');
+const { moveApplicationStage } = require('./pipelineSync');
 
 const app = express();
 app.use(cors());
@@ -468,7 +469,7 @@ app.post('/api/gd/:id/shortlist', async (req, res) => {
 
   const { data: session } = await supabase
     .from('gd_sessions')
-    .select('topic')
+    .select('topic, job_id')
     .eq('id', req.params.id)
     .single();
 
@@ -478,6 +479,16 @@ app.post('/api/gd/:id/shortlist', async (req, res) => {
       studentEmail: p.candidate_email,
       topic: session.topic,
     });
+
+    // Pipeline sync: shortlisting from GD moves the candidate to Interview.
+    if (p.candidate_id) {
+      await moveApplicationStage(supabase, {
+        candidateId: p.candidate_id,
+        jobId: session?.job_id,
+        fromStage: 'GD',
+        toStage: 'Interview',
+      });
+    }
   }
 
   res.json({ success: true });
@@ -531,6 +542,30 @@ app.post('/api/gd/participant/:participantId/manual-rating', async (req, res) =>
 
     if (!data) {
       return res.status(404).json({ error: 'Participant not found' });
+    }
+
+    // Pipeline sync: if the rated criteria average out to 3/5 or higher,
+    // auto-move the candidate from GD to Interview on the pipeline board.
+    const ratedValues = [confidence, communication, content_knowledge, leadership, teamwork]
+      .filter((v) => v !== undefined && v !== null)
+      .map(Number);
+
+    if (ratedValues.length > 0 && data.candidate_id) {
+      const avg = ratedValues.reduce((a, b) => a + b, 0) / ratedValues.length;
+      if (avg >= 3) {
+        const { data: session } = await supabase
+          .from('gd_sessions')
+          .select('job_id')
+          .eq('id', data.session_id)
+          .single();
+
+        await moveApplicationStage(supabase, {
+          candidateId: data.candidate_id,
+          jobId: session?.job_id,
+          fromStage: 'GD',
+          toStage: 'Interview',
+        });
+      }
     }
 
     res.json({ success: true, participant: data });
