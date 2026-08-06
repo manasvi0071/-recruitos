@@ -199,6 +199,19 @@ export async function addAptitudeResult({ candidate_id, job_id, score, total }) 
     .select()
     .single();
   if (error) throw error;
+
+  if (passed) {
+    const { data: app } = await supabase
+      .from('applications')
+      .select('id')
+      .eq('candidate_id', candidate_id)
+      .eq('stage', 'Aptitude')
+      .maybeSingle();
+    if (app) {
+      await supabase.from('applications').update({ stage: 'GD' }).eq('id', app.id);
+    }
+  }
+
   return data;
 }
 
@@ -217,19 +230,23 @@ export async function addGdRating({ candidate_id, confidence, communication, lea
   const overall = Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1));
   const { data, error } = await supabase
     .from('gd_ratings')
-    .insert([{
-      candidate_id,
-      confidence: vals[0],
-      communication: vals[1],
-      leadership: vals[2],
-      participation: vals[3],
-      knowledge: vals[4],
-      teamwork: vals[5],
-      overall,
-    }])
+    .insert([{ candidate_id, confidence: vals[0], communication: vals[1], leadership: vals[2], participation: vals[3], knowledge: vals[4], teamwork: vals[5], overall }])
     .select()
     .single();
   if (error) throw error;
+
+  if (overall >= 3) {
+    const { data: app } = await supabase
+      .from('applications')
+      .select('id')
+      .eq('candidate_id', candidate_id)
+      .eq('stage', 'GD')
+      .maybeSingle();
+    if (app) {
+      await supabase.from('applications').update({ stage: 'Interview' }).eq('id', app.id);
+    }
+  }
+
   return data;
 }
 
@@ -551,4 +568,13 @@ export async function addManualGDResult(data) {
   const result = await res.json();
   if (!res.ok) throw new Error(result.error || 'Failed to save GD result');
   return result;
+}
+
+export async function getCandidatesInEmailPhase(phase) {
+  const { data, error } = await supabase
+    .from('applications')
+    .select('id, stage, candidates(name, email)')
+    .eq('stage', phase);
+  if (error) throw error;
+  return data;
 }
