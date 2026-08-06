@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 
 export default function AuthPanel() {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
+
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
@@ -49,37 +50,29 @@ export default function AuthPanel() {
           <form onSubmit={handleLogin}>
             <div className="field">
               <label>Email</label>
-              <input type="email" value={loginForm.email} onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })} required />
+              <input
+                type="email"
+                value={loginForm.email}
+                onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                required
+              />
             </div>
             <div className="field">
               <label>Password</label>
-              <input type="password" value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} required />
+              <input
+                type="password"
+                value={loginForm.password}
+                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                required
+              />
             </div>
-            {loginError && <p style={{ color: 'var(--danger)', fontSize: 12.5, marginBottom: 10 }}>{loginError}</p>}
+            {loginError && (
+              <p style={{ color: 'var(--danger)', fontSize: 12.5, marginBottom: 10 }}>{loginError}</p>
+            )}
             <button className="btn-primary" type="submit" disabled={loggingIn} style={{ marginTop: 8 }}>
               {loggingIn ? 'Logging in…' : 'Log In'}
             </button>
           </form>
-        </div>
-
-        <div className="auth-side-panel" style={{ left: mode === 'login' ? '50%' : 0 }}>
-          {mode === 'login' ? (
-            <>
-              <h3 style={{ fontFamily: 'var(--font-display)', marginBottom: 10 }}>New here?</h3>
-              <p style={{ fontSize: 13, opacity: 0.85, marginBottom: 22, lineHeight: 1.6 }}>Request access and an admin will review your details.</p>
-              <button className="btn-outline" style={{ background: 'white', color: 'var(--brand-purple)', border: 'none' }} onClick={() => setMode('register')}>
-                Create Request
-              </button>
-            </>
-          ) : (
-            <>
-              <h3 style={{ fontFamily: 'var(--font-display)', marginBottom: 10 }}>Already approved?</h3>
-              <p style={{ fontSize: 13, opacity: 0.85, marginBottom: 22, lineHeight: 1.6 }}>Log in with your existing credentials.</p>
-              <button className="btn-outline" style={{ background: 'white', color: 'var(--brand-purple)', border: 'none' }} onClick={() => setMode('login')}>
-                Log In
-              </button>
-            </>
-          )}
         </div>
 
         <div className="auth-form-panel register">
@@ -94,27 +87,80 @@ export default function AuthPanel() {
           ) : (
             <>
               <h2 style={{ fontFamily: 'var(--font-display)', marginBottom: 6 }}>Request Access</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>Submit your details for admin review.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>
+                Submit your details for admin review.
+              </p>
               <form onSubmit={handleRegister}>
                 <div className="field">
                   <label>Full Name</label>
-                  <input value={regForm.name} onChange={(e) => setRegForm({ ...regForm, name: e.target.value })} required />
+                  <input
+                    value={regForm.name}
+                    onChange={(e) => setRegForm({ ...regForm, name: e.target.value })}
+                    required
+                  />
                 </div>
                 <div className="field">
                   <label>Email</label>
-                  <input type="email" value={regForm.email} onChange={(e) => setRegForm({ ...regForm, email: e.target.value })} required />
+                  <input
+                    type="email"
+                    value={regForm.email}
+                    onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
+                    required
+                  />
                 </div>
                 <div className="field">
                   <label>Password</label>
-                  <input type="password" value={regForm.password} onChange={(e) => setRegForm({ ...regForm, password: e.target.value })} required minLength={6} />
+                  <input
+                    type="password"
+                    value={regForm.password}
+                    onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
+                    required
+                    minLength={6}
+                  />
                 </div>
-                {regError && <p style={{ color: 'var(--danger)', fontSize: 12.5, marginBottom: 10 }}>{regError}</p>}
+                {regError && (
+                  <p style={{ color: 'var(--danger)', fontSize: 12.5, marginBottom: 10 }}>{regError}</p>
+                )}
                 <button className="btn-primary" type="submit" disabled={regStatus === 'loading'} style={{ marginTop: 8 }}>
                   {regStatus === 'loading' ? 'Submitting…' : 'Submit Request'}
                 </button>
               </form>
             </>
           )}
+        </div>
+
+        <div className="auth-overlay">
+          <div className="auth-overlay-content">
+            {mode === 'login' ? (
+              <>
+                <h3 style={{ fontFamily: 'var(--font-display)', marginBottom: 10 }}>New here?</h3>
+                <p style={{ fontSize: 13, opacity: 0.85, marginBottom: 22, lineHeight: 1.6 }}>
+                  Request access and an admin will review your details.
+                </p>
+                <button
+                  className="btn-outline"
+                  style={{ background: 'white', color: 'var(--brand-purple)', border: 'none' }}
+                  onClick={() => setMode('register')}
+                >
+                  Create Request
+                </button>
+              </>
+            ) : (
+              <>
+                <h3 style={{ fontFamily: 'var(--font-display)', marginBottom: 10 }}>Already approved?</h3>
+                <p style={{ fontSize: 13, opacity: 0.85, marginBottom: 22, lineHeight: 1.6 }}>
+                  Log in with your existing credentials.
+                </p>
+                <button
+                  className="btn-outline"
+                  style={{ background: 'white', color: 'var(--brand-purple)', border: 'none' }}
+                  onClick={() => setMode('login')}
+                >
+                  Log In
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
       </div>
