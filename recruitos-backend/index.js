@@ -627,9 +627,12 @@ app.post('/api/auth/register', async (req, res) => {
     }]);
     if (profileError) return res.status(500).json({ error: profileError.message });
 
-    await sendAdminApprovalNotification({ name, email });
-
     res.json({ success: true, message: 'Registration submitted. Await admin approval.' });
+
+     // Send the notification after responding (fire-and-forget)
+    sendAdminApprovalNotification({ name, email }).catch((err) =>
+      console.error('Admin notification email failed:', err)
+    );
   } catch (err) {
     console.error('Register error:', err);
     res.status(500).json({ error: err.message });
