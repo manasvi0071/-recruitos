@@ -24,9 +24,9 @@ export default function Login() {
     <div id="screen-login">
       <div className="login-brand-side">
         <div className="login-logo">
-          <div className="brand-mark">R</div>
+          <div className="brand-mark">SC</div>
           <div>
-            <div style={{ fontFamily: "'Fraunces',serif", fontWeight: 600, fontSize: 17, color: 'var(--white)' }}>RecruitOS</div>
+            <div style={{ fontFamily: "'Fraunces',serif", fontWeight: 600, fontSize: 17, color: 'var(--white)' }}>Saarthi Campus</div>
             <div style={{ fontSize: 10, color: 'var(--gold-soft)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Campus Recruitment Platform</div>
           </div>
         </div>

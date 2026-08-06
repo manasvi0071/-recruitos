@@ -13,6 +13,16 @@ const nav = [
     { key: 'offers', icon: '→', label: 'Offer Letters' },
     { key: 'pipeline', icon: '→', label: 'Hiring Pipeline' },
   ]},
+  {
+  section: "Admin",
+  items: [
+    {
+      key: "pendingapprovals",
+      icon: "✓",
+      label: "Pending Approvals",
+    },
+  ],
+},
   { section: 'Tracking', items: [
     { key: 'joining', icon: '●', label: 'Joining Tracker' },
     { key: 'comm', icon: '●', label: 'Communication CRM' },

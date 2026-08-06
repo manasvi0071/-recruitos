@@ -275,6 +275,22 @@ async function sendAIInterviewInviteEmail({ studentName, studentEmail, jobTitle,
   });
 }
 
+async function sendAdminApprovalNotification({ name, email }) {
+  await resend.emails.send({
+    from: FROM,
+    to: process.env.GMAIL_USER, // sends to your admin inbox — change if you want a specific admin email
+    subject: `New Registration Request — ${name}`,
+    html: `
+      <div style="font-family:Inter,sans-serif;max-width:580px;margin:auto;padding:32px;color:#33363F;">
+        <h2>New account request</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p>Log in to the admin panel to approve or reject this request.</p>
+      </div>
+    `,
+  });
+}
+
 module.exports = {
   generateAIEmailContent,
   sendAIGeneratedEmail,
@@ -285,4 +301,5 @@ module.exports = {
   sendGDInviteEmail,
   sendGDShortlistEmail,
   sendAIInterviewInviteEmail,
+  sendAdminApprovalNotification,
 };

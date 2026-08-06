@@ -27,7 +27,7 @@ app.use(express.json());
 app.use('/api/ai-interview', aiInterviewRoutes);
 app.use('/api/aptitude', aptitudeRoutes);
 app.use('/api/jd', jdRoutes);
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 // ---- COLLEGES ----
 app.get('/api/colleges', async (req, res) => {
@@ -601,4 +601,59 @@ app.get('/api/gd/:id/token', async (req, res) => {
     console.error('GD token error:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+const { sendAdminApprovalNotification } = require('./emailService');
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password, name } = req.body;
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Name, email, and password are required' });
+    }
+
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+    if (authError) return res.status(400).json({ error: authError.message });
+
+    const { error: profileError } = await supabase.from('profiles').insert([{
+      id: authData.user.id,
+      email,
+      name,
+      approved: false,
+    }]);
+    if (profileError) return res.status(500).json({ error: profileError.message });
+
+    await sendAdminApprovalNotification({ name, email });
+
+    res.json({ success: true, message: 'Registration submitted. Await admin approval.' });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: list all pending users
+app.get('/api/auth/pending', async (req, res) => {
+  const { data, error } = await supabase.from('profiles').select('*').eq('approved', false).order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// Admin: approve a user
+app.post('/api/auth/approve/:userId', async (req, res) => {
+  const { error } = await supabase.from('profiles').update({ approved: true }).eq('id', req.params.userId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
+// Admin: reject/delete a pending user
+app.post('/api/auth/reject/:userId', async (req, res) => {
+  const { userId } = req.params;
+  await supabase.from('profiles').delete().eq('id', userId);
+  await supabase.auth.admin.deleteUser(userId);
+  res.json({ success: true });
 });
