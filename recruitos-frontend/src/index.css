@@ -2103,7 +2103,7 @@ body, .panel, .stat-card, .jd-card, .sidebar, .topbar, .btn-outline, .search-box
 .auth-overlay {
   position: absolute;
   top: 0;
-  left: 0;
+  left: 50%;
   width: 50%;
   height: 100%;
   background: var(--gradient-brand-2);
@@ -2118,7 +2118,7 @@ body, .panel, .stat-card, .jd-card, .sidebar, .topbar, .btn-outline, .search-box
   transition: transform 0.55s cubic-bezier(0.65, 0, 0.35, 1);
 }
 .auth-shell.show-register .auth-overlay {
-  transform: translateX(100%);
+  transform: translateX(-100%);
 }
 
 .auth-overlay-content {
