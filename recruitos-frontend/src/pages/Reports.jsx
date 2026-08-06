@@ -226,7 +226,7 @@ export default function Reports() {
       {active === "campus" && (
         <div className="panel">
           <div className="panel-title">Campus-wise Report</div>
-          <div className="chart-card" style={{ width: "100%", height: 360 }}>
+          <div className="chart-card" style={{ width: '100%', maxWidth: 700, height: 260, margin: '0 auto 20px' }}>
             <ResponsiveContainer>
               <BarChart
                 data={campusRows.slice(0, 10)}

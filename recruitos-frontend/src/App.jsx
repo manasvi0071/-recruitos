@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabaseClient";
-import Login from "./components/Login";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import CampusDB from "./pages/CampusDB";
@@ -21,8 +20,8 @@ import AIInterview from "./pages/AIInterview";
 import Landing from "./pages/Landing";
 import ThemeToggle from "./components/ThemeToggle";
 import AptitudeTest from "./pages/Aptitude";
-import Register from "./pages/Register";
 import PendingApprovals from "./pages/PendingApprovals";
+import AuthPanel from './components/AuthPanel';
 
 const pages = {
   dashboard: Dashboard,
@@ -107,7 +106,7 @@ export default function App() {
   }
 
   if (window.location.pathname === "/register") {
-    return <Register />;
+    return <AuthPanel />;
   }
 
   const isAppRoute = window.location.pathname.startsWith("/app");
@@ -122,7 +121,7 @@ export default function App() {
     }
 
     if (!session) {
-      return <Login />;
+      return <AuthPanel />;
     }
 
     if (profileApproved === null) {
@@ -176,9 +175,9 @@ export default function App() {
       <div id="screen-app" style={{ display: "block" }}>
         <div className="topbar">
           <div className="brand">
-            <div className="brand-mark">R</div>
+            <div className="brand-mark">SC</div>
             <div>
-              <div className="brand-name">RecruitOS</div>
+              <div className="brand-name">Saarthi Campus</div>
               <div className="brand-sub">Campus Recruitment Platform</div>
             </div>
           </div>
