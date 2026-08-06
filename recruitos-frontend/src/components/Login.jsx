@@ -43,7 +43,7 @@ export default function Login() {
           <div className="login-logo">
             <div className="brand-mark">R</div>
             <div>
-              <div style={{ fontFamily: "'Fraunces',serif", fontWeight: 600, fontSize: 17, color: 'var(--navy-deep)' }}>RecruitOS</div>
+              <div style={{ fontFamily: "'Fraunces',serif", fontWeight: 600, fontSize: 17, color: 'var(--navy-deep)' }}>Saarthi Campus</div>
               <div style={{ fontSize: 10, color: 'var(--slate-light)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Campus Recruitment Platform</div>
             </div>
           </div>
