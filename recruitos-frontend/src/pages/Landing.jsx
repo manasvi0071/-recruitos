@@ -134,16 +134,18 @@ const stats = [
 ];
 
 const marqueeItems = [
-  "TCS",
-  "Infosys",
-  "Wipro",
-  "HCL",
-  "Cognizant",
-  "Tech Mahindra",
-  "Capgemini",
-  "Accenture",
-  "Pharma Leaders",
-  "900+ Clients",
+  'Information Technology',
+  'Pharmaceuticals',
+  'Banking & Finance',
+  'Manufacturing',
+  'Healthcare',
+  'FMCG',
+  'E-commerce & Retail',
+  'BPO / KPO',
+  'Real Estate',
+  'Logistics & Supply Chain',
+  'Education',
+  'Telecom',
 ];
 
 const features = [
@@ -301,7 +303,7 @@ export default function Landing() {
             <a href="#features">Why Us</a>
             <a href="#growth">Career Growth</a>
             <a href="#contact">Contact</a>
-            <a href="/app">Team Login</a>
+            <a href="/app">Login</a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <ThemeToggle />
