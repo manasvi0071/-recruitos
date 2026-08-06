@@ -10,6 +10,12 @@ const badgeForStatus = {
   'Not Interested': 'gray',
 };
 
+const statusColors = {
+  'Interested': { bg: '#0fae72', text: '#ffffff' },
+  'Follow-up Due': { bg: '#f2b705', text: '#513c04' },
+  'Not Interested': { bg: '#e5e7eb', text: '#4b5563' },
+};
+
 const emptyForm = {
   name: '', city: '', course: '', tpo: '', website: '',
   strength: '', last_contact: '', status: 'Interested',
@@ -136,6 +142,12 @@ const filtered = colleges.filter((c) => {
     setShowForm(true);
   }
 
+  function startAdd() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  }
+
   function cancelForm() {
     setShowForm(false);
     setEditingId(null);
@@ -186,6 +198,17 @@ const filtered = colleges.filter((c) => {
       }
     }
     setSaving(false);
+  }
+
+  async function handleStatusChange(id, newStatus) {
+    // Optimistic update so the dropdown feels instant, then sync to Supabase.
+    setColleges((prev) => prev.map((c) => (c.id === id ? { ...c, status: newStatus } : c)));
+    const { error } = await supabase.from('colleges').update({ status: newStatus }).eq('id', id);
+    if (error) {
+      console.error('Failed to update status:', error);
+      alert('Could not update status. Check console for details.');
+      await loadColleges();
+    }
   }
 
   async function handleDeleteCollege(id, name) {
@@ -387,9 +410,7 @@ const mapped = rows.map((r) => ({
             onChange={handleFileSelect}
           />
           <button className="btn-outline" onClick={() => fileInputRef.current.click()}>Import Excel</button>
-          <button className="btn-gold" onClick={() => (showForm ? cancelForm() : setShowForm(true))}>
-            {showForm ? 'Cancel' : '+ Add College'}
-          </button>
+          <button className="btn-gold" onClick={startAdd}>+ Add College</button>
         </div>
       </div>
 
@@ -430,56 +451,6 @@ const mapped = rows.map((r) => ({
             </button>
             <button className="btn-outline" onClick={cancelImport}>Cancel</button>
           </div>
-        </div>
-      )}
-
-      {showForm && (
-        <div className="panel">
-          <div className="panel-title">{editingId ? 'Edit College' : 'Add New College'}</div>
-          <form onSubmit={handleSaveCollege} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <input
-              className="search-box" placeholder="College name" required
-              value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-            <input
-              className="search-box" placeholder="City"
-              value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
-            />
-            <select
-              className="search-box"
-              value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })}
-            >
-              <option value="">— No course —</option>
-              {courses.filter((c) => c !== 'Unassigned').map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <input
-              className="search-box" placeholder="TPO name"
-              value={form.tpo} onChange={(e) => setForm({ ...form, tpo: e.target.value })}
-            />
-            <input
-              className="search-box" placeholder="Website (https://...)"
-              value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })}
-            />
-            <input
-              className="search-box" placeholder="Strength" type="number"
-              value={form.strength} onChange={(e) => setForm({ ...form, strength: e.target.value })}
-            />
-            <input
-              className="search-box" type="date"
-              value={form.last_contact} onChange={(e) => setForm({ ...form, last_contact: e.target.value })}
-            />
-            <select
-              className="search-box"
-              value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}
-            >
-              <option value="Interested">Interested</option>
-              <option value="Follow-up Due">Follow-up Due</option>
-              <option value="Not Interested">Not Interested</option>
-            </select>
-            <button className="btn-gold" type="submit" disabled={saving}>
-              {saving ? 'Saving…' : editingId ? 'Update College' : 'Save College'}
-            </button>
-          </form>
         </div>
       )}
 
@@ -532,7 +503,36 @@ const mapped = rows.map((r) => ({
   <td style={{ maxWidth: 260, fontSize: 11.5, color: 'var(--text-muted)' }} title={c.courses_available}>
     {c.courses_available ? (c.courses_available.length > 60 ? c.courses_available.slice(0, 60) + '…' : c.courses_available) : '—'}
   </td>
-  <td><span className={`badge ${badgeForStatus[c.status] ?? 'gray'}`}>{c.status}</span></td>
+  <td>
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <select
+        value={c.status || 'Interested'}
+        onChange={(e) => handleStatusChange(c.id, e.target.value)}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          border: 'none', outline: 'none', boxShadow: 'none', cursor: 'pointer',
+          fontWeight: 600, fontSize: 11.5,
+          appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
+          borderRadius: 999, padding: '3px 16px 3px 8px', lineHeight: 1.3,
+          backgroundColor: statusColors[c.status]?.bg ?? statusColors['Interested'].bg,
+          color: statusColors[c.status]?.text ?? statusColors['Interested'].text,
+        }}
+      >
+        <option value="Interested" style={{ backgroundColor: '#ffffff', color: '#111827' }}>Interested</option>
+        <option value="Follow-up Due" style={{ backgroundColor: '#ffffff', color: '#111827' }}>Follow-up Due</option>
+        <option value="Not Interested" style={{ backgroundColor: '#ffffff', color: '#111827' }}>Not Interested</option>
+      </select>
+      <span
+        style={{
+          position: 'absolute', right: 5, top: '50%', transform: 'translateY(-55%)',
+          pointerEvents: 'none', fontSize: 9, lineHeight: 1, opacity: 0.85,
+          color: statusColors[c.status]?.text ?? statusColors['Interested'].text,
+        }}
+      >
+        ▼
+      </span>
+    </div>
+  </td>
   <td style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <button className="btn-outline" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => startEdit(c)}>Edit</button>
                     <button className="btn-outline" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => toggleCoordinators(c.id)}>
@@ -629,6 +629,74 @@ const mapped = rows.map((r) => ({
           </tbody>
         </table>
       </div>
+
+      {showForm && (
+        <div
+          onClick={cancelForm}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="panel"
+            style={{ maxWidth: 640, width: '100%', maxHeight: '85vh', overflowY: 'auto' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <div className="panel-title" style={{ margin: 0 }}>{editingId ? 'Edit College' : 'Add New College'}</div>
+              <button onClick={cancelForm} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+            </div>
+            <form onSubmit={handleSaveCollege} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
+              <input
+                className="search-box" placeholder="College name" required
+                value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+              <input
+                className="search-box" placeholder="City"
+                value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
+              />
+              <select
+                className="search-box"
+                value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })}
+              >
+                <option value="">— No course —</option>
+                {courses.filter((c) => c !== 'Unassigned' && c !== 'All').map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <input
+                className="search-box" placeholder="TPO name"
+                value={form.tpo} onChange={(e) => setForm({ ...form, tpo: e.target.value })}
+              />
+              <input
+                className="search-box" placeholder="Website (https://...)"
+                value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })}
+              />
+              <input
+                className="search-box" placeholder="Strength" type="number"
+                value={form.strength} onChange={(e) => setForm({ ...form, strength: e.target.value })}
+              />
+              <input
+                className="search-box" type="date"
+                value={form.last_contact} onChange={(e) => setForm({ ...form, last_contact: e.target.value })}
+              />
+              <select
+                className="search-box"
+                value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}
+              >
+                <option value="Interested">Interested</option>
+                <option value="Follow-up Due">Follow-up Due</option>
+                <option value="Not Interested">Not Interested</option>
+              </select>
+              <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 10, marginTop: 8 }}>
+                <button className="btn-gold" type="submit" disabled={saving}>
+                  {saving ? 'Saving…' : editingId ? 'Update College' : 'Save College'}
+                </button>
+                <button className="btn-outline" type="button" onClick={cancelForm}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

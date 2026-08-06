@@ -195,6 +195,12 @@ export default function Jobs() {
     setShowForm(true);
   }
 
+  function startAdd() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  }
+
   function cancelForm() {
     setShowForm(false);
     setEditingId(null);
@@ -350,6 +356,7 @@ export default function Jobs() {
         reporting_to: '',
       });
       setShowAIGen(false);
+      setEditingId(null);
       setShowForm(true);
       setAiTitle('');
       setAiCompany('');
@@ -390,9 +397,7 @@ export default function Jobs() {
           <button className="btn-outline" onClick={() => setShowAIGen((v) => !v)}>
             {showAIGen ? 'Cancel' : '✨ Generate with AI'}
           </button>
-          <button className="btn-gold" onClick={() => (showForm ? cancelForm() : setShowForm(true))}>
-            {showForm ? 'Cancel' : '+ Create Job Profile'}
-          </button>
+          <button className="btn-gold" onClick={startAdd}>+ Create Job Profile</button>
         </div>
       </div>
 
@@ -501,61 +506,6 @@ export default function Jobs() {
         </div>
       )}
 
-      {showForm && (
-        <div className="panel">
-          <div className="panel-title">{editingId ? 'Edit Job Profile' : 'Create Job Profile'}</div>
-          <form onSubmit={handleSaveJob} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <input
-              className="search-box" placeholder="Job title" required
-              value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
-            <input
-              className="search-box" placeholder="Company (e.g. TCS, or Talent Corner — In-house)"
-              value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })}
-            />
-            <input
-              className="search-box" placeholder="Location (e.g. Pan India, Pune)"
-              value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}
-            />
-            <input
-              className="search-box" placeholder="Salary range (e.g. ₹3.6–4.5 LPA)"
-              value={form.salary_range} onChange={(e) => setForm({ ...form, salary_range: e.target.value })}
-            />
-            <input
-              className="search-box" placeholder="Experience (e.g. Freshers, 0–1 yrs)"
-              value={form.experience} onChange={(e) => setForm({ ...form, experience: e.target.value })}
-            />
-            <input
-              className="search-box" placeholder="Skills (comma separated)"
-              value={form.skills} onChange={(e) => setForm({ ...form, skills: e.target.value })}
-            />
-            <input
-              className="search-box" placeholder="Qualification"
-              value={form.qualification} onChange={(e) => setForm({ ...form, qualification: e.target.value })}
-            />
-            <input
-              className="search-box" placeholder="Employment Type (e.g. Full-Time)"
-              value={form.employment_type} onChange={(e) => setForm({ ...form, employment_type: e.target.value })}
-            />
-            <input
-              className="search-box" placeholder="Reporting To"
-              value={form.reporting_to} onChange={(e) => setForm({ ...form, reporting_to: e.target.value })}
-            />
-            <textarea
-              className="search-box" placeholder="Job Summary" style={{ gridColumn: '1 / -1', minHeight: 60 }}
-              value={form.job_summary} onChange={(e) => setForm({ ...form, job_summary: e.target.value })}
-            />
-            <textarea
-              className="search-box" placeholder="Key Responsibilities" style={{ gridColumn: '1 / -1', minHeight: 80 }}
-              value={form.responsibilities} onChange={(e) => setForm({ ...form, responsibilities: e.target.value })}
-            />
-            <button className="btn-gold" type="submit" disabled={saving}>
-              {saving ? 'Saving…' : editingId ? 'Update Job Profile' : 'Save Job Profile'}
-            </button>
-          </form>
-        </div>
-      )}
-
       <div className="grid3">
         {loading ? (
           <div className="panel">Loading…</div>
@@ -567,6 +517,79 @@ export default function Jobs() {
           ))
         )}
       </div>
+
+      {showForm && (
+        <div
+          onClick={cancelForm}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="panel"
+            style={{ maxWidth: 720, width: '100%', maxHeight: '85vh', overflowY: 'auto' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <div className="panel-title" style={{ margin: 0 }}>{editingId ? 'Edit Job Profile' : 'Create Job Profile'}</div>
+              <button onClick={cancelForm} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+            </div>
+            <form onSubmit={handleSaveJob} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
+              <input
+                className="search-box" placeholder="Job title" required
+                value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
+              <input
+                className="search-box" placeholder="Company (e.g. TCS, or Talent Corner — In-house)"
+                value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })}
+              />
+              <input
+                className="search-box" placeholder="Location (e.g. Pan India, Pune)"
+                value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}
+              />
+              <input
+                className="search-box" placeholder="Salary range (e.g. ₹3.6–4.5 LPA)"
+                value={form.salary_range} onChange={(e) => setForm({ ...form, salary_range: e.target.value })}
+              />
+              <input
+                className="search-box" placeholder="Experience (e.g. Freshers, 0–1 yrs)"
+                value={form.experience} onChange={(e) => setForm({ ...form, experience: e.target.value })}
+              />
+              <input
+                className="search-box" placeholder="Skills (comma separated)"
+                value={form.skills} onChange={(e) => setForm({ ...form, skills: e.target.value })}
+              />
+              <input
+                className="search-box" placeholder="Qualification"
+                value={form.qualification} onChange={(e) => setForm({ ...form, qualification: e.target.value })}
+              />
+              <input
+                className="search-box" placeholder="Employment Type (e.g. Full-Time)"
+                value={form.employment_type} onChange={(e) => setForm({ ...form, employment_type: e.target.value })}
+              />
+              <input
+                className="search-box" placeholder="Reporting To"
+                value={form.reporting_to} onChange={(e) => setForm({ ...form, reporting_to: e.target.value })}
+              />
+              <textarea
+                className="search-box" placeholder="Job Summary" style={{ gridColumn: '1 / -1', minHeight: 60 }}
+                value={form.job_summary} onChange={(e) => setForm({ ...form, job_summary: e.target.value })}
+              />
+              <textarea
+                className="search-box" placeholder="Key Responsibilities" style={{ gridColumn: '1 / -1', minHeight: 80 }}
+                value={form.responsibilities} onChange={(e) => setForm({ ...form, responsibilities: e.target.value })}
+              />
+              <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 10, marginTop: 8 }}>
+                <button className="btn-gold" type="submit" disabled={saving}>
+                  {saving ? 'Saving…' : editingId ? 'Update Job Profile' : 'Save Job Profile'}
+                </button>
+                <button className="btn-outline" type="button" onClick={cancelForm}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
