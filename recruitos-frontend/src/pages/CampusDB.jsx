@@ -51,6 +51,12 @@ const emptyForm = {
   status: 'Interested',
 };
 
+const emptyCoordinatorForm = {
+  name: '',
+  phone: '',
+  email: '',
+};
+
 export default function CampusDB() {
   const [activeCourse, setActiveCourse] = useState('All');
   const [search, setSearch] = useState('');
@@ -60,35 +66,42 @@ export default function CampusDB() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // College popup
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
+  // Excel import
   const [importRows, setImportRows] = useState(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
 
   const fileInputRef = useRef(null);
 
-  // Placement coordinators
-  const [expandedCollegeId, setExpandedCollegeId] = useState(null);
+  // ---------------------------------------------------------
+  // COORDINATOR STATE
+  // ---------------------------------------------------------
+
   const [coordinatorsByCollege, setCoordinatorsByCollege] = useState({});
-  const [loadingCoordinators, setLoadingCoordinators] = useState(false);
 
-  const [coordForm, setCoordForm] = useState({
-    name: '',
-    phone: '',
-    email: '',
-  });
+  const [showCoordinatorForm, setShowCoordinatorForm] =
+    useState(false);
 
-  const [savingCoord, setSavingCoord] = useState(false);
+  const [coordForm, setCoordForm] = useState(
+    emptyCoordinatorForm
+  );
+
+  const [loadingCoordinators, setLoadingCoordinators] =
+    useState(false);
+
+  const [savingCoordinator, setSavingCoordinator] =
+    useState(false);
 
   // ---------------------------------------------------------
   // FETCH ALL COLLEGES
   // ---------------------------------------------------------
-  // Supabase normally returns a maximum of 1000 rows per request.
-  // This function fetches all rows in pages of 1000.
+
   async function fetchAllColleges() {
     const pageSize = 1000;
     let from = 0;
@@ -120,6 +133,7 @@ export default function CampusDB() {
   // ---------------------------------------------------------
   // LOAD COLLEGES
   // ---------------------------------------------------------
+
   async function loadColleges() {
     setLoading(true);
     setError(null);
@@ -129,6 +143,7 @@ export default function CampusDB() {
       setColleges(data);
     } catch (err) {
       console.error('Failed to load colleges:', err);
+
       setError(
         'Could not load colleges. Check your Supabase connection.'
       );
@@ -153,7 +168,10 @@ export default function CampusDB() {
       } catch (err) {
         if (ignore) return;
 
-        console.error('Failed to load colleges:', err);
+        console.error(
+          'Failed to load colleges:',
+          err
+        );
 
         setError(
           'Could not load colleges. Check your Supabase connection.'
@@ -173,8 +191,11 @@ export default function CampusDB() {
   // ---------------------------------------------------------
   // FILTER COLLEGES
   // ---------------------------------------------------------
+
   const filtered = colleges.filter((college) => {
-    const courseValue = (college.course ?? '')
+    const courseValue = (
+      college.course ?? ''
+    )
       .toLowerCase()
       .trim();
 
@@ -190,14 +211,22 @@ export default function CampusDB() {
       activeCourse === 'All'
         ? true
         : courseValue.includes(activeCourseValue) ||
-          coursesAvailableValue.includes(activeCourseValue);
+          coursesAvailableValue.includes(
+            activeCourseValue
+          );
 
     const q = search.toLowerCase().trim();
 
     const matchSearch =
-      (college.name ?? '').toLowerCase().includes(q) ||
-      (college.city ?? '').toLowerCase().includes(q) ||
-      (college.tpo ?? '').toLowerCase().includes(q);
+      (college.name ?? '')
+        .toLowerCase()
+        .includes(q) ||
+      (college.city ?? '')
+        .toLowerCase()
+        .includes(q) ||
+      (college.tpo ?? '')
+        .toLowerCase()
+        .includes(q);
 
     const matchStatus =
       activeFilter === 'All Status' ||
@@ -213,6 +242,7 @@ export default function CampusDB() {
   // ---------------------------------------------------------
   // EDIT COLLEGE
   // ---------------------------------------------------------
+
   function startEdit(college) {
     setEditingId(college.id);
 
@@ -223,34 +253,53 @@ export default function CampusDB() {
       tpo: college.tpo || '',
       website: college.website || '',
       strength: college.strength ?? '',
-      last_contact: college.last_contact || '',
-      status: college.status || 'Interested',
+      last_contact:
+        college.last_contact || '',
+      status:
+        college.status || 'Interested',
     });
 
+    setShowCoordinatorForm(false);
+    setCoordForm(emptyCoordinatorForm);
+
     setShowForm(true);
+
+    // Load coordinators when editing
+    loadCoordinators(college.id);
   }
 
   // ---------------------------------------------------------
   // ADD COLLEGE
   // ---------------------------------------------------------
+
   function startAdd() {
     setEditingId(null);
     setForm(emptyForm);
+
+    setShowCoordinatorForm(false);
+    setCoordForm(emptyCoordinatorForm);
+
     setShowForm(true);
   }
 
   // ---------------------------------------------------------
-  // CANCEL FORM
+  // CANCEL COLLEGE FORM
   // ---------------------------------------------------------
+
   function cancelForm() {
     setShowForm(false);
     setEditingId(null);
+
     setForm(emptyForm);
+
+    setShowCoordinatorForm(false);
+    setCoordForm(emptyCoordinatorForm);
   }
 
   // ---------------------------------------------------------
   // SAVE / UPDATE COLLEGE
   // ---------------------------------------------------------
+
   async function handleSaveCollege(e) {
     e.preventDefault();
 
@@ -259,8 +308,13 @@ export default function CampusDB() {
       return;
     }
 
-    if (form.website && !/^https?:\/\//i.test(form.website)) {
-      alert('Website should start with http:// or https://');
+    if (
+      form.website &&
+      !/^https?:\/\//i.test(form.website)
+    ) {
+      alert(
+        'Website should start with http:// or https://'
+      );
       return;
     }
 
@@ -271,11 +325,13 @@ export default function CampusDB() {
       city: form.city.trim() || null,
       course: form.course || null,
       tpo: form.tpo.trim() || null,
-      website: form.website.trim() || null,
+      website:
+        form.website.trim() || null,
       strength: form.strength
         ? parseInt(form.strength, 10)
         : null,
-      last_contact: form.last_contact || null,
+      last_contact:
+        form.last_contact || null,
       status: form.status,
     };
 
@@ -286,13 +342,18 @@ export default function CampusDB() {
         .eq('id', editingId);
 
       if (error) {
-        console.error('Failed to update college:', error);
+        console.error(
+          'Failed to update college:',
+          error
+        );
+
         alert(
           'Could not update college. Check console for details.'
         );
       } else {
-        cancelForm();
         await loadColleges();
+        setSaving(false);
+        return;
       }
     } else {
       const { error } = await supabase
@@ -300,7 +361,11 @@ export default function CampusDB() {
         .insert([collegeData]);
 
       if (error) {
-        console.error('Failed to add college:', error);
+        console.error(
+          'Failed to add college:',
+          error
+        );
+
         alert(
           'Could not add college. Check console for details.'
         );
@@ -316,8 +381,11 @@ export default function CampusDB() {
   // ---------------------------------------------------------
   // STATUS CHANGE
   // ---------------------------------------------------------
-  async function handleStatusChange(id, newStatus) {
-    // Optimistic UI update
+
+  async function handleStatusChange(
+    id,
+    newStatus
+  ) {
     setColleges((prev) =>
       prev.map((college) =>
         college.id === id
@@ -337,7 +405,10 @@ export default function CampusDB() {
       .eq('id', id);
 
     if (error) {
-      console.error('Failed to update status:', error);
+      console.error(
+        'Failed to update status:',
+        error
+      );
 
       alert(
         'Could not update status. Check console for details.'
@@ -350,7 +421,11 @@ export default function CampusDB() {
   // ---------------------------------------------------------
   // DELETE COLLEGE
   // ---------------------------------------------------------
-  async function handleDeleteCollege(id, name) {
+
+  async function handleDeleteCollege(
+    id,
+    name
+  ) {
     if (
       !window.confirm(
         `Delete "${name}"? This cannot be undone.`
@@ -365,7 +440,10 @@ export default function CampusDB() {
       .eq('id', id);
 
     if (error) {
-      console.error('Failed to delete college:', error);
+      console.error(
+        'Failed to delete college:',
+        error
+      );
 
       alert(
         'Could not delete college. Check console for details.'
@@ -378,6 +456,7 @@ export default function CampusDB() {
   // ---------------------------------------------------------
   // NORMALIZE IMPORT STATUS
   // ---------------------------------------------------------
+
   function normalizeStatus(raw) {
     const trimmed = (raw || '')
       .toString()
@@ -389,8 +468,9 @@ export default function CampusDB() {
   }
 
   // ---------------------------------------------------------
-  // IMPORT EXCEL FILE
+  // IMPORT EXCEL
   // ---------------------------------------------------------
+
   function handleFileSelect(e) {
     const file = e.target.files?.[0];
 
@@ -409,10 +489,13 @@ export default function CampusDB() {
           }
         );
 
-        const firstSheetName = wb.SheetNames[0];
+        const firstSheetName =
+          wb.SheetNames[0];
 
         if (!firstSheetName) {
-          alert('Excel file does not contain a sheet.');
+          alert(
+            'Excel file does not contain a sheet.'
+          );
           return;
         }
 
@@ -459,13 +542,8 @@ export default function CampusDB() {
 
             status: normalizeStatus(
               row.status ||
-              row.Status
+                row.Status
             ),
-
-            state:
-              row.state ||
-              row.State ||
-              '',
 
             website:
               row.website ||
@@ -485,7 +563,9 @@ export default function CampusDB() {
           .filter(
             (row) =>
               row.name &&
-              row.name.toString().trim()
+              row.name
+                .toString()
+                .trim()
           );
 
         if (mapped.length === 0) {
@@ -514,6 +594,7 @@ export default function CampusDB() {
   // ---------------------------------------------------------
   // CONFIRM IMPORT
   // ---------------------------------------------------------
+
   async function handleConfirmImport() {
     if (
       !importRows ||
@@ -529,54 +610,66 @@ export default function CampusDB() {
 
     const firstErrors = [];
 
-    const records = importRows.map((row) => ({
-      name: row.name
-        ? row.name.toString().trim()
-        : null,
-
-      city: row.city
-        ? row.city.toString().trim()
-        : null,
-
-      course: row.course
-        ? row.course.toString().trim()
-        : null,
-
-      tpo: row.tpo
-        ? row.tpo.toString().trim()
-        : null,
-
-      strength: row.strength
-        ? parseInt(row.strength, 10)
-        : null,
-
-      status:
-        row.status || 'Interested',
-
-      state: row.state
-        ? row.state.toString().trim()
-        : null,
-
-      website: row.website
-        ? row.website.toString().trim()
-        : null,
-
-      institution_type:
-        row.institution_type
-          ? row.institution_type
+    const records = importRows.map(
+      (row) => ({
+        name: row.name
+          ? row.name
               .toString()
               .trim()
           : null,
 
-      courses_available:
-        row.courses_available
-          ? row.courses_available
+        city: row.city
+          ? row.city
               .toString()
               .trim()
           : null,
-    }));
 
-    // Insert in chunks to reduce network requests
+        course: row.course
+          ? row.course
+              .toString()
+              .trim()
+          : null,
+
+        tpo: row.tpo
+          ? row.tpo
+              .toString()
+              .trim()
+          : null,
+
+        strength: row.strength
+          ? parseInt(
+              row.strength,
+              10
+            )
+          : null,
+
+        status:
+          row.status ||
+          'Interested',
+
+        website: row.website
+          ? row.website
+              .toString()
+              .trim()
+          : null,
+
+        institution_type:
+          row.institution_type
+            ? row.institution_type
+                .toString()
+                .trim()
+            : null,
+
+        courses_available:
+          row.courses_available
+            ? row.courses_available
+                .toString()
+                .trim()
+            : null,
+      })
+    );
+
+    // Import in chunks
     const chunkSize = 500;
 
     for (
@@ -589,14 +682,17 @@ export default function CampusDB() {
         i + chunkSize
       );
 
-      const { error } = await supabase
-        .from('colleges')
-        .insert(chunk);
+      const { error } =
+        await supabase
+          .from('colleges')
+          .insert(chunk);
 
       if (error) {
         failed += chunk.length;
 
-        if (firstErrors.length < 3) {
+        if (
+          firstErrors.length < 3
+        ) {
           firstErrors.push(
             error.message
           );
@@ -622,7 +718,8 @@ export default function CampusDB() {
     setImportRows(null);
 
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value =
+        '';
     }
 
     await loadColleges();
@@ -631,94 +728,37 @@ export default function CampusDB() {
   // ---------------------------------------------------------
   // CANCEL IMPORT
   // ---------------------------------------------------------
+
   function cancelImport() {
     setImportRows(null);
     setImportResult(null);
 
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value =
+        '';
     }
   }
+
+  // =========================================================
+  // COORDINATORS
+  // =========================================================
 
   // ---------------------------------------------------------
   // LOAD COORDINATORS
   // ---------------------------------------------------------
-  async function toggleCoordinators(
+
+  async function loadCoordinators(
     collegeId
   ) {
-    if (
-      expandedCollegeId === collegeId
-    ) {
-      setExpandedCollegeId(null);
-      return;
-    }
+    if (!collegeId) return;
 
-    setExpandedCollegeId(collegeId);
+    setLoadingCoordinators(true);
 
-    setCoordForm({
-      name: '',
-      phone: '',
-      email: '',
-    });
-
-    if (
-      !coordinatorsByCollege[collegeId]
-    ) {
-      setLoadingCoordinators(true);
-
-      const { data, error } =
-        await supabase
-          .from('placement_coordinators')
-          .select('*')
-          .eq(
-            'college_id',
-            collegeId
-          )
-          .order(
-            'is_current',
-            {
-              ascending: false,
-            }
-          )
-          .order(
-            'created_at',
-            {
-              ascending: false,
-            }
-          );
-
-      if (error) {
-        console.error(
-          'Failed to load coordinators:',
-          error
-        );
-
-        alert(
-          'Could not load placement coordinators. Check console for details.'
-        );
-      } else {
-        setCoordinatorsByCollege(
-          (prev) => ({
-            ...prev,
-            [collegeId]:
-              data ?? [],
-          })
-        );
-      }
-
-      setLoadingCoordinators(false);
-    }
-  }
-
-  // ---------------------------------------------------------
-  // RELOAD COORDINATORS
-  // ---------------------------------------------------------
-  async function reloadCoordinators(
-    collegeId
-  ) {
     const { data, error } =
       await supabase
-        .from('placement_coordinators')
+        .from(
+          'placement_coordinators'
+        )
         .select('*')
         .eq(
           'college_id',
@@ -737,7 +777,16 @@ export default function CampusDB() {
           }
         );
 
-    if (!error) {
+    if (error) {
+      console.error(
+        'Failed to load coordinators:',
+        error
+      );
+
+      alert(
+        'Could not load coordinators. Check console for details.'
+      );
+    } else {
       setCoordinatorsByCollege(
         (prev) => ({
           ...prev,
@@ -746,18 +795,53 @@ export default function CampusDB() {
         })
       );
     }
+
+    setLoadingCoordinators(false);
+  }
+
+  // ---------------------------------------------------------
+  // OPEN ADD COORDINATOR
+  // ---------------------------------------------------------
+
+  function openAddCoordinator() {
+    setCoordForm(
+      emptyCoordinatorForm
+    );
+
+    setShowCoordinatorForm(true);
+  }
+
+  // ---------------------------------------------------------
+  // CANCEL ADD COORDINATOR
+  // ---------------------------------------------------------
+
+  function cancelAddCoordinator() {
+    setShowCoordinatorForm(false);
+
+    setCoordForm(
+      emptyCoordinatorForm
+    );
   }
 
   // ---------------------------------------------------------
   // ADD COORDINATOR
   // ---------------------------------------------------------
+
   async function handleAddCoordinator(
-    e,
-    collegeId
+    e
   ) {
     e.preventDefault();
 
-    if (!coordForm.name.trim()) {
+    if (!editingId) {
+      alert(
+        'Please save the college first before adding a coordinator.'
+      );
+      return;
+    }
+
+    if (
+      !coordForm.name.trim()
+    ) {
       alert(
         'Please enter coordinator name.'
       );
@@ -776,61 +860,121 @@ export default function CampusDB() {
       return;
     }
 
-    setSavingCoord(true);
+    setSavingCoordinator(true);
 
-    const { error } =
-      await supabase
-        .from(
-          'placement_coordinators'
-        )
-        .insert([
-          {
-            college_id:
-              collegeId,
+    // Archive current coordinator
+    const {
+      error: archiveError,
+    } = await supabase
+      .from(
+        'placement_coordinators'
+      )
+      .update({
+        is_current: false,
+        ended_at:
+          new Date().toISOString(),
+      })
+      .eq(
+        'college_id',
+        editingId
+      )
+      .eq(
+        'is_current',
+        true
+      );
 
-            name:
-              coordForm.name.trim(),
-
-            phone:
-              coordForm.phone ||
-              null,
-
-            email:
-              coordForm.email
-                ? coordForm.email.trim()
-                : null,
-
-            is_current: true,
-          },
-        ]);
-
-    if (error) {
+    if (archiveError) {
       console.error(
-        'Failed to add coordinator:',
-        error
+        'Failed to archive previous coordinator:',
+        archiveError
       );
 
       alert(
-        'Could not add placement coordinator. Check console for details.'
+        'Could not update previous coordinator. Check console for details.'
       );
-    } else {
-      setCoordForm({
-        name: '',
-        phone: '',
-        email: '',
-      });
 
-      await reloadCoordinators(
-        collegeId
-      );
+      setSavingCoordinator(false);
+      return;
     }
 
-    setSavingCoord(false);
+    // Add new current coordinator
+    const {
+      error: insertError,
+    } = await supabase
+      .from(
+        'placement_coordinators'
+      )
+      .insert([
+        {
+          college_id:
+            editingId,
+
+          name:
+            coordForm.name
+              .trim(),
+
+          phone:
+            coordForm.phone ||
+            null,
+
+          email:
+            coordForm.email
+              ? coordForm.email
+                  .trim()
+              : null,
+
+          is_current: true,
+        },
+      ]);
+
+    if (insertError) {
+      console.error(
+        'Failed to add coordinator:',
+        insertError
+      );
+
+      alert(
+        'Could not add coordinator. Check console for details.'
+      );
+
+      setSavingCoordinator(false);
+      return;
+    }
+
+    // Also update college TPO fields
+    // so existing application code can still use colleges.tpo.
+    await supabase
+      .from('colleges')
+      .update({
+        tpo:
+          coordForm.name
+            .trim(),
+      })
+      .eq(
+        'id',
+        editingId
+      );
+
+    setCoordForm(
+      emptyCoordinatorForm
+    );
+
+    setShowCoordinatorForm(false);
+
+    await Promise.all([
+      loadCoordinators(
+        editingId
+      ),
+      loadColleges(),
+    ]);
+
+    setSavingCoordinator(false);
   }
 
   // ---------------------------------------------------------
-  // RETIRE COORDINATOR
+  // MARK COORDINATOR AS LEFT
   // ---------------------------------------------------------
+
   async function handleRetireCoordinator(
     coordinator
   ) {
@@ -867,7 +1011,7 @@ export default function CampusDB() {
         'Could not update coordinator. Check console for details.'
       );
     } else {
-      await reloadCoordinators(
+      await loadCoordinators(
         coordinator.college_id
       );
     }
@@ -876,6 +1020,7 @@ export default function CampusDB() {
   // ---------------------------------------------------------
   // DELETE COORDINATOR
   // ---------------------------------------------------------
+
   async function handleDeleteCoordinator(
     coordinator
   ) {
@@ -908,24 +1053,43 @@ export default function CampusDB() {
         'Could not delete coordinator. Check console for details.'
       );
     } else {
-      await reloadCoordinators(
+      await loadCoordinators(
         coordinator.college_id
       );
     }
   }
 
   // ---------------------------------------------------------
-  // UI
+  // CURRENT COLLEGE COORDINATORS
   // ---------------------------------------------------------
+
+  const currentCoordinators =
+    editingId
+      ? (
+          coordinatorsByCollege[
+            editingId
+          ] ?? []
+        )
+      : [];
+
+  // =========================================================
+  // UI
+  // =========================================================
+
   return (
     <div
       className="page active"
       id="page-campusdb"
     >
-      {/* HEADER */}
+      {/* =====================================================
+          HEADER
+         ===================================================== */}
+
       <div className="page-head">
         <div>
-          <h1>Campus Database</h1>
+          <h1>
+            Campus Database
+          </h1>
 
           <p>
             {loading
@@ -972,7 +1136,10 @@ export default function CampusDB() {
         </div>
       </div>
 
-      {/* ERROR */}
+      {/* =====================================================
+          ERROR
+         ===================================================== */}
+
       {error && (
         <div
           className="panel"
@@ -984,18 +1151,28 @@ export default function CampusDB() {
         </div>
       )}
 
-      {/* IMPORT RESULT */}
+      {/* =====================================================
+          IMPORT RESULT
+         ===================================================== */}
+
       {importResult && (
         <div className="panel">
           <p>
             Import done:{' '}
-            {importResult.success} added,{' '}
-            {importResult.failed} failed.
+            <b>
+              {importResult.success}
+            </b>{' '}
+            added,{' '}
+            <b>
+              {importResult.failed}
+            </b>{' '}
+            failed.
           </p>
 
-          {importResult.failed > 0 &&
-            importResult.firstErrors?.length >
-              0 && (
+          {importResult.failed >
+            0 &&
+            importResult.firstErrors
+              ?.length > 0 && (
               <div
                 style={{
                   color: 'crimson',
@@ -1014,7 +1191,9 @@ export default function CampusDB() {
                       index
                     ) => (
                       <li
-                        key={index}
+                        key={
+                          index
+                        }
                       >
                         {message}
                       </li>
@@ -1035,56 +1214,86 @@ export default function CampusDB() {
         </div>
       )}
 
-      {/* IMPORT PREVIEW */}
+      {/* =====================================================
+          IMPORT PREVIEW
+         ===================================================== */}
+
       {importRows && (
         <div className="panel">
           <div className="panel-title">
             Preview —{' '}
-            {importRows.length} rows
-            found
+            {importRows.length}{' '}
+            rows found
           </div>
 
           <table>
             <tbody>
               <tr>
-                <th>Name</th>
-                <th>City</th>
-                <th>Course</th>
-                <th>TPO</th>
-                <th>Strength</th>
-                <th>Status</th>
+                <th>
+                  Name
+                </th>
+                <th>
+                  City
+                </th>
+                <th>
+                  Course
+                </th>
+                <th>
+                  TPO
+                </th>
+                <th>
+                  Strength
+                </th>
+                <th>
+                  Status
+                </th>
               </tr>
 
               {importRows
                 .slice(0, 10)
-                .map((row, index) => (
-                  <tr key={index}>
-                    <td>
-                      {row.name}
-                    </td>
-                    <td>
-                      {row.city}
-                    </td>
-                    <td>
-                      {row.course}
-                    </td>
-                    <td>
-                      {row.tpo}
-                    </td>
-                    <td>
-                      {row.strength}
-                    </td>
-                    <td>
-                      {row.status}
-                    </td>
-                  </tr>
-                ))}
+                .map(
+                  (
+                    row,
+                    index
+                  ) => (
+                    <tr
+                      key={
+                        index
+                      }
+                    >
+                      <td>
+                        {row.name}
+                      </td>
+
+                      <td>
+                        {row.city}
+                      </td>
+
+                      <td>
+                        {row.course}
+                      </td>
+
+                      <td>
+                        {row.tpo}
+                      </td>
+
+                      <td>
+                        {row.strength}
+                      </td>
+
+                      <td>
+                        {row.status}
+                      </td>
+                    </tr>
+                  )
+                )}
             </tbody>
           </table>
 
-          {importRows.length > 10 && (
+          {importRows.length >
+            10 && (
             <p>
-              ...and{' '}
+              ...
               {importRows.length -
                 10}{' '}
               more rows
@@ -1103,7 +1312,9 @@ export default function CampusDB() {
               onClick={
                 handleConfirmImport
               }
-              disabled={importing}
+              disabled={
+                importing
+              }
             >
               {importing
                 ? 'Importing…'
@@ -1112,7 +1323,9 @@ export default function CampusDB() {
 
             <button
               className="btn-outline"
-              onClick={cancelImport}
+              onClick={
+                cancelImport
+              }
             >
               Cancel
             </button>
@@ -1120,7 +1333,10 @@ export default function CampusDB() {
         </div>
       )}
 
-      {/* FILTER PANEL */}
+      {/* =====================================================
+          FILTER PANEL
+         ===================================================== */}
+
       <div className="panel">
         <div>
           {courses.map(
@@ -1167,65 +1383,92 @@ export default function CampusDB() {
             'Interested',
             'Follow-up Due',
             'Not Interested',
-          ].map((filter) => (
-            <span
-              key={filter}
-              className={`filter-chip ${
-                activeFilter ===
-                filter
-                  ? 'sel'
-                  : ''
-              }`}
-              onClick={() =>
-                setActiveFilter(
+          ].map(
+            (filter) => (
+              <span
+                key={filter}
+                className={`filter-chip ${
+                  activeFilter ===
                   filter
-                )
-              }
-            >
-              {filter}
-            </span>
-          ))}
+                    ? 'sel'
+                    : ''
+                }`}
+                onClick={() =>
+                  setActiveFilter(
+                    filter
+                  )
+                }
+              >
+                {filter}
+              </span>
+            )
+          )}
         </div>
 
-        {/* =================================================
+        {/* ===================================================
             CAMPUS TABLE
             COUNTRY REMOVED
-           ================================================= */}
-        <table>
-          <tbody>
-            <tr>
-              <th>College</th>
-              <th>Institution Type</th>
-              <th>City</th>
-              <th>Website</th>
-              <th>Courses Available</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
+           =================================================== */}
 
-            {loading ? (
+        <div
+          style={{
+            overflowX: 'auto',
+          }}
+        >
+          <table>
+            <tbody>
               <tr>
-                <td
-                  colSpan={7}
-                  style={{
-                    textAlign:
-                      'center',
-                    padding: 24,
-                  }}
-                >
-                  Loading…
-                </td>
+                <th>
+                  College
+                </th>
+
+                <th>
+                  Institution Type
+                </th>
+
+                <th>
+                  City
+                </th>
+
+                <th>
+                  Website
+                </th>
+
+                <th>
+                  Courses Available
+                </th>
+
+                <th>
+                  Status
+                </th>
+
+                <th>
+                  Actions
+                </th>
               </tr>
-            ) : filtered.length > 0 ? (
-              filtered.map(
-                (college) => (
-                  <React.Fragment
-                    key={
-                      college.id
-                    }
+
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    style={{
+                      textAlign:
+                        'center',
+                      padding: 24,
+                    }}
                   >
-                    {/* COLLEGE ROW */}
-                    <tr>
+                    Loading…
+                  </td>
+                </tr>
+              ) : filtered.length >
+                0 ? (
+                filtered.map(
+                  (college) => (
+                    <tr
+                      key={
+                        college.id
+                      }
+                    >
                       <td>
                         {college.name}
                       </td>
@@ -1293,6 +1536,7 @@ export default function CampusDB() {
                       </td>
 
                       {/* STATUS */}
+
                       <td>
                         <div
                           style={{
@@ -1364,39 +1608,15 @@ export default function CampusDB() {
                                   .text,
                             }}
                           >
-                            <option
-                              value="Interested"
-                              style={{
-                                backgroundColor:
-                                  '#ffffff',
-                                color:
-                                  '#111827',
-                              }}
-                            >
+                            <option value="Interested">
                               Interested
                             </option>
 
-                            <option
-                              value="Follow-up Due"
-                              style={{
-                                backgroundColor:
-                                  '#ffffff',
-                                color:
-                                  '#111827',
-                              }}
-                            >
+                            <option value="Follow-up Due">
                               Follow-up Due
                             </option>
 
-                            <option
-                              value="Not Interested"
-                              style={{
-                                backgroundColor:
-                                  '#ffffff',
-                                color:
-                                  '#111827',
-                              }}
-                            >
+                            <option value="Not Interested">
                               Not Interested
                             </option>
                           </select>
@@ -1416,14 +1636,6 @@ export default function CampusDB() {
                                 1,
                               opacity:
                                 0.85,
-                              color:
-                                statusColors[
-                                  college
-                                    .status
-                                ]?.text ??
-                                statusColors
-                                  .Interested
-                                  .text,
                             }}
                           >
                             ▼
@@ -1432,413 +1644,83 @@ export default function CampusDB() {
                       </td>
 
                       {/* ACTIONS */}
-                      <td
-                        style={{
-                          display:
-                            'flex',
-                          gap: 6,
-                          flexWrap:
-                            'wrap',
-                        }}
-                      >
-                        <button
-                          className="btn-outline"
-                          style={{
-                            padding:
-                              '4px 10px',
-                            fontSize:
-                              12,
-                          }}
-                          onClick={() =>
-                            startEdit(
-                              college
-                            )
-                          }
-                        >
-                          Edit
-                        </button>
 
-                        <button
-                          className="btn-outline"
+                      <td>
+                        <div
                           style={{
-                            padding:
-                              '4px 10px',
-                            fontSize:
-                              12,
+                            display:
+                              'flex',
+                            gap: 6,
+                            flexWrap:
+                              'wrap',
                           }}
-                          onClick={() =>
-                            toggleCoordinators(
-                              college.id
-                            )
-                          }
                         >
-                          {expandedCollegeId ===
-                          college.id
-                            ? 'Hide Coordinators'
-                            : 'Coordinators'}
-                        </button>
+                          <button
+                            className="btn-outline"
+                            style={{
+                              padding:
+                                '4px 10px',
+                              fontSize:
+                                12,
+                            }}
+                            onClick={() =>
+                              startEdit(
+                                college
+                              )
+                            }
+                          >
+                            Edit
+                          </button>
 
-                        <button
-                          className="btn-outline"
-                          style={{
-                            padding:
-                              '4px 10px',
-                            fontSize:
-                              12,
-                            color:
-                              'crimson',
-                          }}
-                          onClick={() =>
-                            handleDeleteCollege(
-                              college.id,
-                              college.name
-                            )
-                          }
-                        >
-                          Delete
-                        </button>
+                          <button
+                            className="btn-outline"
+                            style={{
+                              padding:
+                                '4px 10px',
+                              fontSize:
+                                12,
+                              color:
+                                'crimson',
+                            }}
+                            onClick={() =>
+                              handleDeleteCollege(
+                                college.id,
+                                college.name
+                              )
+                            }
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
-
-                    {/* COORDINATORS */}
-                    {expandedCollegeId ===
-                      college.id && (
-                      <tr>
-                        <td
-                          colSpan={7}
-                          style={{
-                            background:
-                              'var(--bg-surface-2)',
-                            padding: 16,
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontWeight:
-                                600,
-                              fontSize:
-                                13,
-                              marginBottom:
-                                10,
-                            }}
-                          >
-                            Placement
-                            Coordinators
-                            —{' '}
-                            {
-                              college.name
-                            }
-                          </div>
-
-                          {loadingCoordinators ? (
-                            <div
-                              style={{
-                                fontSize:
-                                  13,
-                                color:
-                                  'var(--text-muted)',
-                              }}
-                            >
-                              Loading…
-                            </div>
-                          ) : (
-                            <>
-                              {/* COORDINATOR LIST */}
-                              {(
-                                coordinatorsByCollege[
-                                  college
-                                    .id
-                                ] ??
-                                []
-                              ).length ===
-                              0 ? (
-                                <div
-                                  style={{
-                                    fontSize:
-                                      13,
-                                    color:
-                                      'var(--text-muted)',
-                                    marginBottom:
-                                      12,
-                                  }}
-                                >
-                                  No
-                                  coordinators
-                                  added
-                                  yet.
-                                </div>
-                              ) : (
-                                <table
-                                  style={{
-                                    marginBottom:
-                                      12,
-                                  }}
-                                >
-                                  <tbody>
-                                    <tr>
-                                      <th>
-                                        Name
-                                      </th>
-                                      <th>
-                                        Phone
-                                      </th>
-                                      <th>
-                                        Email
-                                      </th>
-                                      <th>
-                                        Status
-                                      </th>
-                                      <th>
-                                        Actions
-                                      </th>
-                                    </tr>
-
-                                    {(
-                                      coordinatorsByCollege[
-                                        college
-                                          .id
-                                      ] ??
-                                      []
-                                    ).map(
-                                      (
-                                        coordinator
-                                      ) => (
-                                        <tr
-                                          key={
-                                            coordinator.id
-                                          }
-                                        >
-                                          <td>
-                                            {
-                                              coordinator.name
-                                            }
-                                          </td>
-
-                                          <td>
-                                            {coordinator.phone ||
-                                              '—'}
-                                          </td>
-
-                                          <td>
-                                            {coordinator.email ||
-                                              '—'}
-                                          </td>
-
-                                          <td>
-                                            {coordinator.is_current ? (
-                                              <span className="badge green">
-                                                Current
-                                              </span>
-                                            ) : (
-                                              <span className="badge gray">
-                                                Past
-                                              </span>
-                                            )}
-                                          </td>
-
-                                          <td
-                                            style={{
-                                              display:
-                                                'flex',
-                                              gap: 6,
-                                            }}
-                                          >
-                                            {coordinator.is_current && (
-                                              <button
-                                                className="btn-outline"
-                                                style={{
-                                                  padding:
-                                                    '3px 8px',
-                                                  fontSize:
-                                                    11.5,
-                                                }}
-                                                onClick={() =>
-                                                  handleRetireCoordinator(
-                                                    coordinator
-                                                  )
-                                                }
-                                              >
-                                                Mark as Left
-                                              </button>
-                                            )}
-
-                                            <button
-                                              className="btn-outline"
-                                              style={{
-                                                padding:
-                                                  '3px 8px',
-                                                fontSize:
-                                                  11.5,
-                                                color:
-                                                  'crimson',
-                                              }}
-                                              onClick={() =>
-                                                handleDeleteCoordinator(
-                                                  coordinator
-                                                )
-                                              }
-                                            >
-                                              Delete
-                                            </button>
-                                          </td>
-                                        </tr>
-                                      )
-                                    )}
-                                  </tbody>
-                                </table>
-                              )}
-
-                              {/* ADD COORDINATOR FORM */}
-                              <form
-                                onSubmit={(
-                                  e
-                                ) =>
-                                  handleAddCoordinator(
-                                    e,
-                                    college.id
-                                  )
-                                }
-                                style={{
-                                  display:
-                                    'flex',
-                                  gap: 8,
-                                  flexWrap:
-                                    'wrap',
-                                  alignItems:
-                                    'center',
-                                }}
-                              >
-                                <input
-                                  className="search-box"
-                                  placeholder="Name"
-                                  required
-                                  style={{
-                                    maxWidth:
-                                      180,
-                                  }}
-                                  value={
-                                    coordForm.name
-                                  }
-                                  onChange={(
-                                    e
-                                  ) =>
-                                    setCoordForm(
-                                      {
-                                        ...coordForm,
-                                        name: e
-                                          .target
-                                          .value,
-                                      }
-                                    )
-                                  }
-                                />
-
-                                <input
-                                  className="search-box"
-                                  placeholder="Phone"
-                                  style={{
-                                    maxWidth:
-                                      160,
-                                  }}
-                                  value={
-                                    coordForm.phone
-                                  }
-                                  onChange={(
-                                    e
-                                  ) =>
-                                    setCoordForm(
-                                      {
-                                        ...coordForm,
-                                        phone:
-                                          sanitizePhone(
-                                            e
-                                              .target
-                                              .value
-                                          ),
-                                      }
-                                    )
-                                  }
-                                  inputMode="numeric"
-                                  maxLength={
-                                    10
-                                  }
-                                />
-
-                                <input
-                                  className="search-box"
-                                  placeholder="Email"
-                                  type="email"
-                                  style={{
-                                    maxWidth:
-                                      220,
-                                  }}
-                                  value={
-                                    coordForm.email
-                                  }
-                                  onChange={(
-                                    e
-                                  ) =>
-                                    setCoordForm(
-                                      {
-                                        ...coordForm,
-                                        email:
-                                          e
-                                            .target
-                                            .value,
-                                      }
-                                    )
-                                  }
-                                />
-
-                                <button
-                                  className="btn-gold"
-                                  type="submit"
-                                  disabled={
-                                    savingCoord
-                                  }
-                                  style={{
-                                    padding:
-                                      '6px 14px',
-                                    fontSize:
-                                      13,
-                                  }}
-                                >
-                                  {savingCoord
-                                    ? 'Adding…'
-                                    : '+ Add Coordinator'}
-                                </button>
-                              </form>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                  )
                 )
-              )
-            ) : (
-              <tr>
-                <td
-                  colSpan={7}
-                  style={{
-                    textAlign:
-                      'center',
-                    color:
-                      'var(--slate-light)',
-                    padding: 24,
-                  }}
-                >
-                  No colleges found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              ) : (
+                <tr>
+                  <td
+                    colSpan={7}
+                    style={{
+                      textAlign:
+                        'center',
+                      color:
+                        'var(--slate-light)',
+                      padding: 24,
+                    }}
+                  >
+                    No colleges found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* =====================================================
-          ADD / EDIT COLLEGE MODAL
+          ADD / EDIT COLLEGE POPUP
          ===================================================== */}
+
       {showForm && (
         <div
           onClick={cancelForm}
@@ -1862,14 +1744,16 @@ export default function CampusDB() {
             }
             className="panel"
             style={{
-              maxWidth: 640,
+              maxWidth: 700,
               width: '100%',
               maxHeight:
-                '85vh',
+                '90vh',
               overflowY:
                 'auto',
             }}
           >
+            {/* POPUP HEADER */}
+
             <div
               style={{
                 display:
@@ -1893,6 +1777,7 @@ export default function CampusDB() {
               </div>
 
               <button
+                type="button"
                 onClick={
                   cancelForm
                 }
@@ -1912,6 +1797,10 @@ export default function CampusDB() {
                 ✕
               </button>
             </div>
+
+            {/* =================================================
+                COLLEGE FORM
+               ================================================= */}
 
             <form
               onSubmit={
@@ -1939,9 +1828,9 @@ export default function CampusDB() {
                 ) =>
                   setForm({
                     ...form,
-                    name: e
-                      .target
-                      .value,
+                    name:
+                      e.target
+                        .value,
                   })
                 }
               />
@@ -1957,9 +1846,9 @@ export default function CampusDB() {
                 ) =>
                   setForm({
                     ...form,
-                    city: e
-                      .target
-                      .value,
+                    city:
+                      e.target
+                        .value,
                   })
                 }
               />
@@ -1988,7 +1877,7 @@ export default function CampusDB() {
                   .filter(
                     (course) =>
                       course !==
-                        'All'
+                      'All'
                   )
                   .map(
                     (
@@ -2021,9 +1910,9 @@ export default function CampusDB() {
                 ) =>
                   setForm({
                     ...form,
-                    tpo: e
-                      .target
-                      .value,
+                    tpo:
+                      e.target
+                        .value,
                   })
                 }
               />
@@ -2148,6 +2037,405 @@ export default function CampusDB() {
                 </button>
               </div>
             </form>
+
+            {/* =================================================
+                COORDINATOR SECTION
+                ONLY IN EDIT POPUP
+               ================================================= */}
+
+            {editingId && (
+              <div
+                style={{
+                  marginTop: 22,
+                  borderTop:
+                    '1px solid var(--border-default, #eee)',
+                  paddingTop: 18,
+                }}
+              >
+                <div
+                  style={{
+                    display:
+                      'flex',
+                    justifyContent:
+                      'space-between',
+                    alignItems:
+                      'center',
+                    marginBottom:
+                      12,
+                  }}
+                >
+                  <div>
+                    <div
+                      className="panel-title"
+                      style={{
+                        margin: 0,
+                        fontSize:
+                          15,
+                      }}
+                    >
+                      Placement Coordinators
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize:
+                          12,
+                        color:
+                          'var(--text-muted)',
+                        marginTop:
+                          3,
+                      }}
+                    >
+                      Manage current and previous coordinators
+                    </div>
+                  </div>
+
+                  {!showCoordinatorForm && (
+                    <button
+                      type="button"
+                      className="btn-gold"
+                      onClick={
+                        openAddCoordinator
+                      }
+                      style={{
+                        padding:
+                          '6px 12px',
+                        fontSize:
+                          12,
+                      }}
+                    >
+                      + Add Coordinator
+                    </button>
+                  )}
+                </div>
+
+                {/* ADD COORDINATOR FORM */}
+
+                {showCoordinatorForm && (
+                  <form
+                    onSubmit={
+                      handleAddCoordinator
+                    }
+                    style={{
+                      padding:
+                        12,
+                      border:
+                        '1px dashed var(--border-default, #ddd)',
+                      borderRadius:
+                        8,
+                      marginBottom:
+                        14,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize:
+                          12,
+                        fontWeight:
+                          700,
+                        marginBottom:
+                          10,
+                      }}
+                    >
+                      Add New Coordinator
+                    </div>
+
+                    <div
+                      style={{
+                        display:
+                          'grid',
+                        gridTemplateColumns:
+                          '1fr 1fr',
+                        gap: 8,
+                      }}
+                    >
+                      <input
+                        className="search-box"
+                        placeholder="Coordinator Name *"
+                        required
+                        value={
+                          coordForm.name
+                        }
+                        onChange={(
+                          e
+                        ) =>
+                          setCoordForm(
+                            {
+                              ...coordForm,
+                              name:
+                                e.target
+                                  .value,
+                            }
+                          )
+                        }
+                      />
+
+                      <input
+                        className="search-box"
+                        placeholder="Phone"
+                        value={
+                          coordForm.phone
+                        }
+                        onChange={(
+                          e
+                        ) =>
+                          setCoordForm(
+                            {
+                              ...coordForm,
+                              phone:
+                                sanitizePhone(
+                                  e.target
+                                    .value
+                                ),
+                            }
+                          )
+                        }
+                        inputMode="numeric"
+                        maxLength={
+                          10
+                        }
+                      />
+
+                      <input
+                        className="search-box"
+                        placeholder="Email"
+                        type="email"
+                        value={
+                          coordForm.email
+                        }
+                        onChange={(
+                          e
+                        ) =>
+                          setCoordForm(
+                            {
+                              ...coordForm,
+                              email:
+                                e.target
+                                  .value,
+                            }
+                          )
+                        }
+                      />
+
+                      <div
+                        style={{
+                          display:
+                            'flex',
+                          gap: 8,
+                          alignItems:
+                            'center',
+                        }}
+                      >
+                        <button
+                          className="btn-gold"
+                          type="submit"
+                          disabled={
+                            savingCoordinator
+                          }
+                          style={{
+                            padding:
+                              '6px 12px',
+                            fontSize:
+                              12,
+                          }}
+                        >
+                          {savingCoordinator
+                            ? 'Saving…'
+                            : 'Save Coordinator'}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn-outline"
+                          onClick={
+                            cancelAddCoordinator
+                          }
+                          style={{
+                            padding:
+                              '6px 12px',
+                            fontSize:
+                              12,
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                )}
+
+                {/* COORDINATOR LIST */}
+
+                {loadingCoordinators ? (
+                  <div
+                    style={{
+                      fontSize:
+                        13,
+                      color:
+                        'var(--text-muted)',
+                    }}
+                  >
+                    Loading coordinators…
+                  </div>
+                ) : currentCoordinators.length ===
+                  0 ? (
+                  <div
+                    style={{
+                      padding:
+                        12,
+                      background:
+                        'var(--bg-soft, #FAFAFC)',
+                      border:
+                        '1px solid var(--border-default, #eee)',
+                      borderRadius:
+                        8,
+                      fontSize:
+                        12.5,
+                      color:
+                        'var(--text-muted)',
+                    }}
+                  >
+                    No coordinators added yet.
+                    Click{' '}
+                    <b>
+                      + Add Coordinator
+                    </b>{' '}
+                    to add one.
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      overflowX:
+                        'auto',
+                    }}
+                  >
+                    <table>
+                      <tbody>
+                        <tr>
+                          <th>
+                            Name
+                          </th>
+
+                          <th>
+                            Phone
+                          </th>
+
+                          <th>
+                            Email
+                          </th>
+
+                          <th>
+                            Status
+                          </th>
+
+                          <th>
+                            Actions
+                          </th>
+                        </tr>
+
+                        {currentCoordinators.map(
+                          (
+                            coordinator
+                          ) => (
+                            <tr
+                              key={
+                                coordinator.id
+                              }
+                            >
+                              <td>
+                                <b>
+                                  {
+                                    coordinator.name
+                                  }
+                                </b>
+                              </td>
+
+                              <td>
+                                {coordinator.phone ||
+                                  '—'}
+                              </td>
+
+                              <td>
+                                {coordinator.email ||
+                                  '—'}
+                              </td>
+
+                              <td>
+                                {coordinator.is_current ? (
+                                  <span
+                                    className="badge green"
+                                  >
+                                    Current
+                                  </span>
+                                ) : (
+                                  <span
+                                    className="badge gray"
+                                  >
+                                    Past
+                                  </span>
+                                )}
+                              </td>
+
+                              <td>
+                                <div
+                                  style={{
+                                    display:
+                                      'flex',
+                                    gap: 6,
+                                    flexWrap:
+                                      'wrap',
+                                  }}
+                                >
+                                  {coordinator.is_current && (
+                                    <button
+                                      type="button"
+                                      className="btn-outline"
+                                      style={{
+                                        padding:
+                                          '3px 8px',
+                                        fontSize:
+                                          11.5,
+                                      }}
+                                      onClick={() =>
+                                        handleRetireCoordinator(
+                                          coordinator
+                                        )
+                                      }
+                                    >
+                                      Mark as Left
+                                    </button>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    className="btn-outline"
+                                    style={{
+                                      padding:
+                                        '3px 8px',
+                                      fontSize:
+                                        11.5,
+                                      color:
+                                        'crimson',
+                                    }}
+                                    onClick={() =>
+                                      handleDeleteCoordinator(
+                                        coordinator
+                                      )
+                                    }
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
