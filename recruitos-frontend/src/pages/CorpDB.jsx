@@ -31,13 +31,13 @@ export default function CorpDB() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Company form
+  // Company popup
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
-  // Add HR
+  // HR inside company popup
   const [showHrForm, setShowHrForm] = useState(false);
   const [hrForm, setHrForm] = useState(emptyHrForm);
   const [savingHr, setSavingHr] = useState(false);
@@ -47,10 +47,6 @@ export default function CorpDB() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const fileInputRef = useRef(null);
-
-  // --------------------------------------------------
-  // LOAD COMPANIES
-  // --------------------------------------------------
 
   async function loadCompanies() {
     setLoading(true);
@@ -66,8 +62,9 @@ export default function CorpDB() {
       setError(
         "Could not load companies. Check your Supabase connection."
       );
+      setCompanies([]);
     } else {
-      setCompanies(data ?? []);
+      setCompanies(data || []);
     }
 
     setLoading(false);
@@ -92,8 +89,9 @@ export default function CorpDB() {
         setError(
           "Could not load companies. Check your Supabase connection."
         );
+        setCompanies([]);
       } else {
-        setCompanies(data ?? []);
+        setCompanies(data || []);
       }
 
       setLoading(false);
@@ -106,53 +104,65 @@ export default function CorpDB() {
     };
   }, []);
 
-  // --------------------------------------------------
-  // EDIT COMPANY
-  // --------------------------------------------------
-
-  function startEdit(company) {
-    setEditingId(company.id);
-
-    setForm({
-      name: company.name || "",
-      sector: company.sector || "",
-      hr_name: company.hr_name || "",
-      hq_location: company.hq_location || "",
-      hiring_status: company.hiring_status || "Active",
-      city: company.city || "",
-      hr_phone: company.hr_phone || "",
-      hr_email: company.hr_email || "",
-      website: company.website || "",
-      gst_no: company.gst_no || "",
-      industry: company.industry || "",
-      sub_industry: company.sub_industry || "",
-    });
-
-    setShowHrForm(false);
-    setHrForm(emptyHrForm);
-    setShowForm(true);
-  }
+  // ---------------------------------------------------------
+  // COMPANY FORM
+  // ---------------------------------------------------------
 
   function startAddCompany() {
     setEditingId(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm });
+    setHrForm({ ...emptyHrForm });
     setShowHrForm(false);
-    setHrForm(emptyHrForm);
+    setShowForm(true);
+  }
+
+  function startEdit(c) {
+    setEditingId(c.id);
+
+    setForm({
+      name: c.name || "",
+      sector: c.sector || "",
+      hr_name: c.hr_name || "",
+      hq_location: c.hq_location || "",
+      hiring_status: c.hiring_status || "Active",
+      city: c.city || "",
+      hr_phone: c.hr_phone || "",
+      hr_email: c.hr_email || "",
+      website: c.website || "",
+      gst_no: c.gst_no || "",
+      industry: c.industry || "",
+      sub_industry: c.sub_industry || "",
+    });
+
+    setHrForm({
+      name: "",
+      title: "",
+      phone: "",
+      email: "",
+    });
+
+    setShowHrForm(false);
     setShowForm(true);
   }
 
   function cancelForm() {
     setShowForm(false);
     setEditingId(null);
-    setForm(emptyForm);
-
+    setForm({ ...emptyForm });
+    setHrForm({ ...emptyHrForm });
     setShowHrForm(false);
-    setHrForm(emptyHrForm);
   }
 
-  // --------------------------------------------------
+  function handleFormChange(field, value) {
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  }
+
+  // ---------------------------------------------------------
   // SAVE COMPANY
-  // --------------------------------------------------
+  // ---------------------------------------------------------
 
   async function handleSaveCompany(e) {
     e.preventDefault();
@@ -171,17 +181,17 @@ export default function CorpDB() {
 
     const companyData = {
       name: form.name.trim(),
-      sector: form.sector.trim() || null,
-      hr_name: form.hr_name.trim() || null,
-      hq_location: form.hq_location.trim() || null,
+      sector: form.sector || null,
+      hr_name: form.hr_name || null,
+      hq_location: form.hq_location || null,
       hiring_status: form.hiring_status || "Active",
-      city: form.city.trim() || null,
+      city: form.city || null,
       hr_phone: form.hr_phone || null,
-      hr_email: form.hr_email.trim() || null,
-      website: form.website.trim() || null,
-      gst_no: form.gst_no.trim() || null,
-      industry: form.industry.trim() || null,
-      sub_industry: form.sub_industry.trim() || null,
+      hr_email: form.hr_email || null,
+      website: form.website || null,
+      gst_no: form.gst_no || null,
+      industry: form.industry || null,
+      sub_industry: form.sub_industry || null,
     };
 
     if (editingId) {
@@ -192,9 +202,7 @@ export default function CorpDB() {
 
       if (error) {
         console.error("Failed to update company:", error);
-        alert(
-          `Could not update company.\n\n${error.message || "Unknown error"}`
-        );
+        alert("Could not update company. Check console for details.");
       } else {
         cancelForm();
         await loadCompanies();
@@ -206,9 +214,7 @@ export default function CorpDB() {
 
       if (error) {
         console.error("Failed to add company:", error);
-        alert(
-          `Could not add company.\n\n${error.message || "Unknown error"}`
-        );
+        alert("Could not add company. Check console for details.");
       } else {
         cancelForm();
         await loadCompanies();
@@ -218,16 +224,18 @@ export default function CorpDB() {
     setSaving(false);
   }
 
-  // --------------------------------------------------
+  // ---------------------------------------------------------
   // DELETE COMPANY
-  // --------------------------------------------------
+  // ---------------------------------------------------------
 
   async function handleDeleteCompany(id, name) {
-    const confirmed = window.confirm(
-      `Delete "${name}"?\n\nThis cannot be undone.`
-    );
-
-    if (!confirmed) return;
+    if (
+      !window.confirm(
+        `Delete "${name}"?\n\nThis cannot be undone.`
+      )
+    ) {
+      return;
+    }
 
     const { error } = await supabase
       .from("companies")
@@ -236,49 +244,43 @@ export default function CorpDB() {
 
     if (error) {
       console.error("Failed to delete company:", error);
-
-      alert(
-        `Could not delete company.\n\n${error.message || "Unknown error"}`
-      );
-    } else {
-      await loadCompanies();
+      alert("Could not delete company. Check console for details.");
+      return;
     }
+
+    await loadCompanies();
   }
 
-  // --------------------------------------------------
-  // OPEN ADD HR
-  // --------------------------------------------------
+  // ---------------------------------------------------------
+  // ADD HR FROM EDIT POPUP
+  // ---------------------------------------------------------
 
-  function openAddHr() {
+  function openAddHrForm() {
     if (!editingId) {
       alert("Please save the company first before adding an HR.");
       return;
     }
 
     setHrForm({
-      name: form.hr_name || "",
+      name: "",
       title: "",
-      phone: form.hr_phone || "",
-      email: form.hr_email || "",
+      phone: "",
+      email: "",
     });
 
     setShowHrForm(true);
   }
 
-  function cancelAddHr() {
+  function cancelHrForm() {
     setShowHrForm(false);
-    setHrForm(emptyHrForm);
+    setHrForm({ ...emptyHrForm });
   }
-
-  // --------------------------------------------------
-  // SAVE HR
-  // --------------------------------------------------
 
   async function handleAddHr(e) {
     e.preventDefault();
 
     if (!editingId) {
-      alert("Company ID not found.");
+      alert("Company ID is missing.");
       return;
     }
 
@@ -294,49 +296,103 @@ export default function CorpDB() {
 
     setSavingHr(true);
 
-    /*
-     * Update the company's current HR information.
-     *
-     * The Corporate Database UI no longer shows HR history.
-     * The HR information is simply stored against the company.
-     */
-    const { error } = await supabase
-      .from("companies")
-      .update({
-        hr_name: hrForm.name.trim(),
-        hr_phone: hrForm.phone || null,
-        hr_email: hrForm.email.trim() || null,
-      })
-      .eq("id", editingId);
+    try {
+      // Archive current HR
+      const { error: archiveError } = await supabase
+        .from("company_hr_contacts")
+        .update({
+          is_current: false,
+          ended_at: new Date().toISOString(),
+        })
+        .eq("company_id", editingId)
+        .eq("is_current", true);
 
-    if (error) {
-      console.error("Failed to save HR:", error);
+      if (archiveError) {
+        console.error(
+          "Failed to archive previous HR:",
+          archiveError
+        );
 
-      alert(
-        `Could not save HR.\n\n${error.message || "Unknown error"}`
-      );
-    } else {
+        alert(
+          "Could not archive previous HR. Check console for details."
+        );
+
+        setSavingHr(false);
+        return;
+      }
+
+      // Insert new HR
+      const { error: insertError } = await supabase
+        .from("company_hr_contacts")
+        .insert([
+          {
+            company_id: editingId,
+            name: hrForm.name.trim(),
+            title: hrForm.title.trim() || null,
+            phone: hrForm.phone || null,
+            email: hrForm.email || null,
+            is_current: true,
+          },
+        ]);
+
+      if (insertError) {
+        console.error(
+          "Failed to add HR contact:",
+          insertError
+        );
+
+        alert(
+          "Could not add new HR. Check console for details."
+        );
+
+        setSavingHr(false);
+        return;
+      }
+
+      // Update current HR in companies table
+      const { error: companyUpdateError } = await supabase
+        .from("companies")
+        .update({
+          hr_name: hrForm.name.trim(),
+          hr_phone: hrForm.phone || null,
+          hr_email: hrForm.email || null,
+        })
+        .eq("id", editingId);
+
+      if (companyUpdateError) {
+        console.error(
+          "HR added but company HR fields could not be updated:",
+          companyUpdateError
+        );
+
+        alert(
+          "HR was added, but company HR details could not be updated."
+        );
+      }
+
+      // Update popup form immediately
       setForm((prev) => ({
         ...prev,
         hr_name: hrForm.name.trim(),
         hr_phone: hrForm.phone || "",
-        hr_email: hrForm.email.trim() || "",
+        hr_email: hrForm.email || "",
       }));
 
+      setHrForm({ ...emptyHrForm });
       setShowHrForm(false);
-      setHrForm(emptyHrForm);
 
       await loadCompanies();
-
-      alert("HR added successfully.");
+    } catch (err) {
+      console.error("Unexpected HR error:", err);
+      alert("Something went wrong while adding HR.");
     }
 
     setSavingHr(false);
   }
 
-  // --------------------------------------------------
-  // EXCEL FILE SELECT
-  // --------------------------------------------------
+  // ---------------------------------------------------------
+  // EXCEL IMPORT
+  // ---------------------------------------------------------
 
   function handleFileSelect(e) {
     const file = e.target.files?.[0];
@@ -353,14 +409,7 @@ export default function CorpDB() {
           type: "binary",
         });
 
-        const firstSheetName = wb.SheetNames[0];
-
-        if (!firstSheetName) {
-          alert("No worksheet found in the Excel file.");
-          return;
-        }
-
-        const sheet = wb.Sheets[firstSheetName];
+        const sheet = wb.Sheets[wb.SheetNames[0]];
 
         const rows = XLSX.utils.sheet_to_json(sheet, {
           defval: "",
@@ -440,17 +489,13 @@ export default function CorpDB() {
 
         setImportRows(mapped);
       } catch (err) {
-        console.error("Excel read error:", err);
-        alert("Could not read the Excel file.");
+        console.error("Excel import error:", err);
+        alert("Could not read this Excel file.");
       }
     };
 
     reader.readAsBinaryString(file);
   }
-
-  // --------------------------------------------------
-  // CONFIRM EXCEL IMPORT
-  // --------------------------------------------------
 
   async function handleConfirmImport() {
     if (!importRows || importRows.length === 0) return;
@@ -460,43 +505,31 @@ export default function CorpDB() {
     let success = 0;
     let failed = 0;
 
-    /*
-     * Batch insert instead of inserting one row at a time.
-     * This is much faster for large Excel files.
-     */
-    const rowsToInsert = importRows.map((row) => ({
-      name: row.name?.trim() || null,
-      sector: row.sector?.trim() || null,
-      hr_name: row.hr_name?.trim() || null,
-      hq_location: row.hq_location?.trim() || null,
-      hiring_status: row.hiring_status || "Active",
-      city: row.city?.trim() || null,
-      hr_phone: row.hr_phone || null,
-      hr_email: row.hr_email?.trim() || null,
-      website: row.website?.trim() || null,
-      gst_no: row.gst_no?.trim() || null,
-      industry: row.industry?.trim() || null,
-      sub_industry: row.sub_industry?.trim() || null,
-    }));
-
-    /*
-     * Insert in batches of 500.
-     * This avoids request-size problems with very large Excel files.
-     */
-    const batchSize = 500;
-
-    for (let i = 0; i < rowsToInsert.length; i += batchSize) {
-      const batch = rowsToInsert.slice(i, i + batchSize);
-
+    for (const row of importRows) {
       const { error } = await supabase
         .from("companies")
-        .insert(batch);
+        .insert([
+          {
+            name: row.name,
+            sector: row.sector || null,
+            hr_name: row.hr_name || null,
+            hq_location: row.hq_location || null,
+            hiring_status: row.hiring_status || "Active",
+            city: row.city || null,
+            hr_phone: row.hr_phone || null,
+            hr_email: row.hr_email || null,
+            website: row.website || null,
+            gst_no: row.gst_no || null,
+            industry: row.industry || null,
+            sub_industry: row.sub_industry || null,
+          },
+        ]);
 
       if (error) {
-        console.error("Excel import batch failed:", error);
-        failed += batch.length;
+        console.error("Import row failed:", error);
+        failed += 1;
       } else {
-        success += batch.length;
+        success += 1;
       }
     }
 
@@ -516,10 +549,6 @@ export default function CorpDB() {
     await loadCompanies();
   }
 
-  // --------------------------------------------------
-  // CANCEL IMPORT
-  // --------------------------------------------------
-
   function cancelImport() {
     setImportRows(null);
     setImportResult(null);
@@ -529,17 +558,14 @@ export default function CorpDB() {
     }
   }
 
-  // --------------------------------------------------
-  // UI
-  // --------------------------------------------------
+  // ---------------------------------------------------------
+  // RENDER
+  // ---------------------------------------------------------
 
   return (
     <div className="page active" id="page-corpdb">
 
-      {/* ================================================
-          PAGE HEADER
-      ================================================= */}
-
+      {/* PAGE HEADER */}
       <div className="page-head">
         <div>
           <h1>Corporate Database</h1>
@@ -574,44 +600,32 @@ export default function CorpDB() {
 
           <button
             className="btn-gold"
-            onClick={() => {
-              if (showForm) {
-                cancelForm();
-              } else {
-                startAddCompany();
-              }
-            }}
+            onClick={startAddCompany}
           >
-            {showForm ? "Cancel" : "+ Add Company"}
+            + Add Company
           </button>
         </div>
       </div>
 
-      {/* ================================================
-          ERROR
-      ================================================= */}
-
+      {/* ERROR */}
       {error && (
         <div
           className="panel"
           style={{
             color: "crimson",
-            marginBottom: 15,
+            marginBottom: 16,
           }}
         >
           {error}
         </div>
       )}
 
-      {/* ================================================
-          IMPORT RESULT
-      ================================================= */}
-
+      {/* IMPORT RESULT */}
       {importResult && (
         <div
           className="panel"
           style={{
-            marginBottom: 15,
+            marginBottom: 16,
           }}
         >
           <p>
@@ -629,15 +643,12 @@ export default function CorpDB() {
         </div>
       )}
 
-      {/* ================================================
-          EXCEL PREVIEW
-      ================================================= */}
-
+      {/* IMPORT PREVIEW */}
       {importRows && (
         <div
           className="panel"
           style={{
-            marginBottom: 15,
+            marginBottom: 16,
           }}
         >
           <div className="panel-title">
@@ -647,10 +658,9 @@ export default function CorpDB() {
           <div
             style={{
               overflowX: "auto",
-              marginTop: 10,
             }}
           >
-            <table>
+            <table className="data-table">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -708,658 +718,694 @@ export default function CorpDB() {
         </div>
       )}
 
-      {/* ================================================
-          ADD / EDIT COMPANY FORM
-      ================================================= */}
-
+      {/* COMPANY ADD / EDIT POPUP */}
       {showForm && (
-        <div className="panel">
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 20,
+          }}
+        >
           <div
+            className="panel"
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 15,
-            }}
-          >
-            <div className="panel-title">
-              {editingId
-                ? "Edit Company"
-                : "Add New Company"}
-            </div>
-
-            <button
-              className="btn-outline"
-              onClick={cancelForm}
-            >
-              ✕
-            </button>
-          </div>
-
-          <form
-            onSubmit={handleSaveCompany}
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "1fr 1fr",
-              gap: 12,
+              width: "100%",
+              maxWidth: 850,
+              maxHeight: "90vh",
+              overflowY: "auto",
+              position: "relative",
             }}
           >
 
-            {/* COMPANY NAME */}
-
-            <input
-              className="search-box"
-              placeholder="Company name"
-              required
-              value={form.name}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  name: e.target.value,
-                })
-              }
-            />
-
-            {/* SECTOR */}
-
-            <input
-              className="search-box"
-              placeholder="Sector (e.g. IT Services)"
-              value={form.sector}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  sector: e.target.value,
-                })
-              }
-            />
-
-            {/* INDUSTRY */}
-
-            <input
-              className="search-box"
-              placeholder="Industry"
-              value={form.industry}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  industry: e.target.value,
-                })
-              }
-            />
-
-            {/* SUB INDUSTRY */}
-
-            <input
-              className="search-box"
-              placeholder="Sub Industry"
-              value={form.sub_industry}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  sub_industry: e.target.value,
-                })
-              }
-            />
-
-            {/* CITY */}
-
-            <input
-              className="search-box"
-              placeholder="City"
-              value={form.city}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  city: e.target.value,
-                })
-              }
-            />
-
-            {/* HQ */}
-
-            <input
-              className="search-box"
-              placeholder="HQ location"
-              value={form.hq_location}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  hq_location: e.target.value,
-                })
-              }
-            />
-
-            {/* HR NAME */}
-
-            <input
-              className="search-box"
-              placeholder="HR Manager name"
-              value={form.hr_name}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  hr_name: e.target.value,
-                })
-              }
-            />
-
-            {/* HR PHONE */}
-
-            <input
-              className="search-box"
-              placeholder="HR mobile no."
-              value={form.hr_phone}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  hr_phone: sanitizePhone(
-                    e.target.value
-                  ),
-                })
-              }
-              inputMode="numeric"
-              maxLength={10}
-            />
-
-            {/* HR EMAIL */}
-
-            <input
-              className="search-box"
-              placeholder="HR email ID"
-              type="email"
-              value={form.hr_email}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  hr_email: e.target.value,
-                })
-              }
-            />
-
-            {/* WEBSITE */}
-
-            <input
-              className="search-box"
-              placeholder="Website (https://...)"
-              value={form.website}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  website: e.target.value,
-                })
-              }
-            />
-
-            {/* GST */}
-
-            <input
-              className="search-box"
-              placeholder="GST No."
-              value={form.gst_no}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  gst_no: e.target.value,
-                })
-              }
-            />
-
-            {/* STATUS */}
-
-            <select
-              className="search-box"
-              value={form.hiring_status}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  hiring_status:
-                    e.target.value,
-                })
-              }
-            >
-              <option value="Active">
-                Hiring: Active
-              </option>
-
-              <option value="Paused">
-                Hiring: Paused
-              </option>
-            </select>
-
-            {/* SAVE COMPANY */}
-
-            <button
-              className="btn-gold"
-              type="submit"
-              disabled={saving}
-            >
-              {saving
-                ? "Saving…"
-                : editingId
-                ? "Update Company"
-                : "Save Company"}
-            </button>
-          </form>
-
-          {/* ============================================
-              ADD HR BUTTON
-          ============================================= */}
-
-          {editingId && (
+            {/* POPUP HEADER */}
             <div
               style={{
-                marginTop: 18,
-                paddingTop: 16,
-                borderTop:
-                  "1px solid var(--border-default, #eee)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 18,
               }}
             >
-              <button
-                type="button"
-                className="btn-gold"
-                onClick={openAddHr}
-                style={{
-                  padding: "8px 14px",
-                }}
-              >
-                + Add HR
-              </button>
-
-              <span
-                style={{
-                  marginLeft: 10,
-                  fontSize: 12,
-                  color:
-                    "var(--text-muted, #777)",
-                }}
-              >
-                Add or update HR contact for this
-                company
-              </span>
-            </div>
-          )}
-
-          {/* ============================================
-              ADD HR FORM
-          ============================================= */}
-
-          {showHrForm && editingId && (
-            <div
-              style={{
-                marginTop: 15,
-                padding: 15,
-                borderRadius: 10,
-                border:
-                  "1px solid var(--border-default, #ddd)",
-                background:
-                  "var(--bg-soft, #fafafa)",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent:
-                    "space-between",
-                  alignItems: "center",
-                  marginBottom: 12,
-                }}
-              >
-                <div
+              <div>
+                <h2
                   style={{
-                    fontWeight: 700,
-                    fontSize: 14,
+                    margin: 0,
+                    fontSize: 20,
                   }}
                 >
-                  Add HR Contact
-                </div>
+                  {editingId
+                    ? "Edit Company"
+                    : "Add New Company"}
+                </h2>
 
-                <button
-                  type="button"
-                  className="btn-outline"
-                  onClick={cancelAddHr}
+                <p
                   style={{
-                    padding: "4px 9px",
+                    margin: "4px 0 0",
+                    color: "var(--text-muted)",
                     fontSize: 12,
                   }}
                 >
-                  ✕
-                </button>
+                  {editingId
+                    ? "Update company information and HR details."
+                    : "Enter company information."}
+                </p>
               </div>
 
-              <form
-                onSubmit={handleAddHr}
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={cancelForm}
+                style={{
+                  padding: "5px 10px",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* COMPANY FORM */}
+            <form onSubmit={handleSaveCompany}>
+
+              <div
                 style={{
                   display: "grid",
                   gridTemplateColumns:
-                    "1fr 1fr",
-                  gap: 10,
+                    "repeat(2, minmax(0, 1fr))",
+                  gap: 12,
                 }}
               >
-                {/* HR NAME */}
-
                 <input
                   className="search-box"
-                  placeholder="HR Name *"
+                  placeholder="Company name *"
                   required
-                  value={hrForm.name}
+                  value={form.name}
                   onChange={(e) =>
-                    setHrForm({
-                      ...hrForm,
-                      name: e.target.value,
-                    })
+                    handleFormChange(
+                      "name",
+                      e.target.value
+                    )
                   }
                 />
 
-                {/* HR TITLE */}
-
                 <input
                   className="search-box"
-                  placeholder="Title (e.g. HR Manager)"
-                  value={hrForm.title}
+                  placeholder="Sector (e.g. IT Services)"
+                  value={form.sector}
                   onChange={(e) =>
-                    setHrForm({
-                      ...hrForm,
-                      title: e.target.value,
-                    })
+                    handleFormChange(
+                      "sector",
+                      e.target.value
+                    )
                   }
                 />
 
-                {/* PHONE */}
+                <input
+                  className="search-box"
+                  placeholder="Industry"
+                  value={form.industry}
+                  onChange={(e) =>
+                    handleFormChange(
+                      "industry",
+                      e.target.value
+                    )
+                  }
+                />
 
                 <input
                   className="search-box"
-                  placeholder="HR Phone"
-                  value={hrForm.phone}
+                  placeholder="Sub Industry"
+                  value={form.sub_industry}
                   onChange={(e) =>
-                    setHrForm({
-                      ...hrForm,
-                      phone: sanitizePhone(
-                        e.target.value
-                      ),
-                    })
+                    handleFormChange(
+                      "sub_industry",
+                      e.target.value
+                    )
+                  }
+                />
+
+                <input
+                  className="search-box"
+                  placeholder="City"
+                  value={form.city}
+                  onChange={(e) =>
+                    handleFormChange(
+                      "city",
+                      e.target.value
+                    )
+                  }
+                />
+
+                <input
+                  className="search-box"
+                  placeholder="HQ location"
+                  value={form.hq_location}
+                  onChange={(e) =>
+                    handleFormChange(
+                      "hq_location",
+                      e.target.value
+                    )
+                  }
+                />
+
+                <input
+                  className="search-box"
+                  placeholder="HR Manager name"
+                  value={form.hr_name}
+                  onChange={(e) =>
+                    handleFormChange(
+                      "hr_name",
+                      e.target.value
+                    )
+                  }
+                />
+
+                <input
+                  className="search-box"
+                  placeholder="HR mobile no."
+                  value={form.hr_phone}
+                  onChange={(e) =>
+                    handleFormChange(
+                      "hr_phone",
+                      sanitizePhone(e.target.value)
+                    )
                   }
                   inputMode="numeric"
                   maxLength={10}
                 />
 
-                {/* EMAIL */}
-
                 <input
                   className="search-box"
-                  placeholder="HR Email"
+                  placeholder="HR email ID"
                   type="email"
-                  value={hrForm.email}
+                  value={form.hr_email}
                   onChange={(e) =>
-                    setHrForm({
-                      ...hrForm,
-                      email: e.target.value,
-                    })
+                    handleFormChange(
+                      "hr_email",
+                      e.target.value
+                    )
                   }
                 />
 
-                {/* BUTTONS */}
+                <input
+                  className="search-box"
+                  placeholder="Website (https://...)"
+                  value={form.website}
+                  onChange={(e) =>
+                    handleFormChange(
+                      "website",
+                      e.target.value
+                    )
+                  }
+                />
 
+                <input
+                  className="search-box"
+                  placeholder="GST No."
+                  value={form.gst_no}
+                  onChange={(e) =>
+                    handleFormChange(
+                      "gst_no",
+                      e.target.value
+                    )
+                  }
+                />
+
+                <select
+                  className="search-box"
+                  value={form.hiring_status}
+                  onChange={(e) =>
+                    handleFormChange(
+                      "hiring_status",
+                      e.target.value
+                    )
+                  }
+                >
+                  <option value="Active">
+                    Hiring: Active
+                  </option>
+
+                  <option value="Paused">
+                    Hiring: Paused
+                  </option>
+                </select>
+              </div>
+
+              {/* ADD HR BUTTON ONLY IN EDIT MODE */}
+              {editingId && (
                 <div
                   style={{
-                    gridColumn: "1 / -1",
-                    display: "flex",
-                    gap: 8,
+                    marginTop: 18,
+                    paddingTop: 16,
+                    borderTop:
+                      "1px solid var(--border-default, #eee)",
                   }}
                 >
-                  <button
-                    className="btn-gold"
-                    type="submit"
-                    disabled={savingHr}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
                   >
-                    {savingHr
-                      ? "Saving…"
-                      : "Save HR"}
-                  </button>
+                    <div>
+                      <div
+                        style={{
+                          fontWeight: 700,
+                          fontSize: 14,
+                        }}
+                      >
+                        HR Contact
+                      </div>
 
-                  <button
-                    type="button"
-                    className="btn-outline"
-                    onClick={cancelAddHr}
-                  >
-                    Cancel
-                  </button>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color:
+                            "var(--text-muted)",
+                          marginTop: 2,
+                        }}
+                      >
+                        Add a new HR contact for this
+                        company.
+                      </div>
+                    </div>
+
+                    {!showHrForm && (
+                      <button
+                        type="button"
+                        className="btn-outline"
+                        onClick={openAddHrForm}
+                        style={{
+                          padding: "6px 12px",
+                          fontSize: 12,
+                        }}
+                      >
+                        + Add HR
+                      </button>
+                    )}
+                  </div>
+
+                  {/* HR FORM */}
+                  {showHrForm && (
+                    <div
+                      style={{
+                        marginTop: 12,
+                        padding: 14,
+                        borderRadius: 8,
+                        border:
+                          "1px dashed var(--border-default, #ddd)",
+                        background:
+                          "var(--bg-soft, #fafafc)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontWeight: 700,
+                          fontSize: 13,
+                          marginBottom: 10,
+                        }}
+                      >
+                        Add New HR
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(2, minmax(0, 1fr))",
+                          gap: 10,
+                        }}
+                      >
+                        <input
+                          className="search-box"
+                          placeholder="HR Name *"
+                          required
+                          value={hrForm.name}
+                          onChange={(e) =>
+                            setHrForm((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
+                        />
+
+                        <input
+                          className="search-box"
+                          placeholder="Title (e.g. HR Manager)"
+                          value={hrForm.title}
+                          onChange={(e) =>
+                            setHrForm((prev) => ({
+                              ...prev,
+                              title: e.target.value,
+                            }))
+                          }
+                        />
+
+                        <input
+                          className="search-box"
+                          placeholder="Phone"
+                          value={hrForm.phone}
+                          onChange={(e) =>
+                            setHrForm((prev) => ({
+                              ...prev,
+                              phone: sanitizePhone(
+                                e.target.value
+                              ),
+                            }))
+                          }
+                          inputMode="numeric"
+                          maxLength={10}
+                        />
+
+                        <input
+                          className="search-box"
+                          placeholder="Email"
+                          type="email"
+                          value={hrForm.email}
+                          onChange={(e) =>
+                            setHrForm((prev) => ({
+                              ...prev,
+                              email: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 8,
+                          marginTop: 10,
+                        }}
+                      >
+                        <button
+                          type="button"
+                          className="btn-gold"
+                          onClick={handleAddHr}
+                          disabled={savingHr}
+                          style={{
+                            padding:
+                              "6px 14px",
+                            fontSize: 12,
+                          }}
+                        >
+                          {savingHr
+                            ? "Saving…"
+                            : "Save HR"}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn-outline"
+                          onClick={cancelHrForm}
+                          style={{
+                            padding:
+                              "6px 14px",
+                            fontSize: 12,
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </form>
-            </div>
-          )}
+              )}
+
+              {/* FORM BUTTONS */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 8,
+                  marginTop: 20,
+                  paddingTop: 14,
+                  borderTop:
+                    "1px solid var(--border-default, #eee)",
+                }}
+              >
+                <button
+                  type="button"
+                  className="btn-outline"
+                  onClick={cancelForm}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className="btn-gold"
+                  type="submit"
+                  disabled={saving}
+                >
+                  {saving
+                    ? "Saving…"
+                    : editingId
+                    ? "Update Company"
+                    : "Save Company"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
-      {/* ================================================
-          COMPANY CARDS
-      ================================================= */}
+      {/* =====================================================
+          CORPORATE TABLE
+          ===================================================== */}
 
-      <div className="grid3">
+      <div
+        className="panel"
+        style={{
+          padding: 0,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            padding: "16px 18px",
+            borderBottom:
+              "1px solid var(--border-default, #eee)",
+          }}
+        >
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: 15,
+            }}
+          >
+            Companies
+          </div>
+
+          <div
+            style={{
+              color: "var(--text-muted)",
+              fontSize: 12,
+              marginTop: 3,
+            }}
+          >
+            Corporate companies and their current HR
+            contact details.
+          </div>
+        </div>
+
         {loading ? (
-          <div className="panel">
+          <div
+            style={{
+              padding: 30,
+              textAlign: "center",
+              color: "var(--text-muted)",
+            }}
+          >
             Loading…
           </div>
         ) : companies.length === 0 ? (
-          <div className="panel">
+          <div
+            style={{
+              padding: 30,
+              textAlign: "center",
+              color: "var(--text-muted)",
+            }}
+          >
             No companies found.
           </div>
         ) : (
-          companies.map((c) => (
-            <div
-              className="panel"
-              key={c.id}
+          <div
+            style={{
+              width: "100%",
+              overflowX: "auto",
+            }}
+          >
+            <table
+              className="data-table"
+              style={{
+                width: "100%",
+                minWidth: 1200,
+              }}
             >
-              <div
-                className="jd-card"
-                style={{
-                  border: "none",
-                  padding: 0,
-                }}
-              >
-                {/* SECTOR */}
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Sector</th>
+                  <th>Industry</th>
+                  <th>City</th>
+                  <th>HQ Location</th>
+                  <th>HR Name</th>
+                  <th>HR Phone</th>
+                  <th>HR Email</th>
+                  <th>Hiring</th>
+                  <th>Website</th>
+                  <th>GST No.</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
 
-                <span className="co">
-                  {c.sector || "—"}
-                </span>
+              <tbody>
+                {companies.map((c) => (
+                  <tr key={c.id}>
+                    <td>
+                      <strong>{c.name}</strong>
+                    </td>
 
-                {/* COMPANY */}
+                    <td>
+                      {c.sector || "—"}
+                    </td>
 
-                <h3>{c.name}</h3>
+                    <td>
+                      {c.industry || c.sub_industry
+                        ? [
+                            c.industry,
+                            c.sub_industry,
+                          ]
+                            .filter(Boolean)
+                            .join(" / ")
+                        : "—"}
+                    </td>
 
-                {/* LOCATION */}
+                    <td>
+                      {c.city || "—"}
+                    </td>
 
-                <div className="meta">
-                  {c.city || c.hq_location
-                    ? [
-                        c.city,
-                        c.hq_location,
-                      ]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "—"}
-                </div>
+                    <td>
+                      {c.hq_location || "—"}
+                    </td>
 
-                {/* HR INFORMATION */}
+                    <td>
+                      {c.hr_name || "Not assigned"}
+                    </td>
 
-                {(c.hr_name ||
-                  c.hr_phone ||
-                  c.hr_email) && (
-                  <div
-                    style={{
-                      margin:
-                        "10px 0 8px",
-                      padding:
-                        "9px 11px",
-                      borderRadius: 8,
-                      background:
-                        "var(--bg-soft, #FAFAFC)",
-                      border:
-                        "1px solid var(--border-default, #eee)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 10.5,
-                        fontWeight: 700,
-                        color:
-                          "var(--text-muted)",
-                        textTransform:
-                          "uppercase",
-                        marginBottom: 4,
-                      }}
-                    >
-                      HR Contact
-                    </div>
+                    <td>
+                      {c.hr_phone || "—"}
+                    </td>
 
-                    {c.hr_name && (
+                    <td>
+                      {c.hr_email || "—"}
+                    </td>
+
+                    <td>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          padding:
+                            "3px 8px",
+                          borderRadius: 999,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          background:
+                            c.hiring_status ===
+                            "Active"
+                              ? "#E8F7EE"
+                              : "#FFF3E0",
+                          color:
+                            c.hiring_status ===
+                            "Active"
+                              ? "#16803A"
+                              : "#A15C00",
+                        }}
+                      >
+                        {c.hiring_status ||
+                          "—"}
+                      </span>
+                    </td>
+
+                    <td>
+                      {c.website ? (
+                        <a
+                          href={c.website}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            color:
+                              "var(--primary)",
+                            whiteSpace:
+                              "nowrap",
+                          }}
+                        >
+                          Visit ↗
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+
+                    <td>
+                      {c.gst_no || "—"}
+                    </td>
+
+                    <td>
                       <div
                         style={{
-                          fontWeight: 600,
-                          fontSize: 13,
+                          display: "flex",
+                          gap: 6,
+                          whiteSpace:
+                            "nowrap",
                         }}
                       >
-                        {c.hr_name}
+                        <button
+                          type="button"
+                          className="btn-outline"
+                          style={{
+                            padding:
+                              "4px 10px",
+                            fontSize: 12,
+                          }}
+                          onClick={() =>
+                            startEdit(c)
+                          }
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn-outline"
+                          style={{
+                            padding:
+                              "4px 10px",
+                            fontSize: 12,
+                            color: "crimson",
+                          }}
+                          onClick={() =>
+                            handleDeleteCompany(
+                              c.id,
+                              c.name
+                            )
+                          }
+                        >
+                          Delete
+                        </button>
                       </div>
-                    )}
-
-                    {c.hr_phone && (
-                      <div
-                        style={{
-                          fontSize: 12,
-                          color:
-                            "var(--text-secondary)",
-                        }}
-                      >
-                        📞 {c.hr_phone}
-                      </div>
-                    )}
-
-                    {c.hr_email && (
-                      <div
-                        style={{
-                          fontSize: 12,
-                          color:
-                            "var(--text-secondary)",
-                        }}
-                      >
-                        ✉️ {c.hr_email}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* COMPANY DETAILS */}
-
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection:
-                      "column",
-                    gap: 3,
-                    margin: "8px 0",
-                    fontSize: 12.5,
-                    color:
-                      "var(--text-secondary)",
-                  }}
-                >
-                  {/* WEBSITE */}
-
-                  {c.website && (
-                    <div>
-                      <a
-                        href={c.website}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          color:
-                            "var(--primary)",
-                        }}
-                      >
-                        Visit website ↗
-                      </a>
-                    </div>
-                  )}
-
-                  {/* INDUSTRY */}
-
-                  {(c.industry ||
-                    c.sub_industry) && (
-                    <div>
-                      Industry:{" "}
-                      {[
-                        c.industry,
-                        c.sub_industry,
-                      ]
-                        .filter(Boolean)
-                        .join(" / ")}
-                    </div>
-                  )}
-
-                  {/* GST */}
-
-                  {c.gst_no && (
-                    <div>
-                      GST: {c.gst_no}
-                    </div>
-                  )}
-                </div>
-
-                {/* HIRING STATUS */}
-
-                <div className="skills">
-                  <span>
-                    Hiring:{" "}
-                    {c.hiring_status ||
-                      "—"}
-                  </span>
-                </div>
-
-                {/* ACTION BUTTONS */}
-
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 6,
-                    marginTop: 10,
-                  }}
-                >
-                  <button
-                    className="btn-outline"
-                    style={{
-                      padding:
-                        "4px 10px",
-                      fontSize: 12,
-                    }}
-                    onClick={() =>
-                      startEdit(c)
-                    }
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    className="btn-outline"
-                    style={{
-                      padding:
-                        "4px 10px",
-                      fontSize: 12,
-                      color: "crimson",
-                    }}
-                    onClick={() =>
-                      handleDeleteCompany(
-                        c.id,
-                        c.name
-                      )
-                    }
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
