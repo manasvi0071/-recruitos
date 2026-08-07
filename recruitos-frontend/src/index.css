@@ -2132,3 +2132,19 @@ body, .panel, .stat-card, .jd-card, .sidebar, .topbar, .btn-outline, .search-box
   margin-bottom: 20px;
   max-width: 100%;
 }
+.saarthi-logo-wrap {
+  filter: drop-shadow(0 0 0 rgba(124, 58, 237, 0));
+  transition: filter 0.35s ease;
+}
+.saarthi-logo-wrap:hover {
+  filter: drop-shadow(0 0 14px rgba(124, 58, 237, 0.45))
+          drop-shadow(0 0 26px rgba(37, 99, 235, 0.25));
+}
+
+.saarthi-mark-stage {
+  background: radial-gradient(circle at 30% 30%, rgba(124, 58, 237, 0.15), transparent 60%),
+              #0B1020;
+  border-radius: 24px;
+  padding: 24px;
+  display: inline-flex;
+}

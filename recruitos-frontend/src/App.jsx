@@ -50,6 +50,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [profileApproved, setProfileApproved] = useState(null);
   const [activePage, setActivePage] = useState("dashboard");
+  
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -178,11 +179,12 @@ export default function App() {
       <div id="screen-app" style={{ display: "block" }}>
         <div className="topbar">
           <div className="brand">
-            <div className="brand-mark">SC</div>
-            <div>
-              <div className="brand-name">Saarthi Campus</div>
-              <div className="brand-sub">Campus Recruitment Platform</div>
-            </div>
+            <SaarthiLogo
+              width="220"
+              showText
+              showTagline
+              darkMode={true}
+              />
           </div>
           <div className="top-actions">
             <ThemeToggle />
@@ -202,7 +204,7 @@ export default function App() {
                 padding: 0,
               }}
             >
-              <SaarthiLogo size={32} showText={false} />
+              <SaarthiLogo width="32" showText={false}  />
             </div>
           </div>
         </div>
