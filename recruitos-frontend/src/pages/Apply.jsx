@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { getJobs, getColleges, uploadResume, createCandidate, applyToJob, updateApplicationScore } from '../lib/api';
 import { extractPdfText, scoreResume } from '../lib/resumeScoring';
 import CollegeAutocomplete from './CollegeAutocomplete';
+import { sanitizePhone } from '../lib/phone';
+import { isValidEmail } from '../lib/email';
 
 // Employment type values in the data are inconsistently entered
 // (e.g. "Full-Time", "internship", "Internship Full-Time", "Full-Time / Training Role").
@@ -64,10 +66,12 @@ export default function Apply() {
     });
   }, [jobs, search, locationFilter, experienceFilter, typeFilter]);
 
-  async function handleFormSubmit(e) {
+async function handleFormSubmit(e) {
     e.preventDefault();
     setError('');
     if (!file) { setError('Please upload your resume (PDF).'); return; }
+    if (!isValidEmail(form.email)) { setError('Please enter a valid email address.'); return; }
+    if (form.phone && form.phone.length !== 10) { setError('Phone number must be exactly 10 digits.'); return; }
     setLoading(true);
     try {
       const resume_url = await uploadResume(file);
@@ -182,7 +186,13 @@ export default function Apply() {
             </div>
             <div className="field">
               <label>Phone</label>
-              <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+<input
+  value={form.phone}
+  onChange={(e) => setForm({ ...form, phone: sanitizePhone(e.target.value) })}
+  inputMode="numeric"
+  maxLength={10}
+  placeholder="10-digit mobile number"
+/>
             </div>
             <div className="field">
               <label>College</label>

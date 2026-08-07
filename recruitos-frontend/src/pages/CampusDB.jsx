@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import * as XLSX from 'xlsx';
+import { sanitizePhone } from '../lib/phone';
+import { isValidEmail } from '../lib/email';
 
 const courses = ['All', 'Engineering', 'MBA', 'BCA', 'BSc IT', 'MCA', 'Pharmacy', 'Law', 'Commerce', 'Arts', 'Medical', 'Polytechnic'];
 
@@ -340,7 +342,7 @@ const mapped = rows.map((r) => ({
     }
   }
 
-  async function handleAddCoordinator(e, collegeId) {
+async function handleAddCoordinator(e, collegeId) {
     e.preventDefault();
     if (!coordForm.name.trim()) return;
     setSavingCoord(true);
@@ -605,9 +607,10 @@ const mapped = rows.map((r) => ({
                               value={coordForm.name} onChange={(e) => setCoordForm({ ...coordForm, name: e.target.value })}
                             />
                             <input
-                              className="search-box" placeholder="Phone" style={{ maxWidth: 160 }}
-                              value={coordForm.phone} onChange={(e) => setCoordForm({ ...coordForm, phone: e.target.value })}
-                            />
+  className="search-box" placeholder="Phone" style={{ maxWidth: 160 }}
+  value={coordForm.phone} onChange={(e) => setCoordForm({ ...coordForm, phone: sanitizePhone(e.target.value) })}
+  inputMode="numeric" maxLength={10}
+/>
                             <input
                               className="search-box" placeholder="Email" type="email" style={{ maxWidth: 220 }}
                               value={coordForm.email} onChange={(e) => setCoordForm({ ...coordForm, email: e.target.value })}
