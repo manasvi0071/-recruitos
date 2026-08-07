@@ -23,6 +23,7 @@ import AptitudeTest from "./pages/Aptitude";
 import PendingApprovals from "./pages/PendingApprovals";
 import AuthPanel from "./components/AuthPanel";
 import SaarthiLogo from "./components/SaarthiLogo";
+import CallRecords from './pages/CallRecords';
 
 const pages = {
   dashboard: Dashboard,
@@ -41,6 +42,7 @@ const pages = {
   gdadmin: GDAdmin,
   gdroom: GDRoom,
   pendingapprovals: PendingApprovals,
+  callrecords: CallRecords,
 };
 
 export default function App() {
