@@ -660,3 +660,59 @@ app.post('/api/auth/reject/:userId', async (req, res) => {
   await supabase.auth.admin.deleteUser(userId);
   res.json({ success: true });
 });
+// Log a new call
+app.post('/api/calls', async (req, res) => {
+  try {
+    const { recruiter_id, recruiter_name, college_id, college_name, call_date, duration_minutes, notes, outcome } = req.body;
+    const { data, error } = await supabase.from('call_logs').insert([{
+      recruiter_id, recruiter_name, college_id, college_name,
+      call_date: call_date || new Date(), duration_minutes, notes, outcome,
+    }]).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true, call: data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get all call logs (for reports)
+app.get('/api/calls', async (req, res) => {
+  const { data, error } = await supabase.from('call_logs').select('*').order('call_date', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// Get recruiter performance summary
+app.get('/api/calls/performance', async (req, res) => {
+  const { data: calls, error } = await supabase.from('call_logs').select('*');
+  if (error) return res.status(500).json({ error: error.message });
+
+  const { data: candidates } = await supabase.from('candidates').select('id, college_id, assigned_recruiter_id');
+
+  const byRecruiter = {};
+  calls.forEach((c) => {
+    if (!byRecruiter[c.recruiter_id]) {
+      byRecruiter[c.recruiter_id] = {
+        recruiter_id: c.recruiter_id,
+        recruiter_name: c.recruiter_name,
+        totalCalls: 0,
+        totalMinutes: 0,
+        collegesContacted: new Set(),
+        calls: [],
+      };
+    }
+    const r = byRecruiter[c.recruiter_id];
+    r.totalCalls += 1;
+    r.totalMinutes += c.duration_minutes || 0;
+    if (c.college_name) r.collegesContacted.add(c.college_name);
+    r.calls.push(c);
+  });
+
+  const result = Object.values(byRecruiter).map((r) => ({
+    ...r,
+    collegesContacted: r.collegesContacted.size,
+    studentsUnder: candidates ? candidates.filter((cand) => cand.assigned_recruiter_id === r.recruiter_id).length : 0,
+  }));
+
+  res.json(result);
+});

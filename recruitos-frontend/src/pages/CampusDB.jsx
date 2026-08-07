@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 import { supabase } from '../lib/supabaseClient';
 import * as XLSX from 'xlsx';
 import { sanitizePhone } from '../lib/phone';

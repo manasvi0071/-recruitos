@@ -578,3 +578,20 @@ export async function getCandidatesInEmailPhase(phase) {
   if (error) throw error;
   return data;
 }
+
+export async function logCall(data) {
+  const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/calls`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.error || 'Failed to log call');
+  return result;
+}
+
+export async function getRecruiterPerformance() {
+  const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/calls/performance`);
+  if (!res.ok) throw new Error('Failed to load recruiter performance');
+  return res.json();
+}
