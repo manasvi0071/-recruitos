@@ -3,7 +3,7 @@ import ThemeToggle from "../components/ThemeToggle";
 import MagneticButton from "../components/MagneticButton";
 import AnimatedCounter from "../components/AnimatedCounter";
 import { useScrollProgress, useScrollY } from "../hooks/useScrollReveal";
-import { logoDataUrl } from "../assets/logoData";
+import SaarthiLogo from "../components/SaarthiLogo";
 
 const departments = [
   {
@@ -134,18 +134,18 @@ const stats = [
 ];
 
 const marqueeItems = [
-  'Information Technology',
-  'Pharmaceuticals',
-  'Banking & Finance',
-  'Manufacturing',
-  'Healthcare',
-  'FMCG',
-  'E-commerce & Retail',
-  'BPO / KPO',
-  'Real Estate',
-  'Logistics & Supply Chain',
-  'Education',
-  'Telecom',
+  "Information Technology",
+  "Pharmaceuticals",
+  "Banking & Finance",
+  "Manufacturing",
+  "Healthcare",
+  "FMCG",
+  "E-commerce & Retail",
+  "BPO / KPO",
+  "Real Estate",
+  "Logistics & Supply Chain",
+  "Education",
+  "Telecom",
 ];
 
 const features = [
@@ -279,15 +279,7 @@ export default function Landing() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <img
-              src={logoDataUrl}
-              alt="Talent Corner"
-              style={{ width: 36, height: 36, objectFit: "contain" }}
-            />
-            <div>
-              <div className="brand-name">Talent Corner</div>
-              <div className="brand-sub">HR Services</div>
-            </div>
+            <SaarthiLogo size={38} />
           </div>
           <div
             style={{
@@ -606,21 +598,12 @@ function SplitHero({ scrollY }) {
             </div>
           ))}
 
-          <img
-            src={logoDataUrl}
-            alt="Talent Corner"
-            className="logo-3d-spin"
-            style={{
-              width: 240,
-              height: 240,
-              objectFit: "contain",
-              opacity: 1,
-              position: "relative",
-              zIndex: 2,
-              filter:
-                "drop-shadow(0 30px 70px rgba(124,58,237,0.6)) brightness(1.25) contrast(1.15) saturate(1.2)",
-            }}
-          />
+          <div
+  className="logo-3d-spin"
+  style={{ position: "relative", zIndex: 2, filter: "drop-shadow(0 30px 70px rgba(124,58,237,0.6))" }}
+>
+  <SaarthiLogo size={220} showText={false} />
+</div>
         </div>
       </div>
 

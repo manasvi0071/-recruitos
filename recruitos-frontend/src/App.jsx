@@ -21,7 +21,8 @@ import Landing from "./pages/Landing";
 import ThemeToggle from "./components/ThemeToggle";
 import AptitudeTest from "./pages/Aptitude";
 import PendingApprovals from "./pages/PendingApprovals";
-import AuthPanel from './components/AuthPanel';
+import AuthPanel from "./components/AuthPanel";
+import SaarthiLogo from "./components/SaarthiLogo";
 
 const pages = {
   dashboard: Dashboard,
@@ -191,7 +192,16 @@ export default function App() {
             >
               Log out
             </span>
-            <div className="avatar">TC</div>
+            <div
+              className="avatar"
+              style={{
+                background: "transparent",
+                boxShadow: "none",
+                padding: 0,
+              }}
+            >
+              <SaarthiLogo size={32} showText={false} />
+            </div>
           </div>
         </div>
 
