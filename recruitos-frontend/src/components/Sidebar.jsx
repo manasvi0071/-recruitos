@@ -1,63 +1,60 @@
 const nav = [
   {
-    section: 'Overview',
+    section: "Overview",
     items: [
-      { key: 'dashboard', icon: '◆', label: 'Dashboard' },
+      { key: "dashboard", icon: "◆", label: "Dashboard" },
     ],
   },
 
   {
-    section: 'Setup',
+    section: "Setup",
     items: [
-      { key: 'campusdb', icon: '▤', label: 'Campus Database' },
-      { key: 'corpdb', icon: '▤', label: 'Corporate Database' },
-      { key: 'jobs', icon: '▤', label: 'Job Profiles' },
+      { key: "campusdb", icon: "▤", label: "Campus Database" },
+      { key: "corpdb", icon: "▤", label: "Corporate Database" },
+      { key: "jobs", icon: "▤", label: "Job Profiles" },
     ],
   },
 
   {
-    section: 'Recruitment',
+    section: "Recruitment",
     items: [
-      { key: 'resume', icon: '→', label: 'Resume Analyzer (AI)' },
-      { key: 'aptitude', icon: '→', label: 'Aptitude Test' },
-      { key: 'gd', icon: '→', label: 'Group Discussion' },
-      { key: 'interview', icon: '→', label: 'Interviews' },
-      { key: 'offers', icon: '→', label: 'Offer Letters' },
-      { key: 'pipeline', icon: '→', label: 'Hiring Pipeline' },
+      { key: "resume", icon: "→", label: "Resume Analyzer (AI)" },
+      { key: "aptitude", icon: "→", label: "Aptitude Test" },
+      { key: "gd", icon: "→", label: "Group Discussion" },
+      { key: "interview", icon: "→", label: "Interviews" },
+      { key: "offers", icon: "→", label: "Offer Letters" },
+      { key: "pipeline", icon: "→", label: "Hiring Pipeline" },
     ],
   },
 
   {
-    section: 'Admin',
+    section: "Admin",
     items: [
       {
-        key: 'pendingapprovals',
-        icon: '✓',
-        label: 'Pending Approvals',
+        key: "pendingapprovals",
+        icon: "✓",
+        label: "Pending Approvals",
       },
     ],
   },
 
   {
-    section: 'Tracking',
+    section: "Tracking",
     items: [
-      { key: 'joining', icon: '●', label: 'Joining Tracker' },
-
-      // NEW
-      { key: 'callrecords', icon: '●', label: 'Call Records' },
-
-      { key: 'comm', icon: '●', label: 'Communication CRM' },
-      { key: 'reports', icon: '●', label: 'Reports & Analytics' },
+      { key: "joining", icon: "●", label: "Joining Tracker" },
+      { key: "callrecords", icon: "●", label: "Call Records" },
+      { key: "comm", icon: "●", label: "Communication CRM" },
+      { key: "reports", icon: "●", label: "Reports & Analytics" },
     ],
   },
 ];
 
 export default function Sidebar({ activePage, setActivePage }) {
   return (
-    <>
+    <aside className="sidebar">
       {nav.map((group) => (
         <div className="side-group" key={group.section}>
-          <div className="side-section">
+          <div className="side-section-label">
             {group.section}
           </div>
 
@@ -65,15 +62,19 @@ export default function Sidebar({ activePage, setActivePage }) {
             <div
               key={item.key}
               className={`side-link ${
-                activePage === item.key ? 'active' : ''
+                activePage === item.key ? "active" : ""
               }`}
               onClick={() => setActivePage(item.key)}
             >
-              {item.icon} {item.label}
+              <span className="side-icon">{item.icon}</span>
+
+              <span className="side-label">
+                {item.label}
+              </span>
             </div>
           ))}
         </div>
       ))}
-    </>
+    </aside>
   );
 }
