@@ -22,7 +22,6 @@ import ThemeToggle from "./components/ThemeToggle";
 import AptitudeTest from "./pages/Aptitude";
 import PendingApprovals from "./pages/PendingApprovals";
 import AuthPanel from "./components/AuthPanel";
-import scLogoNew from "./assets/saarthi-logo-new.png";
 import scLogoTopLeft from "./assets/saarthi-logo-topleft.png";
 import CallRecord from "./pages/CallRecord";
 
@@ -52,7 +51,6 @@ export default function App() {
   const [profileApproved, setProfileApproved] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [activePage, setActivePage] = useState("dashboard");
-  
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -70,32 +68,32 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-  const checkApproval = async () => {
-    if (!session) {
-      setProfileApproved(null);
-      setUserRole(null);
-      return;
-    }
+    const checkApproval = async () => {
+      if (!session) {
+        setProfileApproved(null);
+        setUserRole(null);
+        return;
+      }
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("approved, role")
-      .eq("id", session.user.id)
-      .single();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("approved, role")
+        .eq("id", session.user.id)
+        .single();
 
-    if (error) {
-      console.error("Could not check approval status:", error.message);
-      setProfileApproved(false);
-      setUserRole(null);
-      return;
-    }
+      if (error) {
+        console.error("Could not check approval status:", error.message);
+        setProfileApproved(false);
+        setUserRole(null);
+        return;
+      }
 
-    setProfileApproved(data?.approved === true);
-    setUserRole(data?.role || 'user');
-  };
+      setProfileApproved(data?.approved === true);
+      setUserRole(data?.role || "user");
+    };
 
-  checkApproval();
-}, [session]);
+    checkApproval();
+  }, [session]);
 
   // GD Room — public, students access via email link
   if (window.location.pathname.startsWith("/gd/")) {
@@ -185,18 +183,23 @@ export default function App() {
         <div className="topbar">
           <div
             className="brand"
-            style={{ display: "flex", alignItems: "center", height: "100%" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              height: "100%",
+              overflow: "visible",
+            }}
           >
             <img
               src={scLogoTopLeft}
               alt="Saarthi Campus"
               style={{
-  height: 60,
-  width: "auto",
-  maxWidth: 280,
-  objectFit: "contain",
-  display: "block",
-}}
+                height: "48px",
+                width: "auto",
+                maxWidth: 220,
+                objectFit: "contain",
+                display: "block",
+              }}
             />
           </div>
           <div className="top-actions">
@@ -209,30 +212,16 @@ export default function App() {
             >
               Log out
             </span>
-            <div
-              className="avatar"
-              style={{
-                background: "transparent",
-                boxShadow: "none",
-                padding: 0,
-              }}
-            >
-              <img
-                src={scLogoNew}
-                alt="Saarthi Campus"
-                style={{
-  width: 100,
-  height: 100,
-  borderRadius: 8,
-  objectFit: "contain",
-}}
-              />
-            </div>
+            <div className="avatar">SC</div>
           </div>
         </div>
 
         <div className="app">
-          <Sidebar activePage={activePage} setActivePage={setActivePage} isAdmin={userRole === 'admin'} />
+          <Sidebar
+            activePage={activePage}
+            setActivePage={setActivePage}
+            isAdmin={userRole === "admin"}
+          />
           <div className="main">
             <PageComponent />
           </div>
