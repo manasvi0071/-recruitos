@@ -55,7 +55,7 @@ export default function AuthPanel() {
           <p
             style={{
               color: "var(--text-muted)",
-              fontSize: 13,
+              fontSize: 19,
               marginBottom: 24,
             }}
           >
@@ -136,7 +136,7 @@ export default function AuthPanel() {
               <p
                 style={{
                   color: "var(--text-muted)",
-                  fontSize: 13,
+                  fontSize: 19,
                   marginBottom: 24,
                 }}
               >

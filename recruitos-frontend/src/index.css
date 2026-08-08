@@ -2059,78 +2059,99 @@ body, .panel, .stat-card, .jd-card, .sidebar, .topbar, .btn-outline, .search-box
 .recharts-legend-item-text {
   color: var(--text-secondary) !important;
 }
+/* ===== Minimal, refined auth panel ===== */
+
 .auth-wrap {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--gradient-hero);
+  background: var(--bg-base);
   padding: 24px;
 }
 
 .auth-shell {
   position: relative;
   width: 100%;
-  max-width: 780px;
-  height: 520px;
-  background: var(--bg-surface);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-xl);
+  max-width: 860px;
+  min-height: 540px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-radius: var(--radius-lg);
   overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-lg);
 }
 
-.auth-shell::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #7C3AED, #06B6D4, #F59E0B);
-  z-index: 3;
-}
-/* Both forms sit side by side, full width, always in the DOM */
 .auth-form-panel {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  width: 50%;
-  padding: 48px 44px;
+  padding: 60px 52px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  overflow-y: auto;
-  transition: opacity 0.3s ease 0.25s;
 }
-.auth-form-panel.login { left: 0; }
-.auth-form-panel.register { left: 50%; }
 
-/* Fade forms in/out so the hidden one under the overlay isn't visible/clickable */
-.auth-shell.show-register .auth-form-panel.login { opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
-.auth-shell:not(.show-register) .auth-form-panel.register { opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+.auth-form-panel.register {
+  background: var(--bg-surface);
+}
 
-/* The sliding colored overlay — this is the only thing that visually moves */
 .auth-overlay {
   position: absolute;
   top: 0;
-  left: 50%;
+  right: 0;
   width: 50%;
   height: 100%;
-  background: var(--gradient-brand-2);
-  color: white;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
-  text-align: center;
-  padding: 48px 36px;
-  z-index: 5;
+  justify-content: center;
+  padding: 48px;
+  text-align: left;
+  color: #E8E6F0;
+  background: #14121F;
   transition: transform 0.55s cubic-bezier(0.65, 0, 0.35, 1);
+  z-index: 2;
 }
+
+.auth-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 3px;
+  background: var(--brand-purple);
+}
+
+.auth-overlay-content {
+  position: relative;
+  z-index: 1;
+  max-width: 280px;
+}
+
+.auth-overlay-content h3 {
+  font-size: 27px;
+  color: #FFFFFF;
+}
+
+.auth-overlay-content p {
+  color: rgba(232,230,240,0.6) !important;
+}
+
 .auth-shell.show-register .auth-overlay {
   transform: translateX(-100%);
 }
 
-.auth-overlay-content {
-  transition: opacity 0.3s ease;
+.auth-shell:not(.show-register) .auth-form-panel.register {
+  visibility: hidden;
+}
+.auth-shell.show-register .auth-form-panel.login {
+  visibility: hidden;
+}
+
+@media (max-width: 720px) {
+  .auth-shell { grid-template-columns: 1fr; }
+  .auth-overlay { display: none; }
+  .auth-form-panel.register { display: none; }
+  .auth-shell.show-register .auth-form-panel.register { display: flex; visibility: visible; }
+  .auth-shell.show-register .auth-form-panel.login { display: none; }
 }
 .chart-card {
   background: var(--bg-surface);
