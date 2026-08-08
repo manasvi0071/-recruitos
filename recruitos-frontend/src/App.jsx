@@ -22,8 +22,8 @@ import ThemeToggle from "./components/ThemeToggle";
 import AptitudeTest from "./pages/Aptitude";
 import PendingApprovals from "./pages/PendingApprovals";
 import AuthPanel from "./components/AuthPanel";
-import scLogoTopLeft from "./assets/saarthi-logo-topleft.png";
 import CallRecord from "./pages/CallRecord";
+import SaarthiLogo from "./components/SaarthiLogo";
 
 const pages = {
   dashboard: Dashboard,
@@ -186,19 +186,16 @@ export default function App() {
             style={{
               display: "flex",
               alignItems: "center",
-              height: "100%",
-              overflow: "visible",
+              height: "150%",
+              minWidth: 170,
             }}
           >
-            <img
-              src={scLogoTopLeft}
-              alt="Saarthi Campus"
+            <SaarthiLogo
+              size={75}
+              className="theme-adaptive-logo"
               style={{
-                height: "48px",
-                width: "auto",
-                maxWidth: 220,
-                objectFit: "contain",
-                display: "block",
+                transform: "scale(1.2)",
+                transformOrigin: "left center",
               }}
             />
           </div>
@@ -215,7 +212,6 @@ export default function App() {
             <div className="avatar">SC</div>
           </div>
         </div>
-
         <div className="app">
           <Sidebar
             activePage={activePage}

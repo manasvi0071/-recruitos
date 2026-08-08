@@ -4,8 +4,6 @@ import MagneticButton from "../components/MagneticButton";
 import AnimatedCounter from "../components/AnimatedCounter";
 import { useScrollProgress, useScrollY } from "../hooks/useScrollReveal";
 import SaarthiLogo from "../components/SaarthiLogo";
-import scLogo from "../assets/saarthi-logo.png";
-import fullLogo from "../assets/saarthi-logo-full.png";
 
 const departments = [
   {
@@ -274,20 +272,20 @@ export default function Landing() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "0px clamp(16px,2vw,28px)",
+            padding: "14px clamp(20px,4vw,48px)",
             position: "sticky",
             top: 0,
             zIndex: 100,
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <img src={fullLogo} alt="Saarthi Campus" style={{ height: 100, width: "auto", maxWidth: 280 }} />
+            <SaarthiLogo size={92} width={200} />
           </div>
           <div
             style={{
               display: "flex",
               gap: 30,
-              fontSize: 16,
+              fontSize: 19,
               fontWeight: 600,
               color: "var(--text-secondary)",
               alignItems: "center",
@@ -299,15 +297,16 @@ export default function Landing() {
             <a href="#contact">Contact</a>
             <a href="/app">Login</a>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <ThemeToggle />
             <button
-  className="btn-gold"
-  style={{ padding: "10px 22px", fontSize: 14 }}
-  onClick={() => { window.location.href = "/register"; }}
->
-  Join Us
-</button>
+              className="btn-gold"
+              onClick={() => {
+                window.location.href = "/register";
+              }}
+            >
+              Join Us
+            </button>
           </div>
         </nav>
 
@@ -600,11 +599,16 @@ function SplitHero({ scrollY }) {
           ))}
 
           <div
-  className="logo-3d-spin"
-  style={{ position: "relative", zIndex: 2, filter: "drop-shadow(0 30px 70px rgba(124,58,237,0.6))" }}
->
-  <img src={scLogo} alt="Saarthi Campus" style={{ width: 440, height: 440, objectFit: "contain" }} />
-</div>
+            className="logo-3d-spin"
+            style={{
+              position: "relative",
+              zIndex: 2,
+              filter: "drop-shadow(0 30px 70px rgba(124,58,237,0.6))",
+              textAlign: "center",
+            }}
+          >
+            <SaarthiLogo size={220} />
+          </div>
         </div>
       </div>
 
