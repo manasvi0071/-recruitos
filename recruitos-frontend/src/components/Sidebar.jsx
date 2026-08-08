@@ -49,10 +49,17 @@ const nav = [
   },
 ];
 
-export default function Sidebar({ activePage, setActivePage }) {
+export default function Sidebar({ activePage, setActivePage, isAdmin }) {
+  const visibleNav = nav
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => item.key !== 'pendingapprovals' || isAdmin),
+    }))
+    .filter((group) => group.items.length > 0);
+
   return (
     <aside className="sidebar">
-      {nav.map((group) => (
+      {visibleNav.map((group) => (
         <div className="side-group" key={group.section}>
           <div className="side-section-label">
             {group.section}

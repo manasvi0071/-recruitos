@@ -639,25 +639,38 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
+async function requireAdmin(req, res, next) {
+  const userId = req.headers['x-user-id'];
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+  const { data: profile, error } = await supabase.from('profiles').select('role').eq('id', userId).single();
+  if (error || !profile || profile.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+}
 // Admin: list all pending users
-app.get('/api/auth/pending', async (req, res) => {
+// Admin: list all pending users
+app.get('/api/auth/pending', requireAdmin, async (req, res) => {
   const { data, error } = await supabase.from('profiles').select('*').eq('approved', false).order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
 // Admin: approve a user
-app.post('/api/auth/approve/:userId', async (req, res) => {
+// Admin: approve a user
+app.post('/api/auth/approve/:userId', requireAdmin, async (req, res) => {
   const { error } = await supabase.from('profiles').update({ approved: true }).eq('id', req.params.userId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
 });
 
 // Admin: reject/delete a pending user
-app.post('/api/auth/reject/:userId', async (req, res) => {
+// Admin: reject/delete a pending user
+app.post('/api/auth/reject/:userId', requireAdmin, async (req, res) => {
   const { userId } = req.params;
-  await supabase.from('profiles').delete().eq('id', userId);
-  await supabase.auth.admin.deleteUser(userId);
+  const { error } = await supabase.from('profiles').update({ approved: false, status: 'denied' }).eq('id', userId);
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
 });
 // Log a new call
