@@ -5,6 +5,7 @@ import {
   getCompanies,
   getOffers,
   getJoiningStatus,
+  getCallRecords,
 } from "../lib/api";
 
 import {
@@ -84,19 +85,17 @@ const REPORT_LIST = [
     t: "Monthly / Yearly Report",
     d: "Drive summary",
   },
+  {
+    key: "calls",
+    t: "Call Records Report",
+    d: "Completed calls, follow-ups by organization",
+  },
 ];
 
 /* ---------------------------------------------------------
    HELPER
 --------------------------------------------------------- */
 
-/*
-  Recruiter information can come from different places
-  depending on how job_profiles is structured.
-
-  This function tries the common possibilities so the
-  report does not break if one field is missing.
-*/
 function getRecruiterName(application) {
   const job = application?.job_profiles || {};
 
@@ -135,6 +134,7 @@ export default function Reports() {
   const [apps, setApps] = useState([]);
   const [offers, setOffers] = useState([]);
   const [joining, setJoining] = useState([]);
+  const [calls, setCalls] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -150,18 +150,20 @@ export default function Reports() {
 
     async function init() {
       try {
-        const [a, , , off, joi] = await Promise.all([
+        const [a, , , off, joi, callData] = await Promise.all([
           getAllApplications(),
           getColleges(),
           getCompanies(),
           getOffers(),
           getJoiningStatus(),
+          getCallRecords(),
         ]);
 
         if (!ignore) {
           setApps(a || []);
           setOffers(off || []);
           setJoining(joi || []);
+          setCalls(callData || []);
         }
       } catch (err) {
         if (!ignore) {
@@ -442,6 +444,50 @@ export default function Reports() {
 
     return Object.values(byMonth);
   }, [apps]);
+
+  /* -------------------------------------------------------
+     CALL RECORDS REPORT
+  ------------------------------------------------------- */
+
+  const callStats = useMemo(() => {
+    const total = calls.length;
+    const completed = calls.filter((c) => c.status === "Completed").length;
+    const followUp = calls.filter((c) => c.status === "Follow Up").length;
+    const pending = calls.filter(
+      (c) => c.status !== "Completed" && c.status !== "Follow Up"
+    ).length;
+
+    return { total, completed, followUp, pending };
+  }, [calls]);
+
+  const callsByOrg = useMemo(() => {
+    const byOrg = {};
+
+    calls.forEach((c) => {
+      const name = c.organization || "Unknown";
+
+      if (!byOrg[name]) {
+        byOrg[name] = {
+          name,
+          total: 0,
+          completed: 0,
+          followUp: 0,
+        };
+      }
+
+      byOrg[name].total += 1;
+
+      if (c.status === "Completed") {
+        byOrg[name].completed += 1;
+      }
+
+      if (c.status === "Follow Up") {
+        byOrg[name].followUp += 1;
+      }
+    });
+
+    return Object.values(byOrg).sort((a, b) => b.total - a.total);
+  }, [calls]);
 
   /* -------------------------------------------------------
      LOADING
@@ -1300,6 +1346,154 @@ export default function Reports() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* =================================================
+          CALL RECORDS REPORT
+      ================================================= */}
+
+      {active === "calls" && (
+        <div className="panel">
+          <div className="panel-title">
+            Call Records Report
+          </div>
+
+          {/* Summary cards */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gap: 12,
+              marginBottom: 20,
+            }}
+          >
+            <div className="panel">
+              <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                Total Calls
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, marginTop: 5 }}>
+                {callStats.total}
+              </div>
+            </div>
+
+            <div className="panel">
+              <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                Completed
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, marginTop: 5 }}>
+                {callStats.completed}
+              </div>
+            </div>
+
+            <div className="panel">
+              <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                Follow Ups
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, marginTop: 5 }}>
+                {callStats.followUp}
+              </div>
+            </div>
+
+            <div className="panel">
+              <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                Pending
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, marginTop: 5 }}>
+                {callStats.pending}
+              </div>
+            </div>
+          </div>
+
+          {/* Chart by organization */}
+          {callsByOrg.length > 0 && (
+            <div
+              className="chart-card"
+              style={{ width: "100%", height: 320, marginBottom: 24 }}
+            >
+              <ResponsiveContainer>
+                <BarChart
+                  data={callsByOrg.slice(0, 10)}
+                  margin={{ top: 10, right: 10, left: -10, bottom: 50 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="var(--border-default)"
+                  />
+
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 11 }}
+                    angle={-20}
+                    textAnchor="end"
+                    height={70}
+                  />
+
+                  <YAxis tick={{ fontSize: 11 }} />
+
+                  <Tooltip />
+
+                  <Legend />
+
+                  <Bar
+                    dataKey="total"
+                    name="Total Calls"
+                    fill="#7C3AED"
+                    radius={[6, 6, 0, 0]}
+                  />
+
+                  <Bar
+                    dataKey="completed"
+                    name="Completed"
+                    fill="#10B981"
+                    radius={[6, 6, 0, 0]}
+                  />
+
+                  <Bar
+                    dataKey="followUp"
+                    name="Follow Up"
+                    fill="#F59E0B"
+                    radius={[6, 6, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Table */}
+          {callsByOrg.length === 0 ? (
+            <div
+              style={{
+                textAlign: "center",
+                padding: 30,
+                color: "var(--text-muted)",
+              }}
+            >
+              No call records found.
+            </div>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Organization</th>
+                  <th>Total Calls</th>
+                  <th>Completed</th>
+                  <th>Follow Up</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {callsByOrg.map((r) => (
+                  <tr key={r.name}>
+                    <td>{r.name}</td>
+                    <td>{r.total}</td>
+                    <td>{r.completed}</td>
+                    <td>{r.followUp}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
     </div>

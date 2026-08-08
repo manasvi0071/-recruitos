@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Plus, Search, Filter, X } from "lucide-react";
+import { getCallRecords, addCallRecord, updateCallRecord, deleteCallRecord } from "../lib/api";
 
 export default function CallRecord() {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
-
-  // Later we will replace this with Supabase call_records table
   const [callRecords, setCallRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  // Form state for the Add Call Record modal
   const emptyForm = {
     contact: "",
     organization: "",
@@ -16,7 +17,6 @@ export default function CallRecord() {
     type: "College",
     status: "Completed",
     date: "",
-    time: "",
     duration: "",
     note: ""
   };
@@ -32,37 +32,6 @@ export default function CallRecord() {
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  function nowHHMM() {
-    const d = new Date();
-    const hh = String(d.getHours()).padStart(2, "0");
-    const mm = String(d.getMinutes()).padStart(2, "0");
-    return `${hh}:${mm}`;
-  }
-
-  function isoToDisplay(iso) {
-    if (!iso) return "";
-    const [y, m, d] = iso.split("-");
-    return `${d}-${m}-${y}`;
-  }
-
-  function displayToIso(display) {
-    if (!display) return "";
-    const [d, m, y] = display.split("-");
-    return `${y}-${m}-${d}`;
-  }
-
-  // 24hr "HH:MM" -> "10:30 AM" for table display
-  function formatTime(t) {
-    if (!t) return "";
-    const [hStr, mStr] = t.split(":");
-    let h = parseInt(hStr, 10);
-    const suffix = h >= 12 ? "PM" : "AM";
-    h = h % 12;
-    if (h === 0) h = 12;
-    return `${h}:${mStr} ${suffix}`;
-  }
-
-  // Duration in minutes -> "15 min" or "1 hr 5 min" for table display
   function formatDuration(mins) {
     if (mins === "" || mins === null || mins === undefined) return "";
     const total = parseInt(mins, 10);
@@ -73,10 +42,26 @@ export default function CallRecord() {
     return m === 0 ? `${h} hr` : `${h} hr ${m} min`;
   }
 
+  async function loadData() {
+    try {
+      setLoading(true);
+      const data = await getCallRecords();
+      setCallRecords(data || []);
+    } catch (err) {
+      console.error("Failed to load call records:", err);
+      setError(err.message || "Failed to load call records.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
   function validateForm(values) {
     const errs = {};
 
-    // Contact name: required, letters/spaces only, min 2 chars
     if (!values.contact.trim()) {
       errs.contact = "Contact name is required.";
     } else if (values.contact.trim().length < 2) {
@@ -85,31 +70,22 @@ export default function CallRecord() {
       errs.contact = "Name can only contain letters and spaces.";
     }
 
-    // Organization: optional but no numbers-only junk
     if (values.organization.trim() && values.organization.trim().length < 2) {
       errs.organization = "Organization name looks too short.";
     }
 
-    // Phone: required, exactly 10 digits, must start 6-9 (Indian mobile format)
     if (!values.phone.trim()) {
       errs.phone = "Phone number is required.";
     } else if (!/^[6-9]\d{9}$/.test(values.phone.trim())) {
       errs.phone = "Enter a valid 10-digit mobile number.";
     }
 
-    // Date: required, cannot be in the future
     if (!values.date) {
       errs.date = "Date is required.";
     } else if (values.date > todayISO()) {
       errs.date = "Date cannot be in the future.";
     }
 
-    // Time: required
-    if (!values.time) {
-      errs.time = "Time is required.";
-    }
-
-    // Duration: optional, but if provided must be a positive whole number of minutes
     if (values.duration !== "" && values.duration !== null && values.duration !== undefined) {
       const durNum = Number(values.duration);
       if (!Number.isInteger(durNum) || durNum <= 0) {
@@ -119,7 +95,6 @@ export default function CallRecord() {
       }
     }
 
-    // Note: optional, max 200 chars
     if (values.note.trim().length > 200) {
       errs.note = "Note cannot exceed 200 characters.";
     }
@@ -130,7 +105,7 @@ export default function CallRecord() {
   const filtered = callRecords.filter((c) => {
     const q = search.trim().toLowerCase();
     if (!q) return true;
-    return [c.contact, c.organization, c.phone, c.type, c.note]
+    return [c.contact_name, c.organization, c.phone, c.entity_type, c.notes]
       .join(" ")
       .toLowerCase()
       .includes(q);
@@ -140,11 +115,11 @@ export default function CallRecord() {
     total: callRecords.length,
     completed: callRecords.filter((c) => c.status === "Completed").length,
     followUps: callRecords.filter((c) => c.status === "Follow Up").length,
-    today: callRecords.filter((c) => c.date === isoToDisplay(todayISO())).length,
+    today: callRecords.filter((c) => c.call_date === todayISO()).length,
   };
 
   function openAddModal() {
-    setForm({ ...emptyForm, date: todayISO(), time: nowHHMM() });
+    setForm({ ...emptyForm, date: todayISO() });
     setErrors({});
     setEditingId(null);
     setShowModal(true);
@@ -152,37 +127,58 @@ export default function CallRecord() {
 
   function openEditModal(record) {
     setForm({
-      contact: record.contact,
-      organization: record.organization,
-      phone: record.phone,
-      type: record.type,
-      status: record.status,
-      date: displayToIso(record.date),
-      time: record.time || "",
+      contact: record.contact_name || "",
+      organization: record.organization || "",
+      phone: record.phone || "",
+      type: record.entity_type || "College",
+      status: record.status || "Completed",
+      date: record.call_date || "",
       duration: record.duration || "",
-      note: record.note
+      note: record.notes || ""
     });
     setErrors({});
     setEditingId(record.id);
     setShowModal(true);
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     const record = callRecords.find((c) => c.id === id);
     const ok = window.confirm(
-      `Delete call record for "${record ? record.contact : "this contact"}"? This cannot be undone.`
+      `Delete call record for "${record ? record.contact_name : "this contact"}"? This cannot be undone.`
     );
     if (!ok) return;
 
-    // Later: replace with Supabase delete from call_records table
-    setCallRecords((prev) => prev.filter((c) => c.id !== id));
+    try {
+      await deleteCallRecord(id);
+      setCallRecords((prev) => prev.filter((c) => c.id !== id));
+    } catch (err) {
+      console.error("Failed to delete call record:", err);
+      alert(err.message || "Failed to delete call record.");
+    }
   }
 
-  function handleStatusChange(id, newStatus) {
-    // Later: replace with Supabase update on call_records table
-    setCallRecords((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: newStatus } : c))
-    );
+  async function handleStatusChange(id, newStatus) {
+    const record = callRecords.find((c) => c.id === id);
+    if (!record) return;
+
+    try {
+      await updateCallRecord(id, {
+        contact_name: record.contact_name,
+        organization: record.organization,
+        phone: record.phone,
+        entity_type: record.entity_type,
+        call_date: record.call_date,
+        duration: record.duration,
+        status: newStatus,
+        notes: record.notes,
+      });
+      setCallRecords((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, status: newStatus } : c))
+      );
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      alert(err.message || "Failed to update status.");
+    }
   }
 
   function closeModal() {
@@ -193,28 +189,24 @@ export default function CallRecord() {
   function handleChange(e) {
     const { name, value } = e.target;
 
-    // Restrict phone field to digits only, max 10 characters, as the user types
     if (name === "phone") {
       const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
       setForm((prev) => ({ ...prev, phone: digitsOnly }));
       return;
     }
 
-    // Restrict contact name to letters/spaces while typing
     if (name === "contact") {
       const lettersOnly = value.replace(/[^A-Za-z\s.'-]/g, "");
       setForm((prev) => ({ ...prev, contact: lettersOnly }));
       return;
     }
 
-    // Restrict duration to digits only, max 3 characters
     if (name === "duration") {
       const digitsOnly = value.replace(/\D/g, "").slice(0, 3);
       setForm((prev) => ({ ...prev, duration: digitsOnly }));
       return;
     }
 
-    // Restrict note field to 200 characters
     if (name === "note") {
       setForm((prev) => ({ ...prev, note: value.slice(0, 200) }));
       return;
@@ -223,7 +215,7 @@ export default function CallRecord() {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
     const validationErrors = validateForm(form);
@@ -233,46 +225,35 @@ export default function CallRecord() {
       return;
     }
 
-    if (editingId) {
-      // Later: replace with Supabase update on call_records table
-      setCallRecords((prev) =>
-        prev.map((c) =>
-          c.id === editingId
-            ? {
-                ...c,
-                contact: form.contact.trim(),
-                organization: form.organization.trim(),
-                phone: form.phone.trim(),
-                type: form.type,
-                status: form.status,
-                date: isoToDisplay(form.date),
-                time: form.time,
-                duration: form.duration,
-                note: form.note.trim()
-              }
-            : c
-        )
-      );
-    } else {
-      const newRecord = {
-        id: Date.now(),
-        contact: form.contact.trim(),
-        organization: form.organization.trim(),
-        phone: form.phone.trim(),
-        type: form.type,
-        status: form.status,
-        date: isoToDisplay(form.date),
-        time: form.time,
-        duration: form.duration,
-        note: form.note.trim()
-      };
+    const payload = {
+      contact_name: form.contact.trim(),
+      organization: form.organization.trim(),
+      phone: form.phone.trim(),
+      entity_type: form.type,
+      status: form.status,
+      call_date: form.date,
+      duration: form.duration,
+      notes: form.note.trim(),
+    };
 
-      // Later: replace with Supabase insert into call_records table
-      setCallRecords((prev) => [newRecord, ...prev]);
+    try {
+      setSaving(true);
+
+      if (editingId) {
+        await updateCallRecord(editingId, payload);
+      } else {
+        await addCallRecord(payload);
+      }
+
+      await loadData();
+      setShowModal(false);
+      setEditingId(null);
+    } catch (err) {
+      console.error("Failed to save call record:", err);
+      alert(err.message || "Failed to save call record.");
+    } finally {
+      setSaving(false);
     }
-
-    setShowModal(false);
-    setEditingId(null);
   }
 
   function badgeClass(status) {
@@ -280,6 +261,26 @@ export default function CallRecord() {
     if (status === "Follow Up") return "badge gold";
     if (status === "Cancelled") return "badge red";
     return "badge gray";
+  }
+
+  if (loading) {
+    return (
+      <div className="page active">
+        <div className="panel">
+          <p style={{ color: "var(--text-muted)" }}>Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page active">
+        <div className="panel">
+          <p style={{ color: "var(--danger)" }}>{error}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -347,7 +348,7 @@ export default function CallRecord() {
       {/* Table */}
       <div className="panel" style={{ padding: 0, overflow: "hidden" }}>
         <div style={{ overflowX: "auto" }}>
-          <table style={{ minWidth: "1350px" }}>
+          <table style={{ minWidth: "1200px" }}>
             <thead>
               <tr>
                 <th>Contact</th>
@@ -355,7 +356,6 @@ export default function CallRecord() {
                 <th>Phone</th>
                 <th>Type</th>
                 <th>Date</th>
-                <th>Time</th>
                 <th>Duration</th>
                 <th>Note</th>
                 <th>Status</th>
@@ -366,21 +366,22 @@ export default function CallRecord() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={10} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
-                    No calls match "{search}".
+                  <td colSpan={9} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                    {callRecords.length === 0
+                      ? "No call records yet. Click \"Add Call Record\" to log one."
+                      : `No calls match "${search}".`}
                   </td>
                 </tr>
               ) : (
                 filtered.map((call) => (
                   <tr key={call.id}>
-                    <td style={{ fontWeight: 700, color: "var(--text-primary)" }}>{call.contact}</td>
+                    <td style={{ fontWeight: 700, color: "var(--text-primary)" }}>{call.contact_name}</td>
                     <td>{call.organization}</td>
                     <td>{call.phone}</td>
-                    <td>{call.type}</td>
-                    <td>{call.date}</td>
-                    <td>{formatTime(call.time)}</td>
+                    <td>{call.entity_type}</td>
+                    <td>{call.call_date}</td>
                     <td>{formatDuration(call.duration)}</td>
-                    <td>{call.note}</td>
+                    <td>{call.notes}</td>
                     <td>
                       <select
                         value={call.status}
@@ -432,7 +433,7 @@ export default function CallRecord() {
         </div>
       </div>
 
-      {/* Add Call Record modal */}
+      {/* Add/Edit Call Record modal */}
       {showModal && (
         <div
           onClick={closeModal}
@@ -532,33 +533,18 @@ export default function CallRecord() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: "12px" }}>
-                <div style={{ flex: 1 }}>
-                  <label>Date *</label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={form.date}
-                    onChange={handleChange}
-                    max={todayISO()}
-                    style={{ ...inputStyle, borderColor: errors.date ? "#e33" : undefined }}
-                    required
-                  />
-                  {errors.date && <p style={errorStyle}>{errors.date}</p>}
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <label>Time *</label>
-                  <input
-                    type="time"
-                    name="time"
-                    value={form.time}
-                    onChange={handleChange}
-                    style={{ ...inputStyle, borderColor: errors.time ? "#e33" : undefined }}
-                    required
-                  />
-                  {errors.time && <p style={errorStyle}>{errors.time}</p>}
-                </div>
+              <div>
+                <label>Date *</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={form.date}
+                  onChange={handleChange}
+                  max={todayISO()}
+                  style={{ ...inputStyle, borderColor: errors.date ? "#e33" : undefined }}
+                  required
+                />
+                {errors.date && <p style={errorStyle}>{errors.date}</p>}
               </div>
 
               <div>
@@ -595,11 +581,11 @@ export default function CallRecord() {
               </div>
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px" }}>
-                <button type="button" className="btn-outline" onClick={closeModal}>
+                <button type="button" className="btn-outline" onClick={closeModal} disabled={saving}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-gold">
-                  {editingId ? "Update Call Record" : "Save Call Record"}
+                <button type="submit" className="btn-gold" disabled={saving}>
+                  {saving ? "Saving..." : editingId ? "Update Call Record" : "Save Call Record"}
                 </button>
               </div>
             </form>

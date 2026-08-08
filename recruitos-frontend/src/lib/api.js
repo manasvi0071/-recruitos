@@ -343,6 +343,42 @@ export async function getJoiningStatus() {
   return data;
 }
 
+// ---------- Call Records ----------
+export async function getCallRecords() {
+  const { data, error } = await supabase
+    .from('call_records')
+    .select('*')
+    .order('call_date', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function addCallRecord({ contact_name, organization, phone, entity_type, call_date, duration, status, notes }) {
+  const { data, error } = await supabase
+    .from('call_records')
+    .insert([{ contact_name, organization, phone, entity_type, call_date: call_date || null, duration: duration ? Number(duration) : null, status, notes }])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCallRecord(id, { contact_name, organization, phone, entity_type, call_date, duration, status, notes }) {
+  const { data, error } = await supabase
+    .from('call_records')
+    .update({ contact_name, organization, phone, entity_type, call_date: call_date || null, duration: duration ? Number(duration) : null, status, notes })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteCallRecord(id) {
+  const { error } = await supabase.from('call_records').delete().eq('id', id);
+  if (error) throw error;
+}
+
 // ---------- Communication CRM ----------
 export async function getCommunications() {
   const { data, error } = await supabase
