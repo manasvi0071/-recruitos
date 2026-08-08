@@ -274,7 +274,7 @@ export default function Landing() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "0px clamp(16px,3vw,40px)",
+            padding: "0px clamp(16px,2vw,28px)",
             position: "sticky",
             top: 0,
             zIndex: 100,
@@ -299,16 +299,15 @@ export default function Landing() {
             <a href="#contact">Contact</a>
             <a href="/app">Login</a>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <ThemeToggle />
             <button
-              className="btn-gold"
-              onClick={() => {
-                window.location.href = "/register";
-              }}
-            >
-              Join Us
-            </button>
+  className="btn-gold"
+  style={{ padding: "10px 22px", fontSize: 14 }}
+  onClick={() => { window.location.href = "/register"; }}
+>
+  Join Us
+</button>
           </div>
         </nav>
 
