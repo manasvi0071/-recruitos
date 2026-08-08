@@ -23,6 +23,10 @@ import AptitudeTest from "./pages/Aptitude";
 import PendingApprovals from "./pages/PendingApprovals";
 import AuthPanel from "./components/AuthPanel";
 import SaarthiLogo from "./components/SaarthiLogo";
+import scLogoFull from "./assets/saarthi-logo-full.png";
+import scLogoIcon from "./assets/saarthi-logo.png";
+import scLogoNew from "./assets/saarthi-logo-new.png";
+import scLogoTopLeft from "./assets/saarthi-logo-topleft.png";
 import CallRecord from "./pages/CallRecord";
 
 const pages = {
@@ -182,13 +186,21 @@ export default function App() {
     return (
       <div id="screen-app" style={{ display: "block" }}>
         <div className="topbar">
-          <div className="brand">
-            <SaarthiLogo
-              width="220"
-              showText
-              showTagline
-              darkMode={true}
-              />
+          <div
+            className="brand"
+            style={{ display: "flex", alignItems: "center", height: "100%" }}
+          >
+            <img
+              src={scLogoTopLeft}
+              alt="Saarthi Campus"
+              style={{
+  height: 60,
+  width: "auto",
+  maxWidth: 280,
+  objectFit: "contain",
+  display: "block",
+}}
+            />
           </div>
           <div className="top-actions">
             <ThemeToggle />
@@ -208,7 +220,16 @@ export default function App() {
                 padding: 0,
               }}
             >
-              <SaarthiLogo width="32" showText={false}  />
+              <img
+                src={scLogoNew}
+                alt="Saarthi Campus"
+                style={{
+  width: 100,
+  height: 100,
+  borderRadius: 8,
+  objectFit: "contain",
+}}
+              />
             </div>
           </div>
         </div>
