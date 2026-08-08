@@ -1,6 +1,6 @@
 import logoImg from '../assets/saarthi-logo-transparent.png';
 
-export default function SaarthiLogo({ size = 64, width }) {
+export default function SaarthiLogo({ size = 90, width }) {
   return (
     <img
       src={logoImg}
