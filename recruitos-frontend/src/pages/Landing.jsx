@@ -279,7 +279,7 @@ export default function Landing() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <SaarthiLogo size={96} width={220} />
+            <SaarthiLogo size={98} width={230} />
           </div>
           <div
             style={{
