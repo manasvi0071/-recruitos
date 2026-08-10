@@ -3,6 +3,9 @@ import { supabase } from '../lib/supabaseClient';
 import * as XLSX from 'xlsx';
 import { generateJD } from '../lib/api';
 
+const IN_HOUSE_COMPANY = 'Talent Corner';
+const NEW_COMPANY_VALUE = '__new__';
+
 const emptyForm = {
   title: '', company: '', location: '', salary_range: '', experience: '', skills: '',
   job_summary: '', responsibilities: '', qualification: '', employment_type: '', reporting_to: '',
@@ -118,6 +121,11 @@ export default function Jobs() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
+  // Companies for the dropdown, loaded from the `companies` table.
+  const [companyOptions, setCompanyOptions] = useState([]);
+  const [companySelect, setCompanySelect] = useState(''); // dropdown value
+  const [newCompanyName, setNewCompanyName] = useState(''); // shown when "Add new company" chosen
+
   const [showAIGen, setShowAIGen] = useState(false);
   const [aiTitle, setAiTitle] = useState('');
   const [aiCompany, setAiCompany] = useState('');
@@ -151,31 +159,59 @@ export default function Jobs() {
     setLoading(false);
   }
 
-  useEffect(() => {
-  let ignore = false;
-
-  async function init() {
-    setLoading(true);
-    setError(null);
-    const { data, error } = await supabase
-      .from('job_profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (ignore) return;
-
-    if (error) {
-      console.error('Failed to load jobs:', error);
-      setError('Could not load job profiles. Check your Supabase connection.');
-    } else {
-      setJobs(data ?? []);
-    }
-    setLoading(false);
+  async function loadCompanyOptions() {
+    const { data, error } = await supabase.from('companies').select('id, name').order('name');
+    if (!error) setCompanyOptions(data ?? []);
   }
 
-  init();
-  return () => { ignore = true; };
-}, []);
+  useEffect(() => {
+    let ignore = false;
+
+    async function init() {
+      setLoading(true);
+      setError(null);
+      const { data, error } = await supabase
+        .from('job_profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (ignore) return;
+
+      if (error) {
+        console.error('Failed to load jobs:', error);
+        setError('Could not load job profiles. Check your Supabase connection.');
+      } else {
+        setJobs(data ?? []);
+      }
+      setLoading(false);
+
+      await loadCompanyOptions();
+    }
+
+    init();
+    return () => { ignore = true; };
+  }, []);
+
+  // Keep the dropdown + "new company" text field in sync with form.company
+  // whenever the form is opened for add/edit.
+  function syncCompanySelectFromForm(companyValue) {
+    if (!companyValue || companyValue === IN_HOUSE_COMPANY) {
+      setCompanySelect(companyValue === IN_HOUSE_COMPANY ? IN_HOUSE_COMPANY : '');
+      setNewCompanyName('');
+      return;
+    }
+    const match = companyOptions.find((c) => c.name === companyValue);
+    if (match) {
+      setCompanySelect(companyValue);
+      setNewCompanyName('');
+    } else {
+      // Existing job has a company name that isn't in the companies table
+      // (legacy free-text data) — surface it via the "Add new company" slot
+      // so it isn't silently lost.
+      setCompanySelect(NEW_COMPANY_VALUE);
+      setNewCompanyName(companyValue);
+    }
+  }
 
   function startEdit(j) {
     setEditingId(j.id);
@@ -192,12 +228,15 @@ export default function Jobs() {
       employment_type: j.employment_type || '',
       reporting_to: j.reporting_to || '',
     });
+    syncCompanySelectFromForm(j.company || '');
     setShowForm(true);
   }
 
   function startAdd() {
     setEditingId(null);
     setForm(emptyForm);
+    setCompanySelect('');
+    setNewCompanyName('');
     setShowForm(true);
   }
 
@@ -205,10 +244,35 @@ export default function Jobs() {
     setShowForm(false);
     setEditingId(null);
     setForm(emptyForm);
+    setCompanySelect('');
+    setNewCompanyName('');
+  }
+
+  // Dropdown change handler: keeps form.company (the text actually saved to
+  // job_profiles) in sync with whichever option is picked.
+  function handleCompanySelectChange(value) {
+    setCompanySelect(value);
+    if (value === NEW_COMPANY_VALUE) {
+      setForm((f) => ({ ...f, company: newCompanyName }));
+    } else {
+      setNewCompanyName('');
+      setForm((f) => ({ ...f, company: value }));
+    }
+  }
+
+  function handleNewCompanyNameChange(value) {
+    setNewCompanyName(value);
+    setForm((f) => ({ ...f, company: value }));
   }
 
   async function handleSaveJob(e) {
     e.preventDefault();
+
+    if (!form.company || !form.company.trim()) {
+      alert('Please select or enter a company (choose "Talent Corner (In-house)" for internal roles).');
+      return;
+    }
+
     setSaving(true);
 
     const skillsArray = form.skills
@@ -218,7 +282,7 @@ export default function Jobs() {
 
     const payload = {
       title: form.title,
-      company: form.company,
+      company: form.company.trim(),
       location: form.location,
       salary_range: form.salary_range,
       experience: form.experience,
@@ -229,6 +293,23 @@ export default function Jobs() {
       employment_type: form.employment_type || null,
       reporting_to: form.reporting_to || null,
     };
+
+    // If the user typed a brand-new company name, add it to the `companies`
+    // table too (best-effort — job_profiles.company is still saved as plain
+    // text either way, so this never blocks saving the job).
+    if (companySelect === NEW_COMPANY_VALUE && newCompanyName.trim()) {
+      const exists = companyOptions.some(
+        (c) => c.name.toLowerCase() === newCompanyName.trim().toLowerCase(),
+      );
+      if (!exists) {
+        const { error: coErr } = await supabase.from('companies').insert([{ name: newCompanyName.trim() }]);
+        if (coErr) {
+          console.warn('Could not add new company to companies table:', coErr.message);
+        } else {
+          await loadCompanyOptions();
+        }
+      }
+    }
 
     if (editingId) {
       const { error } = await supabase.from('job_profiles').update(payload).eq('id', editingId);
@@ -274,7 +355,9 @@ export default function Jobs() {
       const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
       const mapped = rows.map((r) => ({
         title: r.title || r.Title || r.role || r.Role || '',
-        company: r.company || r.Company || '',
+        // Import rows without a company are treated as in-house rather than
+        // silently going NULL, matching how the manual form now behaves.
+        company: r.company || r.Company || IN_HOUSE_COMPANY,
         location: r.location || r.Location || '',
         salary_range: r.salary_range || r['Salary Range'] || r['Salary range'] || r.salary || '',
         experience: r.experience || r.Experience || '',
@@ -302,7 +385,7 @@ export default function Jobs() {
         .filter(Boolean);
       const { error } = await supabase.from('job_profiles').insert([{
         title: row.title,
-        company: row.company || null,
+        company: row.company || IN_HOUSE_COMPANY,
         location: row.location || null,
         salary_range: row.salary_range || null,
         experience: row.experience || null,
@@ -342,9 +425,10 @@ export default function Jobs() {
       const composedPrompt = parts.join('. ') + '.';
 
       const jd = await generateJD({ prompt: composedPrompt, company: aiCompany });
+      const resolvedCompany = aiCompany.trim() || IN_HOUSE_COMPANY;
       setForm({
         title: jd.title || aiTitle.trim(),
-        company: aiCompany || '',
+        company: resolvedCompany,
         location: jd.location || aiLocation || '',
         salary_range: jd.salary_range || aiSalaryRange || '',
         experience: jd.experience || aiExperience || '',
@@ -355,6 +439,7 @@ export default function Jobs() {
         employment_type: jd.employment_type || aiEmploymentType || '',
         reporting_to: '',
       });
+      syncCompanySelectFromForm(resolvedCompany);
       setShowAIGen(false);
       setEditingId(null);
       setShowForm(true);
@@ -416,7 +501,7 @@ export default function Jobs() {
               />
             </div>
             <div className="field" style={{ margin: 0 }}>
-              <label>Company (optional)</label>
+              <label>Company (optional — leave blank for In-house)</label>
               <input
                 className="search-box" style={{ width: '100%' }}
                 placeholder="e.g. TCS"
@@ -497,6 +582,9 @@ export default function Jobs() {
             </tbody>
           </table>
           {importRows.length > 10 && <p>...and {importRows.length - 10} more rows</p>}
+          <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            Rows without a company will be imported as "{IN_HOUSE_COMPANY}" (In-house).
+          </p>
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             <button className="btn-gold" onClick={handleConfirmImport} disabled={importing}>
               {importing ? 'Importing…' : `Import ${importRows.length} Job Profiles`}
@@ -540,10 +628,36 @@ export default function Jobs() {
                 className="search-box" placeholder="Job title" required
                 value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
-              <input
-                className="search-box" placeholder="Company (e.g. TCS, or Talent Corner — In-house)"
-                value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })}
-              />
+
+              {/* Company: dropdown instead of free text, so this can never
+                  silently save as NULL/blank again. */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <select
+                  className="search-box"
+                  required
+                  value={companySelect}
+                  onChange={(e) => handleCompanySelectChange(e.target.value)}
+                >
+                  <option value="" disabled>— Select company —</option>
+                  <option value={IN_HOUSE_COMPANY}>Talent Corner (In-house)</option>
+                  {companyOptions
+                    .filter((c) => c.name !== IN_HOUSE_COMPANY)
+                    .map((c) => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                  <option value={NEW_COMPANY_VALUE}>+ Add new company…</option>
+                </select>
+                {companySelect === NEW_COMPANY_VALUE && (
+                  <input
+                    className="search-box"
+                    placeholder="New company name (e.g. TCS)"
+                    required
+                    value={newCompanyName}
+                    onChange={(e) => handleNewCompanyNameChange(e.target.value)}
+                  />
+                )}
+              </div>
+
               <input
                 className="search-box" placeholder="Location (e.g. Pan India, Pune)"
                 value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}
