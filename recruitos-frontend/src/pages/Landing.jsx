@@ -295,14 +295,14 @@ export default function Landing() {
             <a href="#features">Why Us</a>
             <a href="#growth">Career Growth</a>
             <a href="#contact">Contact</a>
-            <a href="/app">Login</a>
+            <a href="/login">Login</a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <ThemeToggle />
             <button
               className="btn-gold"
               onClick={() => {
-                window.location.href = "/register";
+                window.location.href = "/login";
               }}
             >
               Join Us

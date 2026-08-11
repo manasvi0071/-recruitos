@@ -24,6 +24,7 @@ import PendingApprovals from "./pages/PendingApprovals";
 import AuthPanel from "./components/AuthPanel";
 import CallRecord from "./pages/CallRecord";
 import SaarthiLogo from "./components/SaarthiLogo";
+import LoginSelect from "./pages/LoginSelect";
 
 const pages = {
   dashboard: Dashboard,
@@ -112,9 +113,18 @@ export default function App() {
     return <AptitudeTest />;
   }
 
-  if (window.location.pathname === "/register") {
-    return <AuthPanel />;
-  }
+ if (window.location.pathname === "/login") {
+  return <LoginSelect />;
+}
+if (window.location.pathname === "/login/recruiter") {
+  return <AuthPanel role="recruiter" />;
+}
+if (window.location.pathname === "/login/candidate") {
+  return <AuthPanel role="candidate" />;
+}
+if (window.location.pathname === "/login/corporate") {
+  return <AuthPanel role="corporate" />;
+}
 
   const isAppRoute = window.location.pathname.startsWith("/app");
 
@@ -128,8 +138,8 @@ export default function App() {
     }
 
     if (!session) {
-      return <AuthPanel />;
-    }
+  return <LoginSelect />;
+}
 
     if (profileApproved === null) {
       return (
@@ -175,6 +185,30 @@ export default function App() {
         </div>
       );
     }
+
+    if (userRole === "candidate") {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 24 }}>
+      <div>
+        <h2>Candidate Dashboard</h2>
+        <p style={{ color: "var(--text-muted)" }}>Coming soon — your applications will appear here.</p>
+        <button className="logout-link" onClick={() => supabase.auth.signOut()}>Log out</button>
+      </div>
+    </div>
+  );
+}
+
+if (userRole === "corporate") {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 24 }}>
+      <div>
+        <h2>Corporate Dashboard</h2>
+        <p style={{ color: "var(--text-muted)" }}>Coming soon — your job postings will appear here.</p>
+        <button className="logout-link" onClick={() => supabase.auth.signOut()}>Log out</button>
+      </div>
+    </div>
+  );
+}
 
     const PageComponent = pages[activePage];
 
