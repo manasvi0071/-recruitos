@@ -20,8 +20,13 @@ export default function AuthPanel({ role = "recruiter" }) {
     setLoginError("");
     setLoggingIn(true);
     const { error } = await supabase.auth.signInWithPassword(loginForm);
-    if (error) setLoginError(error.message);
-    setLoggingIn(false);
+    if (error) {
+      setLoginError(error.message);
+      setLoggingIn(false);
+      return;
+    }
+    // Successful login — move the browser off the login form and into the app.
+    window.location.href = "/app";
   }
 
   async function handleRegister(e) {

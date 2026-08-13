@@ -43,6 +43,8 @@ const emptyForm = {
   strength: '',
   last_contact: '',
   status: 'Interested',
+  institution_type: '',
+  courses_available: '',
 };
 
 export default function CampusDB() {
@@ -217,6 +219,8 @@ export default function CampusDB() {
       strength: c.strength ?? '',
       last_contact: c.last_contact || '',
       status: c.status || 'Interested',
+      institution_type: c.institution_type || '',
+      courses_available: c.courses_available || '',
     });
 
     setShowCoordinatorForm(false);
@@ -288,6 +292,8 @@ export default function CampusDB() {
         : null,
       last_contact: form.last_contact || null,
       status: form.status,
+      institution_type: form.institution_type?.trim() || null,
+      courses_available: form.courses_available?.trim() || null,
     };
 
     if (editingId) {
@@ -1768,6 +1774,36 @@ export default function CampusDB() {
                   setForm({
                     ...form,
                     strength:
+                      e.target.value,
+                  })
+                }
+              />
+
+              <input
+                className="search-box"
+                placeholder="Institution Type (e.g. Engineering)"
+                value={
+                  form.institution_type
+                }
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    institution_type:
+                      e.target.value,
+                  })
+                }
+              />
+
+              <input
+                className="search-box"
+                placeholder="Courses Available (comma separated)"
+                value={
+                  form.courses_available
+                }
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    courses_available:
                       e.target.value,
                   })
                 }

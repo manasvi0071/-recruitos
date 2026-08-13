@@ -253,8 +253,6 @@ app.post('/api/communications', async (req, res) => {
 // ---- GENERATE EMAIL (Comm.jsx "Generate with AI" button) ----
 app.post('/api/generate-email', generateEmail);
 
-app.listen(5000, () => console.log('✅ RecruitOS backend running on http://localhost:5000'));
-
 // Create GD Session
 app.post('/api/gd/create', async (req, res) => {
   try {
@@ -650,14 +648,12 @@ async function requireAdmin(req, res, next) {
   next();
 }
 // Admin: list all pending users
-// Admin: list all pending users
 app.get('/api/auth/pending', requireAdmin, async (req, res) => {
   const { data, error } = await supabase.from('profiles').select('*').eq('approved', false).order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
-// Admin: approve a user
 // Admin: approve a user
 app.post('/api/auth/approve/:userId', requireAdmin, async (req, res) => {
   const { error } = await supabase.from('profiles').update({ approved: true }).eq('id', req.params.userId);
@@ -666,13 +662,13 @@ app.post('/api/auth/approve/:userId', requireAdmin, async (req, res) => {
 });
 
 // Admin: reject/delete a pending user
-// Admin: reject/delete a pending user
 app.post('/api/auth/reject/:userId', requireAdmin, async (req, res) => {
   const { userId } = req.params;
   const { error } = await supabase.from('profiles').update({ approved: false, status: 'denied' }).eq('id', userId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
 });
+
 // Log a new call
 app.post('/api/calls', async (req, res) => {
   try {
@@ -729,3 +725,11 @@ app.get('/api/calls/performance', async (req, res) => {
 
   res.json(result);
 });
+
+// Local development only — on Vercel this file is loaded as a serverless
+// function via module.exports, so app.listen must not run there.
+if (require.main === module) {
+  app.listen(5000, () => console.log('✅ RecruitOS backend running on http://localhost:5000'));
+}
+
+module.exports = app;
