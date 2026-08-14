@@ -20,6 +20,7 @@ const aptitudeRoutes = require('./aptitudeRoutes');
 const { createGDRoom, createMeetingToken } = require('./dailyService');
 const jdRoutes = require('./jdRoutes');
 const { moveApplicationStage } = require('./pipelineSync');
+const { getRequestProfile } = require('./authHelpers');
 
 const app = express();
 app.use(cors());
@@ -62,9 +63,22 @@ app.post('/api/companies', async (req, res) => {
 
 // ---- JOB PROFILES ----
 app.get('/api/jobs', async (req, res) => {
-  const { data, error } = await supabase.from('job_profiles').select('*');
+  const profile = await getRequestProfile(supabase, req);
+  const payload = { ...req.body };
+
+  let query = supabase.from('job_profiles').select('*');
+
+  if (profile?.role === 'corporate') {
+    if (!profile.company_id) return res.json([]); // no company linked yet, see nothing
+    query = query.eq('company_id', profile.company_id);
+    if (!profile.company_id) return res.status(403).json({ error: 'No company linked to this account' });
+    payload.company_id = profile.company_id;
+  }
+  // admin, recruiter, candidate (via /public route) see everything for now
+
+  const { data, error } = await supabase.from('job_profiles').insert([payload]).select();
   if (error) return res.status(500).json({ error });
-  res.json(data);
+  res.json(data[0]);
 });
 
 app.get('/api/jobs/public', async (req, res) => {

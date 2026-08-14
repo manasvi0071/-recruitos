@@ -1,4 +1,10 @@
 import { supabase } from './supabaseClient';
+async function authHeaders() {
+  const { data } = await supabase.auth.getSession();
+  const userId = data.session?.user?.id;
+  return userId ? { 'x-user-id': userId } : {};
+}
+
 
 // ---------- Dashboard ----------
 export async function getRecentApplications(limit = 4) {
@@ -101,8 +107,10 @@ export async function deleteCompany(id) {
 
 // ---------- Job Profiles ----------
 export async function getJobs() {
-  const { data, error } = await supabase.from('job_profiles').select('*');
-  if (error) throw error;
+  const headers = await authHeaders();
+  const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/jobs`, { headers });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to load jobs');
   return data;
 }
 
