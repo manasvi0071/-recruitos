@@ -17,7 +17,6 @@ import Pipeline from "./pages/Pipeline";
 import GDAdmin from "./pages/GDAdmin";
 import GDRoom from "./pages/GDRoom";
 import AIInterview from "./pages/AIInterview";
-import Landing from "./pages/Landing";
 import ThemeToggle from "./components/ThemeToggle";
 import AptitudeTest from "./pages/Aptitude";
 import PendingApprovals from "./pages/PendingApprovals";
@@ -129,7 +128,7 @@ if (window.location.pathname === "/login/corporate") {
   const isAppRoute = window.location.pathname.startsWith("/app");
 
   if (window.location.pathname === "/") {
-    return <Landing />;
+    return <AuthPanel />;
   }
 
   if (isAppRoute) {
@@ -261,5 +260,5 @@ if (userRole === "corporate") {
   }
 
   // Fallback — unknown path
-  return <Landing />;
+  return <LoginSelect />;
 }

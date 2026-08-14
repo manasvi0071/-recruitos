@@ -49,11 +49,16 @@ const nav = [
   },
 ];
 
+const RECRUITER_BLOCKED_KEYS = ['pendingapprovals', 'corpdb'];
+
 export default function Sidebar({ activePage, setActivePage, isAdmin }) {
   const visibleNav = nav
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => item.key !== 'pendingapprovals' || isAdmin),
+      items: group.items.filter((item) => {
+        if (isAdmin) return true;
+        return !RECRUITER_BLOCKED_KEYS.includes(item.key);
+      }),
     }))
     .filter((group) => group.items.length > 0);
 
