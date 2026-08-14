@@ -128,7 +128,7 @@ if (window.location.pathname === "/login/corporate") {
   const isAppRoute = window.location.pathname.startsWith("/app");
 
   if (window.location.pathname === "/") {
-    return <AuthPanel />;
+    return <LoginSelect />;
   }
 
   if (isAppRoute) {
