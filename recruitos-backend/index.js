@@ -678,14 +678,97 @@ app.post('/api/auth/reject/:userId', requireAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-// Admin: list all users (for User Management page)
+// Admin: list all users (for User Management page) — merges profile data
+// with Supabase Auth's last_sign_in_at so the UI can show real activity.
 app.get('/api/auth/users', requireAdmin, async (req, res) => {
-  const { data, error } = await supabase
+  const { data: profiles, error } = await supabase
     .from('profiles')
     .select('*')
     .order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+
+  let authById = {};
+  try {
+    const { data: authList } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    (authList?.users || []).forEach((u) => {
+      authById[u.id] = u.last_sign_in_at;
+    });
+  } catch (err) {
+    console.error('listUsers error:', err);
+  }
+
+  const merged = profiles.map((p) => ({
+    ...p,
+    last_sign_in_at: authById[p.id] || null,
+  }));
+
+  res.json(merged);
+});
+
+// Admin: directly create a new user (auto-approved, no sign-up flow needed)
+app.post('/api/auth/users', requireAdmin, async (req, res) => {
+  const { email, password, name, role } = req.body;
+  if (!email || !password || !name || !role) {
+    return res.status(400).json({ error: 'Name, email, password, and role are required' });
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
+  if (authError) return res.status(400).json({ error: authError.message });
+
+  const { data, error: profileError } = await supabase
+    .from('profiles')
+    .insert([{ id: authData.user.id, email, name, role, approved: true }])
+    .select()
+    .single();
+  if (profileError) return res.status(500).json({ error: profileError.message });
+
+  res.json({ success: true, user: data });
+});
+
+// Admin: delete a user entirely (auth + profile)
+app.delete('/api/auth/users/:userId', requireAdmin, async (req, res) => {
+  const { userId } = req.params;
+
+  const { error: profileError } = await supabase.from('profiles').delete().eq('id', userId);
+  if (profileError) return res.status(500).json({ error: profileError.message });
+
+  try {
+    await supabase.auth.admin.deleteUser(userId);
+  } catch (err) {
+    console.error('Auth user delete error:', err);
+  }
+
+  res.json({ success: true });
+});
+
+// Admin: edit a user's name/email
+app.patch('/api/auth/users/:userId', requireAdmin, async (req, res) => {
+  const { userId } = req.params;
+  const { name, email } = req.body;
+
+  if (!name || !email) {
+    return res.status(400).json({ error: 'Name and email are required' });
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ name, email })
+    .eq('id', userId)
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+
+  try {
+    await supabase.auth.admin.updateUserById(userId, { email });
+  } catch (err) {
+    console.error('Auth user email update error:', err);
+  }
+
+  res.json({ success: true, user: data });
 });
 
 // Admin: change an existing user's role

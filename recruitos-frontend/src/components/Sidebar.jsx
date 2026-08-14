@@ -31,11 +31,6 @@ const nav = [
     section: "Admin",
     items: [
       {
-        key: "pendingapprovals",
-        icon: "✓",
-        label: "Pending Approvals",
-      },
-      {
         key: "usermanagement",
         icon: "👤",
         label: "User Management",
@@ -59,8 +54,7 @@ export default function Sidebar({ activePage, setActivePage, isAdmin }) {
     .map((group) => ({
       ...group,
       items: group.items.filter(
-        (item) =>
-          (item.key !== 'pendingapprovals' && item.key !== 'usermanagement') || isAdmin
+        (item) => item.key !== 'usermanagement' || isAdmin
       ),
     }))
     .filter((group) => group.items.length > 0);
