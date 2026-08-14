@@ -612,9 +612,13 @@ const { sendAdminApprovalNotification } = require('./emailService');
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { email, password, name, role } = req.body;
-    if (!email || !password || !name || !role) {
-      return res.status(400).json({ error: 'Name, email, password, and role are required' });
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Name, email, and password are required' });
     }
+
+    const finalRole = ['recruiter', 'corporate', 'candidate'].includes(role) ? role : 'candidate';
+    // Candidates get auto-approved (self-service); recruiter/corporate need admin approval
+    const autoApprove = finalRole === 'candidate';
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
@@ -627,16 +631,18 @@ app.post('/api/auth/register', async (req, res) => {
       id: authData.user.id,
       email,
       name,
-      role,
-      approved: role === 'candidate', // candidates auto-approved, recruiter/corporate need admin approval
+      role: finalRole,
+      approved: autoApprove,
     }]);
     if (profileError) return res.status(500).json({ error: profileError.message });
 
-    res.json({ success: true, message: role === 'candidate' ? 'Account created!' : 'Registration submitted. Await admin approval.' });
+    res.json({ success: true, message: autoApprove ? 'Account created.' : 'Registration submitted. Await admin approval.' });
 
-    sendAdminApprovalNotification({ name, email, role }).catch((err) =>
-      console.error('Admin notification email failed:', err)
-    );
+    if (!autoApprove) {
+      sendAdminApprovalNotification({ name, email, role: finalRole }).catch((err) =>
+        console.error('Admin notification email failed:', err)
+      );
+    }
   } catch (err) {
     console.error('Register error:', err);
     res.status(500).json({ error: err.message });
