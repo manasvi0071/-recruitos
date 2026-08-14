@@ -20,6 +20,7 @@ import AIInterview from "./pages/AIInterview";
 import ThemeToggle from "./components/ThemeToggle";
 import AptitudeTest from "./pages/Aptitude";
 import PendingApprovals from "./pages/PendingApprovals";
+import UserManagement from "./pages/UserManagement";
 import AuthPanel from "./components/AuthPanel";
 import CallRecord from "./pages/CallRecord";
 import SaarthiLogo from "./components/SaarthiLogo";
@@ -42,6 +43,7 @@ const pages = {
   gdadmin: GDAdmin,
   gdroom: GDRoom,
   pendingapprovals: PendingApprovals,
+  usermanagement: UserManagement,
   callrecords: CallRecord,
 };
 
@@ -260,5 +262,5 @@ if (userRole === "corporate") {
   }
 
   // Fallback — unknown path
-  return <LoginSelect />;
+return <LoginSelect />;
 }

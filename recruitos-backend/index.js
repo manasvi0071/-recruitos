@@ -253,7 +253,11 @@ app.post('/api/communications', async (req, res) => {
 // ---- GENERATE EMAIL (Comm.jsx "Generate with AI" button) ----
 app.post('/api/generate-email', generateEmail);
 
-app.listen(5000, () => console.log('✅ RecruitOS backend running on http://localhost:5000'));
+if (require.main === module) {
+  app.listen(5000, () => console.log('✅ RecruitOS backend running on http://localhost:5000'));
+}
+
+module.exports = app;
 
 // Create GD Session
 app.post('/api/gd/create', async (req, res) => {
@@ -676,6 +680,31 @@ app.post('/api/auth/approve/:userId', requireAdmin, async (req, res) => {
 app.post('/api/auth/reject/:userId', requireAdmin, async (req, res) => {
   const { userId } = req.params;
   const { error } = await supabase.from('profiles').update({ approved: false, status: 'denied' }).eq('id', userId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
+// Admin: list all users (for User Management page)
+app.get('/api/auth/users', requireAdmin, async (req, res) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// Admin: change an existing user's role
+app.post('/api/auth/users/:userId/role', requireAdmin, async (req, res) => {
+  const { userId } = req.params;
+  const { role } = req.body;
+
+  const validRoles = ['admin', 'recruiter', 'candidate', 'corporate'];
+  if (!validRoles.includes(role)) {
+    return res.status(400).json({ error: 'Invalid role' });
+  }
+
+  const { error } = await supabase.from('profiles').update({ role }).eq('id', userId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
 });

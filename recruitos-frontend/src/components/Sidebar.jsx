@@ -35,6 +35,11 @@ const nav = [
         icon: "✓",
         label: "Pending Approvals",
       },
+      {
+        key: "usermanagement",
+        icon: "👤",
+        label: "User Management",
+      },
     ],
   },
 
@@ -49,17 +54,19 @@ const nav = [
   },
 ];
 
-const RECRUITER_BLOCKED_KEYS = ['pendingapprovals', 'corpdb'];
+const RECRUITER_BLOCKED_KEYS = ['corpdb'];
 
 export default function Sidebar({ activePage, setActivePage, isAdmin }) {
   const visibleNav = nav
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => {
+items: group.items.filter((item) => {
         if (isAdmin) return true;
-        return !RECRUITER_BLOCKED_KEYS.includes(item.key);
+        const blocked = ['pendingapprovals', 'usermanagement', ...RECRUITER_BLOCKED_KEYS];
+        return !blocked.includes(item.key);
       }),
-    }))
+      }),
+    )
     .filter((group) => group.items.length > 0);
 
   return (
