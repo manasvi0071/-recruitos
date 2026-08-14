@@ -2275,3 +2275,4 @@ body, .panel, .stat-card, .jd-card, .sidebar, .topbar, .btn-outline, .search-box
   .auth-shell.show-register .auth-form-panel.register { display: flex; visibility: visible; }
   .auth-shell.show-register .auth-form-panel.login { display: none; }
 }
+

@@ -31,11 +31,6 @@ const nav = [
     section: "Admin",
     items: [
       {
-        key: "pendingapprovals",
-        icon: "✓",
-        label: "Pending Approvals",
-      },
-      {
         key: "usermanagement",
         icon: "👤",
         label: "User Management",
@@ -62,11 +57,10 @@ export default function Sidebar({ activePage, setActivePage, isAdmin }) {
       ...group,
 items: group.items.filter((item) => {
         if (isAdmin) return true;
-        const blocked = ['pendingapprovals', 'usermanagement', ...RECRUITER_BLOCKED_KEYS];
+        const blocked = ['usermanagement', ...RECRUITER_BLOCKED_KEYS];
         return !blocked.includes(item.key);
       }),
-      }),
-    )
+    }))
     .filter((group) => group.items.length > 0);
 
   return (

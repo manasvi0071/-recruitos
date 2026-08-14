@@ -19,7 +19,6 @@ import GDRoom from "./pages/GDRoom";
 import AIInterview from "./pages/AIInterview";
 import ThemeToggle from "./components/ThemeToggle";
 import AptitudeTest from "./pages/Aptitude";
-import PendingApprovals from "./pages/PendingApprovals";
 import UserManagement from "./pages/UserManagement";
 import AuthPanel from "./components/AuthPanel";
 import CallRecord from "./pages/CallRecord";
@@ -42,7 +41,6 @@ const pages = {
   pipeline: Pipeline,
   gdadmin: GDAdmin,
   gdroom: GDRoom,
-  pendingapprovals: PendingApprovals,
   usermanagement: UserManagement,
   callrecords: CallRecord,
 };
