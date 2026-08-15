@@ -146,6 +146,26 @@ async function sendStudentSelectionEmail({ studentName, studentEmail, jobTitle, 
   });
 }
 
+async function sendStudentRejectionEmail({ studentName, studentEmail, jobTitle, company }) {
+  await resend.emails.send({
+    from: FROM,
+    to: studentEmail,
+    subject: `Update on your application — ${jobTitle}`,
+    html: `
+      <div style="font-family:Inter,sans-serif; max-width:580px; margin:auto; padding:32px; color:#33363F;">
+        <div style="background:#0A0C12; padding:20px 28px; border-radius:10px; margin-bottom:28px;">
+          <h2 style="color:#EDE6D6; font-family:Georgia,serif; margin:0;">Saarthi Campus</h2>
+        </div>
+        <p>Dear ${studentName},</p>
+        <p>Thank you for taking the time to apply for the <strong>${jobTitle}</strong> position${company ? ` at <strong>${company}</strong>` : ''} and for participating in our selection process.</p>
+        <p>After careful consideration, we have decided to move forward with other candidates whose profiles more closely match our current requirements. This does not reflect on your abilities, and we encourage you to apply for future openings that match your skills.</p>
+        <p>We wish you the very best in your career journey.</p>
+        <p>Warm regards,<br/><strong>Talent Corner Recruitment Team</strong></p>
+      </div>
+    `,
+  });
+}
+
 // ─── 3. EMAIL TO COLLEGE when their student is selected ───
 async function sendCollegeSelectionEmail({ tpoName, tpoEmail, collegeName, studentName, jobTitle, company }) {
   await resend.emails.send({
@@ -302,4 +322,5 @@ module.exports = {
   sendGDShortlistEmail,
   sendAIInterviewInviteEmail,
   sendAdminApprovalNotification,
+  sendStudentRejectionEmail,
 };

@@ -219,6 +219,32 @@ app.post('/api/candidate/select', async (req, res) => {
   }
 });
 
+const { sendStudentRejectionEmail } = require('./emailService'); // add to your existing require line for emailService instead of a new line — merge with existing import
+
+app.post('/api/candidate/reject', async (req, res) => {
+  const { applicationId } = req.body;
+  try {
+    const { data: app } = await supabase
+      .from('applications')
+      .select('*, candidates(name, email), job_profiles(title, company)')
+      .eq('id', applicationId)
+      .single();
+
+    await supabase.from('applications').update({ stage: 'Rejected' }).eq('id', applicationId);
+
+    await sendStudentRejectionEmail({
+      studentName: app.candidates?.name,
+      studentEmail: app.candidates?.email,
+      jobTitle: app.job_profiles?.title,
+      company: app.job_profiles?.company,
+    });
+
+    res.json({ success: true, message: 'Candidate rejected. Email sent.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ---- COLLEGE OUTREACH EMAIL ----
 app.post('/api/email/college-outreach', async (req, res) => {
   try {
