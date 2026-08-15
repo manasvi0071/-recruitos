@@ -119,7 +119,7 @@ if (window.location.pathname === "/login/recruiter") {
   return <AuthPanel role="recruiter" />;
 }
 if (window.location.pathname === "/login/admin") {
-  return <AuthPanel role="admin" />;
+  return <AuthPanel role="recruiter" />;
 }
 if (window.location.pathname === "/login/candidate") {
   return <AuthPanel role="candidate" />;
