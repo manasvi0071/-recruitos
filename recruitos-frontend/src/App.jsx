@@ -118,6 +118,9 @@ export default function App() {
 if (window.location.pathname === "/login/recruiter") {
   return <AuthPanel role="recruiter" />;
 }
+if (window.location.pathname === "/login/admin") {
+  return <AuthPanel role="admin" />;
+}
 if (window.location.pathname === "/login/candidate") {
   return <AuthPanel role="candidate" />;
 }
