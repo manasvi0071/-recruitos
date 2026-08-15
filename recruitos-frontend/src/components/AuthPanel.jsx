@@ -12,9 +12,8 @@ export default function AuthPanel({ role = "recruiter" }) {
   const [regStatus, setRegStatus] = useState("idle");
   const [regError, setRegError] = useState("");
 
-  const roleLabel =
-    role === "candidate" ? "Candidate" : role === "corporate" ? "Corporate" : "Recruiter";
-
+ const roleLabel =
+  role === "candidate" ? "Candidate" : role === "corporate" ? "Corporate" : role === "admin" ? "Admin" : "Recruiter";
   async function handleLogin(e) {
     e.preventDefault();
     setLoginError("");
