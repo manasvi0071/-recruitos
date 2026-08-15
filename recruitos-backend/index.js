@@ -81,6 +81,22 @@ app.get('/api/jobs', async (req, res) => {
   res.json(data[0]);
 });
 
+app.get('/api/my-applications', async (req, res) => {
+  const profile = await getRequestProfile(supabase, req);
+  if (!profile || profile.role !== 'candidate' || !profile.candidate_id) {
+    return res.status(403).json({ error: 'Not authorized' });
+  }
+
+  const { data, error } = await supabase
+    .from('applications')
+    .select('*, job_profiles(title, company, location, salary_range)')
+    .eq('candidate_id', profile.candidate_id)
+    .order('created_at', { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 app.get('/api/jobs/public', async (req, res) => {
   const { data, error } = await supabase
     .from('job_profiles')
@@ -656,8 +672,7 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
 
-    const finalRole = ['recruiter', 'corporate', 'candidate'].includes(role) ? role : 'candidate';
-    // Candidates get auto-approved (self-service); recruiter/corporate need admin approval
+    const finalRole = ['recruiter', 'corporate', 'candidate', 'admin'].includes(role) ? role : 'candidate';
     const autoApprove = finalRole === 'candidate';
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -667,12 +682,35 @@ app.post('/api/auth/register', async (req, res) => {
     });
     if (authError) return res.status(400).json({ error: authError.message });
 
+    let candidateId = null;
+    if (finalRole === 'candidate') {
+      // Check if a candidates row already exists with this email (e.g. they applied before registering)
+      const { data: existingCandidate } = await supabase
+        .from('candidates')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (existingCandidate) {
+        candidateId = existingCandidate.id;
+      } else {
+        const { data: newCandidate, error: candErr } = await supabase
+          .from('candidates')
+          .insert([{ name, email }])
+          .select()
+          .single();
+        if (candErr) return res.status(500).json({ error: candErr.message });
+        candidateId = newCandidate.id;
+      }
+    }
+
     const { error: profileError } = await supabase.from('profiles').insert([{
       id: authData.user.id,
       email,
       name,
       role: finalRole,
       approved: autoApprove,
+      candidate_id: candidateId,
     }]);
     if (profileError) return res.status(500).json({ error: profileError.message });
 

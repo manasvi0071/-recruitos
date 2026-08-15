@@ -24,6 +24,7 @@ import AuthPanel from "./components/AuthPanel";
 import CallRecord from "./pages/CallRecord";
 import SaarthiLogo from "./components/SaarthiLogo";
 import LoginSelect from "./pages/LoginSelect";
+import CandidateDashboard from './pages/CandidateDashboard';
 
 const pages = {
   dashboard: Dashboard,
@@ -188,16 +189,8 @@ if (window.location.pathname === "/login/corporate") {
       );
     }
 
-    if (userRole === "candidate") {
-  return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 24 }}>
-      <div>
-        <h2>Candidate Dashboard</h2>
-        <p style={{ color: "var(--text-muted)" }}>Coming soon — your applications will appear here.</p>
-        <button className="logout-link" onClick={() => supabase.auth.signOut()}>Log out</button>
-      </div>
-    </div>
-  );
+   if (userRole === "candidate") {
+  return <CandidateDashboard />;
 }
 
 if (userRole === "corporate") {
