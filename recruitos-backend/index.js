@@ -97,6 +97,46 @@ app.get('/api/my-applications', async (req, res) => {
   res.json(data);
 });
 
+app.get('/api/my-company-jobs', async (req, res) => {
+  const profile = await getRequestProfile(supabase, req);
+  if (!profile || profile.role !== 'corporate' || !profile.company_id) {
+    return res.status(403).json({ error: 'Not authorized' });
+  }
+
+  const { data: jobs, error } = await supabase
+    .from('job_profiles')
+    .select('*')
+    .eq('company_id', profile.company_id)
+    .order('created_at', { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(jobs);
+});
+
+app.get('/api/my-company-applications', async (req, res) => {
+  const profile = await getRequestProfile(supabase, req);
+  if (!profile || profile.role !== 'corporate' || !profile.company_id) {
+    return res.status(403).json({ error: 'Not authorized' });
+  }
+
+  const { data: myJobs } = await supabase
+    .from('job_profiles')
+    .select('id')
+    .eq('company_id', profile.company_id);
+
+  const jobIds = (myJobs || []).map((j) => j.id);
+  if (jobIds.length === 0) return res.json([]);
+
+  const { data, error } = await supabase
+    .from('applications')
+    .select('*, candidates(name, email, phone, resume_url), job_profiles(title)')
+    .in('job_id', jobIds)
+    .order('created_at', { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 app.get('/api/jobs/public', async (req, res) => {
   const { data, error } = await supabase
     .from('job_profiles')
