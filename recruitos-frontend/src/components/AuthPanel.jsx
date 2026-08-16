@@ -12,38 +12,47 @@ export default function AuthPanel({ role = "recruiter" }) {
   const [regStatus, setRegStatus] = useState("idle");
   const [regError, setRegError] = useState("");
 
- const roleLabel =
-  role === "candidate" ? "Candidate" : role === "corporate" ? "Corporate" : role === "admin" ? "Admin" : "Recruiter";
+  const roleLabel =
+    role === "candidate"
+      ? "Candidate"
+      : role === "corporate"
+        ? "Corporate"
+        : role === "admin"
+          ? "Admin"
+          : "Recruiter";
   async function handleLogin(e) {
-  e.preventDefault();
-  setLoginError("");
-  setLoggingIn(true);
+    e.preventDefault();
+    setLoginError("");
+    setLoggingIn(true);
 
-  const { data: authData, error } = await supabase.auth.signInWithPassword(loginForm);
-  if (error) {
-    setLoginError(error.message);
-    setLoggingIn(false);
-    return;
+    const { data: authData, error } =
+      await supabase.auth.signInWithPassword(loginForm);
+    if (error) {
+      setLoginError(error.message);
+      setLoggingIn(false);
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", authData.user.id)
+      .single();
+
+    const actualRole = profile?.role;
+    const doorRole = [role];
+
+    if (actualRole && !doorRole.includes(actualRole)) {
+      await supabase.auth.signOut();
+      setLoginError(
+        `This account is registered as "${actualRole}", not "${role}". Please log in from the ${actualRole} login page instead.`,
+      );
+      setLoggingIn(false);
+      return;
+    }
+
+    window.location.href = "/app";
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", authData.user.id)
-    .single();
-
-  const actualRole = profile?.role;
-  const doorRole = role === "admin" ? ["admin", "recruiter"] : [role];
-
-  if (actualRole && !doorRole.includes(actualRole)) {
-    await supabase.auth.signOut();
-    setLoginError(`This account is registered as "${actualRole}", not "${role}". Please log in from the ${actualRole} login page instead.`);
-    setLoggingIn(false);
-    return;
-  }
-
-  window.location.href = "/app";
-}
 
   async function handleRegister(e) {
     e.preventDefault();
@@ -69,12 +78,20 @@ export default function AuthPanel({ role = "recruiter" }) {
 
   return (
     <div className="auth-wrap">
-      <div className={`auth-shell ${mode === "register" ? "show-register" : ""}`}>
+      <div
+        className={`auth-shell ${mode === "register" ? "show-register" : ""}`}
+      >
         <div className="auth-form-panel login">
           <h2 style={{ fontFamily: "var(--font-display)", marginBottom: 6 }}>
             {roleLabel} Login
           </h2>
-          <p style={{ color: "var(--text-muted)", fontSize: 13.5, marginBottom: 24 }}>
+          <p
+            style={{
+              color: "var(--text-muted)",
+              fontSize: 13.5,
+              marginBottom: 24,
+            }}
+          >
             Log in to your workspace
           </p>
           <form onSubmit={handleLogin}>
@@ -83,7 +100,9 @@ export default function AuthPanel({ role = "recruiter" }) {
               <input
                 type="email"
                 value={loginForm.email}
-                onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                onChange={(e) =>
+                  setLoginForm({ ...loginForm, email: e.target.value })
+                }
                 required
               />
             </div>
@@ -92,16 +111,29 @@ export default function AuthPanel({ role = "recruiter" }) {
               <input
                 type="password"
                 value={loginForm.password}
-                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                onChange={(e) =>
+                  setLoginForm({ ...loginForm, password: e.target.value })
+                }
                 required
               />
             </div>
             {loginError && (
-              <p style={{ color: "var(--danger)", fontSize: 12.5, marginBottom: 10 }}>
+              <p
+                style={{
+                  color: "var(--danger)",
+                  fontSize: 12.5,
+                  marginBottom: 10,
+                }}
+              >
                 {loginError}
               </p>
             )}
-            <button className="btn-primary" type="submit" disabled={loggingIn} style={{ marginTop: 8 }}>
+            <button
+              className="btn-primary"
+              type="submit"
+              disabled={loggingIn}
+              style={{ marginTop: 8 }}
+            >
               {loggingIn ? "Logging in…" : "Log In"}
             </button>
           </form>
@@ -111,10 +143,20 @@ export default function AuthPanel({ role = "recruiter" }) {
           {regStatus === "done" ? (
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
-              <h2 style={{ fontFamily: "var(--font-display)", marginBottom: 8 }}>
-                {role === "candidate" ? "Account Created!" : "Request Submitted"}
+              <h2
+                style={{ fontFamily: "var(--font-display)", marginBottom: 8 }}
+              >
+                {role === "candidate"
+                  ? "Account Created!"
+                  : "Request Submitted"}
               </h2>
-              <p style={{ color: "var(--text-muted)", fontSize: 13.5, lineHeight: 1.6 }}>
+              <p
+                style={{
+                  color: "var(--text-muted)",
+                  fontSize: 13.5,
+                  lineHeight: 1.6,
+                }}
+              >
                 {role === "candidate"
                   ? "You can now log in with your email and password."
                   : "An admin has been notified. You'll be able to log in once approved."}
@@ -122,20 +164,30 @@ export default function AuthPanel({ role = "recruiter" }) {
             </div>
           ) : (
             <>
-              <h2 style={{ fontFamily: "var(--font-display)", marginBottom: 6 }}>
+              <h2
+                style={{ fontFamily: "var(--font-display)", marginBottom: 6 }}
+              >
                 {roleLabel} Sign Up
               </h2>
-              <p style={{ color: "var(--text-muted)", fontSize: 13.5, marginBottom: 24 }}>
+              <p
+                style={{
+                  color: "var(--text-muted)",
+                  fontSize: 13.5,
+                  lineHeight: 1.6,
+                }}
+              >
                 {role === "candidate"
-                  ? "Create your account to track applications."
-                  : "Submit your details for admin review."}
+                  ? "You're registered! You can now log in with your email and password."
+                  : "An admin has been notified. You'll be able to log in once your account is approved."}
               </p>
               <form onSubmit={handleRegister}>
                 <div className="field">
                   <label>Full Name</label>
                   <input
                     value={regForm.name}
-                    onChange={(e) => setRegForm({ ...regForm, name: e.target.value })}
+                    onChange={(e) =>
+                      setRegForm({ ...regForm, name: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -144,7 +196,9 @@ export default function AuthPanel({ role = "recruiter" }) {
                   <input
                     type="email"
                     value={regForm.email}
-                    onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
+                    onChange={(e) =>
+                      setRegForm({ ...regForm, email: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -153,17 +207,30 @@ export default function AuthPanel({ role = "recruiter" }) {
                   <input
                     type="password"
                     value={regForm.password}
-                    onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
+                    onChange={(e) =>
+                      setRegForm({ ...regForm, password: e.target.value })
+                    }
                     required
                     minLength={6}
                   />
                 </div>
                 {regError && (
-                  <p style={{ color: "var(--danger)", fontSize: 12.5, marginBottom: 10 }}>
+                  <p
+                    style={{
+                      color: "var(--danger)",
+                      fontSize: 12.5,
+                      marginBottom: 10,
+                    }}
+                  >
                     {regError}
                   </p>
                 )}
-                <button className="btn-primary" type="submit" disabled={regStatus === "loading"} style={{ marginTop: 8 }}>
+                <button
+                  className="btn-primary"
+                  type="submit"
+                  disabled={regStatus === "loading"}
+                  style={{ marginTop: 8 }}
+                >
                   {regStatus === "loading" ? "Submitting…" : "Submit"}
                 </button>
               </form>
@@ -175,15 +242,34 @@ export default function AuthPanel({ role = "recruiter" }) {
           <div className="auth-overlay-content">
             {mode === "login" ? (
               <>
-                <h3 style={{ fontFamily: "var(--font-display)", marginBottom: 10 }}>New here?</h3>
-                <p style={{ fontSize: 13, opacity: 0.85, marginBottom: 22, lineHeight: 1.6 }}>
+                <h3
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    marginBottom: 10,
+                  }}
+                >
+                  New here?
+                </h3>
+                <p
+                  style={{
+                    fontSize: 13,
+                    opacity: 0.85,
+                    marginBottom: 22,
+                    lineHeight: 1.6,
+                  }}
+                >
                   Create an account to get started.
                 </p>
                 <button
                   className="btn-outline"
                   style={{
-                    background: "rgba(255,255,255,0.95)", color: "#4C1D95", border: "none",
-                    borderRadius: 999, padding: "11px 28px", fontWeight: 700, fontSize: 13.5,
+                    background: "rgba(255,255,255,0.95)",
+                    color: "#4C1D95",
+                    border: "none",
+                    borderRadius: 999,
+                    padding: "11px 28px",
+                    fontWeight: 700,
+                    fontSize: 13.5,
                   }}
                   onClick={() => setMode("register")}
                 >
@@ -192,15 +278,34 @@ export default function AuthPanel({ role = "recruiter" }) {
               </>
             ) : (
               <>
-                <h3 style={{ fontFamily: "var(--font-display)", marginBottom: 10 }}>Already have an account?</h3>
-                <p style={{ fontSize: 13, opacity: 0.85, marginBottom: 22, lineHeight: 1.6 }}>
+                <h3
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    marginBottom: 10,
+                  }}
+                >
+                  Already have an account?
+                </h3>
+                <p
+                  style={{
+                    fontSize: 13,
+                    opacity: 0.85,
+                    marginBottom: 22,
+                    lineHeight: 1.6,
+                  }}
+                >
                   Log in with your existing credentials.
                 </p>
                 <button
                   className="btn-outline"
                   style={{
-                    background: "rgba(255,255,255,0.95)", color: "#4C1D95", border: "none",
-                    borderRadius: 999, padding: "11px 28px", fontWeight: 700, fontSize: 13.5,
+                    background: "rgba(255,255,255,0.95)",
+                    color: "#4C1D95",
+                    border: "none",
+                    borderRadius: 999,
+                    padding: "11px 28px",
+                    fontWeight: 700,
+                    fontSize: 13.5,
                   }}
                   onClick={() => setMode("login")}
                 >
