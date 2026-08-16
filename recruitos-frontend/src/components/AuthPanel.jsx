@@ -15,18 +15,35 @@ export default function AuthPanel({ role = "recruiter" }) {
  const roleLabel =
   role === "candidate" ? "Candidate" : role === "corporate" ? "Corporate" : role === "admin" ? "Admin" : "Recruiter";
   async function handleLogin(e) {
-    e.preventDefault();
-    setLoginError("");
-    setLoggingIn(true);
-    const { error } = await supabase.auth.signInWithPassword(loginForm);
-    if (error) {
-      setLoginError(error.message);
-      setLoggingIn(false);
-      return;
-    }
-    // Successful login — move the browser off the login form and into the app.
-    window.location.href = "/app";
+  e.preventDefault();
+  setLoginError("");
+  setLoggingIn(true);
+
+  const { data: authData, error } = await supabase.auth.signInWithPassword(loginForm);
+  if (error) {
+    setLoginError(error.message);
+    setLoggingIn(false);
+    return;
   }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", authData.user.id)
+    .single();
+
+  const actualRole = profile?.role;
+  const doorRole = role === "admin" ? ["admin", "recruiter"] : [role];
+
+  if (actualRole && !doorRole.includes(actualRole)) {
+    await supabase.auth.signOut();
+    setLoginError(`This account is registered as "${actualRole}", not "${role}". Please log in from the ${actualRole} login page instead.`);
+    setLoggingIn(false);
+    return;
+  }
+
+  window.location.href = "/app";
+}
 
   async function handleRegister(e) {
     e.preventDefault();
