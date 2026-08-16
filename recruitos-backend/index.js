@@ -32,6 +32,11 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 // ---- COLLEGES ----
 app.get('/api/colleges', async (req, res) => {
+  const profile = await getRequestProfile(supabase, req);
+  if (profile && (profile.role === 'candidate' || profile.role === 'corporate')) {
+    return res.status(403).json({ error: 'Not authorized' });
+  }
+
   const { course, status, search } = req.query;
   let query = supabase.from('colleges').select('*');
   if (course) query = query.ilike('course', `%${course}%`);
@@ -50,7 +55,15 @@ app.post('/api/colleges', async (req, res) => {
 
 // ---- COMPANIES ----
 app.get('/api/companies', async (req, res) => {
-  const { data, error } = await supabase.from('companies').select('*');
+  const profile = await getRequestProfile(supabase, req);
+  let query = supabase.from('companies').select('*');
+
+  if (profile?.role === 'corporate' && profile.company_id) {
+    query = query.eq('id', profile.company_id);
+  }
+  // admin, recruiter see all companies
+
+  const { data, error } = await query;
   if (error) return res.status(500).json({ error });
   res.json(data);
 });
@@ -64,21 +77,16 @@ app.post('/api/companies', async (req, res) => {
 // ---- JOB PROFILES ----
 app.get('/api/jobs', async (req, res) => {
   const profile = await getRequestProfile(supabase, req);
-  const payload = { ...req.body };
-
   let query = supabase.from('job_profiles').select('*');
 
   if (profile?.role === 'corporate') {
-    if (!profile.company_id) return res.json([]); // no company linked yet, see nothing
+    if (!profile.company_id) return res.json([]);
     query = query.eq('company_id', profile.company_id);
-    if (!profile.company_id) return res.status(403).json({ error: 'No company linked to this account' });
-    payload.company_id = profile.company_id;
   }
-  // admin, recruiter, candidate (via /public route) see everything for now
 
-  const { data, error } = await supabase.from('job_profiles').insert([payload]).select();
+  const { data, error } = await query;
   if (error) return res.status(500).json({ error });
-  res.json(data[0]);
+  res.json(data);
 });
 
 app.get('/api/my-applications', async (req, res) => {
@@ -143,12 +151,6 @@ app.get('/api/jobs/public', async (req, res) => {
     .select('id, title, company, skills');
   if (error) return res.status(500).json({ error });
   res.json(data);
-});
-
-app.post('/api/jobs', async (req, res) => {
-  const { data, error } = await supabase.from('job_profiles').insert([req.body]).select();
-  if (error) return res.status(500).json({ error });
-  res.json(data[0]);
 });
 
 // ---- TRIGGER AI ANALYSIS ----
@@ -313,15 +315,30 @@ app.post('/api/email/college-outreach', async (req, res) => {
 
 // ---- OFFERS ----
 app.get('/api/offers', async (req, res) => {
-  const { data, error } = await supabase
-    .from('offers')
-    .select('*, candidates(name), job_profiles(title, company)');
+  const profile = await getRequestProfile(supabase, req);
+  let query = supabase.from('offers').select('*, candidates(name), job_profiles(title, company, company_id)');
+
+  const { data, error } = await query;
   if (error) return res.status(500).json({ error });
-  res.json(data);
+
+  let filtered = data;
+  if (profile?.role === 'candidate' && profile.candidate_id) {
+    filtered = data.filter((o) => o.candidate_id === profile.candidate_id);
+  } else if (profile?.role === 'corporate' && profile.company_id) {
+    filtered = data.filter((o) => o.job_profiles?.company_id === profile.company_id);
+  }
+  // admin, recruiter see everything
+
+  res.json(filtered);
 });
 
 // ---- JOINING ----
 app.get('/api/joining', async (req, res) => {
+  const profile = await getRequestProfile(supabase, req);
+  if (profile && (profile.role === 'candidate' || profile.role === 'corporate')) {
+    return res.status(403).json({ error: 'Not authorized' });
+  }
+
   const { data, error } = await supabase
     .from('joining')
     .select('*, candidates(name, college), offers(job_profiles(company))');
@@ -331,6 +348,11 @@ app.get('/api/joining', async (req, res) => {
 
 // ---- COMMUNICATIONS ----
 app.get('/api/communications', async (req, res) => {
+  const profile = await getRequestProfile(supabase, req);
+  if (profile && (profile.role === 'candidate' || profile.role === 'corporate')) {
+    return res.status(403).json({ error: 'Not authorized' });
+  }
+
   const { collegeId, companyId } = req.query;
   let query = supabase.from('communications').select('*').order('date', { ascending: true });
   if (collegeId) query = query.eq('college_id', collegeId);
