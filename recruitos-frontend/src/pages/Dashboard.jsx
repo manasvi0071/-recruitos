@@ -9,10 +9,16 @@ import {
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
 
@@ -54,6 +60,8 @@ export default function Dashboard() {
   const [driveError, setDriveError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
   const [growthData, setGrowthData] = useState([]);
+  const [stageBreakdown, setStageBreakdown] = useState([]);
+const CHART_COLORS = ['#7C3AED', '#06B6D4', '#F59E0B', '#EC4899', '#10B981', '#6366F1'];
 
   const [minDateTime] = useState(() =>
     new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
@@ -175,28 +183,31 @@ export default function Dashboard() {
             .gte("created_at", oneWeekAgo.toISOString()),
         ]);
 
-        const { data: allApps } = await supabase
-          .from("applications")
-          .select("created_at")
-          .order("created_at", { ascending: true });
+       const { data: allApps } = await supabase
+  .from("applications")
+  .select("created_at, stage")
+  .order("created_at", { ascending: true });
 
-        if (!ignore && allApps) {
-          const weeks = {};
-          allApps.forEach((a) => {
-            const d = new Date(a.created_at);
-            const weekStart = new Date(d);
-            weekStart.setDate(d.getDate() - d.getDay());
-            const key = weekStart.toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-            });
-            weeks[key] = (weeks[key] || 0) + 1;
-          });
-          const sorted = Object.entries(weeks)
-            .slice(-8)
-            .map(([week, count]) => ({ week, count }));
-          setGrowthData(sorted);
-        }
+if (!ignore && allApps) {
+  const weeks = {};
+  const stages = {};
+  allApps.forEach((a) => {
+    const d = new Date(a.created_at);
+    const weekStart = new Date(d);
+    weekStart.setDate(d.getDate() - d.getDay());
+    const key = weekStart.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+    });
+    weeks[key] = (weeks[key] || 0) + 1;
+    stages[a.stage] = (stages[a.stage] || 0) + 1;
+  });
+  const sorted = Object.entries(weeks)
+    .slice(-8)
+    .map(([week, count]) => ({ week, count }));
+  setGrowthData(sorted);
+  setStageBreakdown(Object.entries(stages).map(([name, value]) => ({ name, value })));
+}
 
         if (
           collegesErr ||
@@ -432,6 +443,53 @@ export default function Dashboard() {
             />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+
+      <div className="grid2" style={{ marginBottom: 20 }}>
+        <div className="chart-card" style={{ height: 280 }}>
+          <div className="panel-title" style={{ marginBottom: 8 }}>
+            Candidates by Stage
+          </div>
+          <ResponsiveContainer width="100%" height="85%">
+            <BarChart data={stageBreakdown} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" />
+              <XAxis dataKey="name" tick={{ fontSize: 10.5 }} angle={-15} textAnchor="end" height={50} />
+              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+              <Tooltip contentStyle={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: 8, fontSize: 12 }} />
+              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                {stageBreakdown.map((entry, i) => (
+                  <Cell key={entry.name} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="chart-card" style={{ height: 280 }}>
+          <div className="panel-title" style={{ marginBottom: 8 }}>
+            Stage Distribution
+          </div>
+          <ResponsiveContainer width="100%" height="85%">
+            <PieChart>
+              <Pie
+                data={stageBreakdown}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                label={(entry) => entry.name}
+                labelLine={false}
+              >
+                {stageBreakdown.map((entry, i) => (
+                  <Cell key={entry.name} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip contentStyle={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: 8, fontSize: 12 }} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       <div className="grid2">
