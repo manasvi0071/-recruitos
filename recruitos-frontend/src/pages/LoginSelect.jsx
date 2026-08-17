@@ -1,4 +1,3 @@
-import React from "react";
 import campusBg from "../assets/campus-bg.png";
 import {
   Briefcase,
