@@ -1,382 +1,331 @@
-const ROLE_CARDS = [
+import React from "react";
+import campusBg from "../assets/campus-bg.png";
+import {
+  Briefcase,
+  User,
+  Building2,
+  ShieldCheck,
+  Search,
+  ClipboardCheck,
+  ListChecks,
+  CalendarClock,
+  BarChart3,
+  Bell,
+  LayoutDashboard,
+  FileSpreadsheet,
+  ClipboardList,
+  Users,
+  UserCog,
+  Settings,
+  Activity,
+  Database,
+  Cpu,
+  TrendingUp,
+  Layers,
+  ArrowRight,
+} from "lucide-react";
+
+const cards = [
   {
-    key: "recruiter",
-    title: "Recruiter Login",
-    desc: "Access your dashboard to manage job postings, candidates and hiring pipeline",
-    icon: "👤",
-    color: "#7C3AED",
-    colorSoft: "#EDE9FE",
-    btnGradient: "linear-gradient(90deg, #7C3AED, #A78BFA)",
-    features: [
-      "Post & Manage Jobs",
-      "Review Candidates",
-      "Track Hiring Pipeline",
-      "Schedule Interviews",
-      "Analytics & Reports",
-    ],
+    role: "Recruiter",
+    icon: Briefcase,
     path: "/login/recruiter",
+    ringColor: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
+    buttonColor: "linear-gradient(90deg, #7C3AED, #9333EA)",
+    desc: "Post jobs, review candidates and manage your hiring pipeline.",
+    features: [
+      { icon: ClipboardCheck, label: "Post & Manage Jobs" },
+      { icon: Users, label: "Review Candidates" },
+      { icon: ListChecks, label: "Track Applications" },
+      { icon: CalendarClock, label: "Schedule Interviews" },
+      { icon: BarChart3, label: "Analytics & Reports" },
+    ],
+    featureColor: "#8B5CF6",
   },
   {
-    key: "candidate",
-    title: "Candidate Login",
-    desc: "Track your applications and interview progress",
-    icon: "🧑",
-    color: "#2563EB",
-    colorSoft: "#DBEAFE",
-    btnGradient: "linear-gradient(90deg, #2563EB, #60A5FA)",
-    features: [
-      "View Job Opportunities",
-      "Track Applications",
-      "Interview Updates",
-      "Profile & Resume",
-      "View Offers",
-    ],
+    role: "Candidate",
+    icon: User,
     path: "/login/candidate",
+    ringColor: "linear-gradient(135deg, #60A5FA, #2563EB)",
+    buttonColor: "linear-gradient(90deg, #2563EB, #3B82F6)",
+    desc: "Find opportunities, track applications and advance your career.",
+    features: [
+      { icon: Search, label: "Browse Jobs" },
+      { icon: ListChecks, label: "Track Applications" },
+      { icon: CalendarClock, label: "Interview Updates" },
+      { icon: FileSpreadsheet, label: "Profile & Resume" },
+      { icon: Bell, label: "Job Alerts" },
+    ],
+    featureColor: "#2563EB",
   },
   {
-    key: "corporate",
-    title: "Corporate Login",
-    desc: "Manage your company profile and recruitment activities",
-    icon: "🏢",
-    color: "#059669",
-    colorSoft: "#D1FAE5",
-    btnGradient: "linear-gradient(90deg, #059669, #34D399)",
-    features: [
-      "Company Dashboard",
-      "Manage Job Postings",
-      "View Applications",
-      "Team Management",
-      "Reports & Analytics",
-    ],
+    role: "Corporate",
+    icon: Building2,
     path: "/login/corporate",
+    ringColor: "linear-gradient(135deg, #34D399, #059669)",
+    buttonColor: "linear-gradient(90deg, #059669, #10B981)",
+    desc: "Manage company profile, jobs, and recruitment activities.",
+    features: [
+      { icon: LayoutDashboard, label: "Company Dashboard" },
+      { icon: ClipboardList, label: "Manage Job Postings" },
+      { icon: ClipboardCheck, label: "View Applications" },
+      { icon: UserCog, label: "Team Management" },
+      { icon: BarChart3, label: "Reports & Analytics" },
+    ],
+    featureColor: "#059669",
   },
   {
-    key: "admin",
-    title: "Admin Login",
-    desc: "Manage platform users, roles and system configurations",
-    icon: "🛡️",
-    color: "#EA580C",
-    colorSoft: "#FFEDD5",
-    btnGradient: "linear-gradient(90deg, #EA580C, #FB923C)",
-    features: [
-      "User Management",
-      "Role & Permissions",
-      "System Settings",
-      "Activity Logs",
-      "Data & Reports",
-    ],
+    role: "Admin",
+    icon: ShieldCheck,
     path: "/login/admin",
+    ringColor: "linear-gradient(135deg, #FB923C, #EA580C)",
+    buttonColor: "linear-gradient(90deg, #EA580C, #F97316)",
+    desc: "Manage platform users, roles, permissions and system settings.",
+    features: [
+      { icon: Users, label: "User Management" },
+      { icon: ShieldCheck, label: "Role & Permissions" },
+      { icon: Settings, label: "System Settings" },
+      { icon: Activity, label: "Activity Logs" },
+      { icon: Database, label: "Data & Reports" },
+    ],
+    featureColor: "#EA580C",
   },
 ];
 
-export default function LoginSelector() {
+const trustItems = [
+  { icon: ShieldCheck, title: "Secure & Compliant", sub: "Enterprise-grade security", color: "#8B5CF6" },
+  { icon: Cpu, title: "AI Powered", sub: "Smart matching & insights", color: "#2563EB" },
+  { icon: TrendingUp, title: "Real-time Analytics", sub: "Data-driven decisions", color: "#059669" },
+  { icon: Layers, title: "Scalable Platform", sub: "Built for your growth", color: "#EA580C" },
+];
+
+export default function SaarthiCampusLanding() {
   return (
-    <>
-      <style>{`
-        @keyframes bgColorShift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-      `}</style>
     <div
       style={{
         minHeight: "100vh",
-        background:
-          "linear-gradient(-45deg, #0F0B2E, #2E1065, #5B21B6, #1E3A8A, #0F0B2E)",
-        backgroundSize: "400% 400%",
-        animation: "bgColorShift 14s ease infinite",
-        padding: "56px 24px",
-        position: "relative",
-        overflow: "hidden",
+        width: "100%",
+        backgroundImage: `url(${campusBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundColor: "#fff",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "48px 24px",
+        boxSizing: "border-box",
       }}
     >
-      {/* Subtle radial glows */}
-      <div
-        style={{
-          position: "absolute",
-          top: -120,
-          left: -100,
-          width: 420,
-          height: 420,
-          borderRadius: "50%",
-          background:
-            "radial-gradient(circle, rgba(220,203,255,0.5) 0%, transparent 70%)",
-          filter: "blur(10px)",
-          zIndex: 0,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: -140,
-          right: -100,
-          width: 460,
-          height: 460,
-          borderRadius: "50%",
-          background:
-            "radial-gradient(circle, rgba(201,226,255,0.55) 0%, transparent 70%)",
-          filter: "blur(10px)",
-          zIndex: 0,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          top: "35%",
-          right: 40,
-          width: 260,
-          height: 260,
-          borderRadius: "50%",
-          background:
-            "radial-gradient(circle, rgba(243,215,245,0.35) 0%, transparent 70%)",
-          filter: "blur(14px)",
-          zIndex: 0,
-        }}
-      />
-
-      {/* Faint dotted patterns */}
-      <div
-        style={{
-          position: "absolute",
-          top: 30,
-          left: 30,
-          width: 90,
-          height: 90,
-          backgroundImage:
-            "radial-gradient(circle, rgba(124,58,237,0.18) 1.2px, transparent 1.2px)",
-          backgroundSize: "14px 14px",
-          zIndex: 0,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: 40,
-          left: 60,
-          width: 90,
-          height: 90,
-          backgroundImage:
-            "radial-gradient(circle, rgba(37,99,235,0.15) 1.2px, transparent 1.2px)",
-          backgroundSize: "14px 14px",
-          zIndex: 0,
-        }}
-      />
-
-      {/* Thin curved wave line */}
-      <svg
-        width="420"
-        height="200"
-        style={{ position: "absolute", top: 0, right: 0, zIndex: 0, opacity: 0.5 }}
-        viewBox="0 0 420 200"
-      >
-        <path
-          d="M0,100 C100,20 300,180 420,60"
-          fill="none"
-          stroke="rgba(124,58,237,0.15)"
-          strokeWidth="1.5"
-        />
-      </svg>
-      <svg
-        width="420"
-        height="200"
-        style={{ position: "absolute", bottom: 0, left: 0, zIndex: 0, opacity: 0.5 }}
-        viewBox="0 0 420 200"
-      >
-        <path
-          d="M0,140 C120,60 260,180 420,90"
-          fill="none"
-          stroke="rgba(37,99,235,0.15)"
-          strokeWidth="1.5"
-        />
-      </svg>
-
-      {/* Small geometric circles + plus symbols in corners */}
-      <div style={{ position: "absolute", top: 60, right: 90, width: 14, height: 14, borderRadius: "50%", border: "1.5px solid rgba(124,58,237,0.25)", zIndex: 0 }} />
-      <div style={{ position: "absolute", bottom: 90, right: 140, width: 10, height: 10, borderRadius: "50%", border: "1.5px solid rgba(37,99,235,0.25)", zIndex: 0 }} />
-      <span style={{ position: "absolute", top: 100, left: 120, fontSize: 16, color: "rgba(124,58,237,0.25)", zIndex: 0 }}>+</span>
-      <span style={{ position: "absolute", bottom: 120, right: 60, fontSize: 16, color: "rgba(37,99,235,0.25)", zIndex: 0 }}>+</span>
-
-      {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: 44, position: "relative", zIndex: 1 }}>
+      <div style={{ width: "100%", maxWidth: 1280 }}>
+        {/* top bar */}
         <div
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 10,
-            marginBottom: 6,
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 16,
+            marginBottom: 56,
           }}
         >
-          <span style={{ fontSize: 30 }}>🎓</span>
-          <span style={{ fontSize: 26, fontWeight: 700, color: "#FFFFFF", fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}>
-            Saarthi
-          </span>
-          <span style={{ fontSize: 26, fontWeight: 700, color: "#C4B5FD", fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}>
-            Campus
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                background: "linear-gradient(135deg, #7C3AED, #4F46E5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#fff",
+              }}
+            >
+              <svg viewBox="0 0 24 24" width={20} height={20} fill="currentColor">
+                <path d="M12 2 3 7l9 5 9-5-9-5Zm0 7L3 14v3l9 5 9-5v-3l-9 5-9-5V9Z" />
+              </svg>
+            </div>
+            <span style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>Saarthi</span>
+            <span
+              style={{
+                borderRadius: 999,
+                background: "linear-gradient(90deg, #7C3AED, #4F46E5)",
+                padding: "4px 12px",
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: "0.05em",
+                color: "#fff",
+              }}
+            >
+              CAMPUS
+            </span>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
+              Powering Connections. Building Futures.
+            </p>
+            <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
+              AI-Powered Campus Recruitment Platform
+            </p>
+          </div>
         </div>
-        <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 12.5, marginBottom: 30, letterSpacing: "0.04em", textTransform: "uppercase", fontWeight: 500 }}>
-          Campus Recruitment Platform
-        </p>
 
-        <h1 style={{ fontSize: 36, fontWeight: 700, color: "#FFFFFF", fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}>
-          Welcome to <span style={{ color: "#C4B5FD" }}>Saarthi Campus</span>
-        </h1>
-        <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 14.5, marginTop: 10, fontWeight: 400 }}>
-          Choose your login to continue
-        </p>
-      </div>
+        {/* heading + cards */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0,1fr) minmax(0,2.6fr)",
+            gap: 40,
+            alignItems: "start",
+          }}
+        >
+          <div>
+            <h1 style={{ margin: 0, fontSize: 44, fontWeight: 800, lineHeight: 1.15, color: "#0f172a" }}>
+              Welcome to
+              <br />
+              <span
+                style={{
+                  background: "linear-gradient(90deg, #7C3AED, #3B82F6)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                Saarthi Campus
+              </span>
+            </h1>
+            <div style={{ marginTop: 16, height: 4, width: 64, borderRadius: 999, background: "linear-gradient(90deg, #7C3AED, #3B82F6)" }} />
+            <p style={{ marginTop: 24, fontSize: 16, color: "#475569", lineHeight: 1.6 }}>
+              Smart recruitment. Better connections.
+              <br />
+              One platform for all your hiring needs.
+            </p>
+            <p style={{ marginTop: 32, fontSize: 14, fontWeight: 700, color: "#1e293b" }}>
+              Choose your login to continue
+            </p>
+          </div>
 
-      {/* Cards */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: 20,
-          maxWidth: 1200,
-          margin: "0 auto",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        {ROLE_CARDS.map((card) => (
           <div
-            key={card.key}
             style={{
-              background: "var(--bg-surface)",
-              border: "1px solid var(--border-default)",
-              borderRadius: "var(--radius-lg)",
-              padding: "32px 24px",
-              boxShadow: "var(--shadow-sm)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              textAlign: "center",
+              display: "grid",
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gap: 20,
             }}
           >
-            <div
-              style={{
-                width: 64,
-                height: 64,
-                borderRadius: "50%",
-                background: card.colorSoft,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 28,
-                marginBottom: 18,
-              }}
-            >
-              {card.icon}
-            </div>
-
-            <h3 style={{ fontSize: 17.5, fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-display)", letterSpacing: "-0.01em" }}>
-              {card.title}
-            </h3>
-            <p
-              style={{
-                fontSize: 12.5,
-                color: "var(--text-muted)",
-                marginTop: 7,
-                marginBottom: 20,
-                lineHeight: 1.55,
-                minHeight: 36,
-              }}
-            >
-              {card.desc}
-            </p>
-
-            <button
-              onClick={() => { window.location.href = card.path; }}
-              style={{
-                width: "100%",
-                background: card.btnGradient,
-                color: "white",
-                border: "none",
-                padding: "11px 18px",
-                borderRadius: "var(--radius-md)",
-                fontWeight: 700,
-                fontSize: 13.5,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-              }}
-            >
-              Login as {card.title.split(" ")[0]} <span>→</span>
-            </button>
-
-            <div
-              style={{
-                width: "100%",
-                borderTop: "1px solid var(--border-default)",
-                marginTop: 22,
-                paddingTop: 16,
-                textAlign: "left",
-              }}
-            >
-              {card.features.map((f) => (
+            {cards.map(({ role, icon: Icon, path, ringColor, buttonColor, desc, features, featureColor }) => (
+              <div
+                key={role}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  borderRadius: 16,
+                  border: "1px solid #f1f5f9",
+                  background: "#fff",
+                  padding: 20,
+                  boxShadow: "0 4px 14px rgba(15,23,42,0.06)",
+                }}
+              >
                 <div
-                  key={f}
+                  style={{
+                    margin: "0 auto",
+                    width: 64,
+                    height: 64,
+                    borderRadius: "50%",
+                    background: ringColor,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#fff",
+                    boxShadow: "0 4px 10px rgba(0,0,0,0.12)",
+                  }}
+                >
+                  <Icon size={28} />
+                </div>
+                <h3 style={{ marginTop: 16, marginBottom: 8, fontSize: 18, fontWeight: 800, textAlign: "center", color: "#0f172a" }}>
+                  {role} Login
+                </h3>
+                <p style={{ margin: "0 0 16px", fontSize: 12.5, lineHeight: 1.6, textAlign: "center", color: "#64748b", minHeight: 58 }}>
+                  {desc}
+                </p>
+                <div style={{ borderTop: "1px dashed #e2e8f0", margin: "0 0 16px" }} />
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px", flex: 1 }}>
+                  {features.map(({ icon: FIcon, label }) => (
+                    <li key={label} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#334155", padding: "5px 0" }}>
+                      <FIcon size={16} color={featureColor} style={{ flexShrink: 0 }} />
+                      {label}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  onClick={() => { window.location.href = path; }}
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 8,
-                    fontSize: 12.5,
-                    color: "var(--text-secondary)",
-                    padding: "5px 0",
+                    justifyContent: "center",
+                    gap: 6,
+                    borderRadius: 10,
+                    border: "none",
+                    padding: "12px 16px",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "#fff",
+                    background: buttonColor,
+                    cursor: "pointer",
                   }}
                 >
-                  <span style={{ color: card.color, fontWeight: 700 }}>✓</span>
-                  {f}
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Footer strip */}
-      <div
-        style={{
-          maxWidth: 700,
-          margin: "40px auto 0",
-          background: "var(--bg-surface)",
-          border: "1px solid var(--border-default)",
-          borderRadius: "var(--radius-lg)",
-          padding: "16px 22px",
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <span style={{ fontSize: 22 }}>🛡️</span>
-        <div>
-          <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--brand-purple)" }}>
-            Secure • Reliable • Smart Recruitment
-          </div>
-          <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-            Your data is protected with enterprise-grade security
+                  Login as {role}
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
 
-      <p
-        style={{
-          textAlign: "center",
-          fontSize: 12,
-          color: "rgba(255,255,255,0.6)",
-          marginTop: 24,
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        © {new Date().getFullYear()} Saarthi Campus. All rights reserved.
-      </p>
+        {/* trust strip */}
+        <div
+          style={{
+            marginTop: 48,
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gap: 24,
+            borderRadius: 16,
+            border: "1px solid #f1f5f9",
+            background: "rgba(255,255,255,0.92)",
+            padding: 24,
+            boxShadow: "0 4px 14px rgba(15,23,42,0.06)",
+          }}
+        >
+          {trustItems.map(({ icon: Icon, title, sub, color }) => (
+            <div key={title} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  background: "#f8fafc",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color,
+                  flexShrink: 0,
+                }}
+              >
+                <Icon size={20} />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: "#1e293b" }}>{title}</p>
+                <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>{sub}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p style={{ marginTop: 40, textAlign: "center", fontSize: 12, color: "#94a3b8" }}>
+          © 2026 Saarthi Campus. All rights reserved.
+        </p>
+      </div>
     </div>
-    </>
   );
 }
