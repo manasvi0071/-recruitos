@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabaseClient";
 import * as XLSX from "xlsx";
 import { sanitizePhone } from "../lib/phone";
 import { isValidEmail } from "../lib/email";
+import AIImport from "../components/AIImport";
 
 const emptyForm = {
   name: "",
@@ -47,6 +48,7 @@ export default function CorpDB() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const fileInputRef = useRef(null);
+  const [showImport, setShowImport] = useState(false);
 
   async function loadCompanies() {
     setLoading(true);
@@ -59,9 +61,7 @@ export default function CorpDB() {
 
     if (error) {
       console.error("Failed to load companies:", error);
-      setError(
-        "Could not load companies. Check your Supabase connection."
-      );
+      setError("Could not load companies. Check your Supabase connection.");
       setCompanies([]);
     } else {
       setCompanies(data || []);
@@ -86,9 +86,7 @@ export default function CorpDB() {
 
       if (error) {
         console.error("Failed to load companies:", error);
-        setError(
-          "Could not load companies. Check your Supabase connection."
-        );
+        setError("Could not load companies. Check your Supabase connection.");
         setCompanies([]);
       } else {
         setCompanies(data || []);
@@ -208,9 +206,7 @@ export default function CorpDB() {
         await loadCompanies();
       }
     } else {
-      const { error } = await supabase
-        .from("companies")
-        .insert([companyData]);
+      const { error } = await supabase.from("companies").insert([companyData]);
 
       if (error) {
         console.error("Failed to add company:", error);
@@ -229,18 +225,11 @@ export default function CorpDB() {
   // ---------------------------------------------------------
 
   async function handleDeleteCompany(id, name) {
-    if (
-      !window.confirm(
-        `Delete "${name}"?\n\nThis cannot be undone.`
-      )
-    ) {
+    if (!window.confirm(`Delete "${name}"?\n\nThis cannot be undone.`)) {
       return;
     }
 
-    const { error } = await supabase
-      .from("companies")
-      .delete()
-      .eq("id", id);
+    const { error } = await supabase.from("companies").delete().eq("id", id);
 
     if (error) {
       console.error("Failed to delete company:", error);
@@ -308,14 +297,9 @@ export default function CorpDB() {
         .eq("is_current", true);
 
       if (archiveError) {
-        console.error(
-          "Failed to archive previous HR:",
-          archiveError
-        );
+        console.error("Failed to archive previous HR:", archiveError);
 
-        alert(
-          "Could not archive previous HR. Check console for details."
-        );
+        alert("Could not archive previous HR. Check console for details.");
 
         setSavingHr(false);
         return;
@@ -336,14 +320,9 @@ export default function CorpDB() {
         ]);
 
       if (insertError) {
-        console.error(
-          "Failed to add HR contact:",
-          insertError
-        );
+        console.error("Failed to add HR contact:", insertError);
 
-        alert(
-          "Could not add new HR. Check console for details."
-        );
+        alert("Could not add new HR. Check console for details.");
 
         setSavingHr(false);
         return;
@@ -362,12 +341,10 @@ export default function CorpDB() {
       if (companyUpdateError) {
         console.error(
           "HR added but company HR fields could not be updated:",
-          companyUpdateError
+          companyUpdateError,
         );
 
-        alert(
-          "HR was added, but company HR details could not be updated."
-        );
+        alert("HR was added, but company HR details could not be updated.");
       }
 
       // Update popup form immediately
@@ -417,73 +394,30 @@ export default function CorpDB() {
 
         const mapped = rows
           .map((r) => ({
-            name:
-              r.name ||
-              r.Name ||
-              r.Company ||
-              r.company ||
-              "",
+            name: r.name || r.Name || r.Company || r.company || "",
 
-            sector:
-              r.sector ||
-              r.Sector ||
-              "",
+            sector: r.sector || r.Sector || "",
 
-            hr_name:
-              r.hr_name ||
-              r["HR Name"] ||
-              r.hr ||
-              "",
+            hr_name: r.hr_name || r["HR Name"] || r.hr || "",
 
-            hq_location:
-              r.hq_location ||
-              r["HQ Location"] ||
-              r.hq ||
-              "",
+            hq_location: r.hq_location || r["HQ Location"] || r.hq || "",
 
-            hiring_status:
-              r.hiring_status ||
-              r["Hiring Status"] ||
-              "Active",
+            hiring_status: r.hiring_status || r["Hiring Status"] || "Active",
 
-            city:
-              r.city ||
-              r.City ||
-              "",
+            city: r.city || r.City || "",
 
             hr_phone:
-              r.hr_phone ||
-              r["HR Phone"] ||
-              r["Mobile No"] ||
-              r.mobile ||
-              "",
+              r.hr_phone || r["HR Phone"] || r["Mobile No"] || r.mobile || "",
 
-            hr_email:
-              r.hr_email ||
-              r["HR Email"] ||
-              r.email ||
-              "",
+            hr_email: r.hr_email || r["HR Email"] || r.email || "",
 
-            website:
-              r.website ||
-              r.Website ||
-              "",
+            website: r.website || r.Website || "",
 
-            gst_no:
-              r.gst_no ||
-              r["GST No"] ||
-              r.GST ||
-              "",
+            gst_no: r.gst_no || r["GST No"] || r.GST || "",
 
-            industry:
-              r.industry ||
-              r.Industry ||
-              "",
+            industry: r.industry || r.Industry || "",
 
-            sub_industry:
-              r.sub_industry ||
-              r["Sub Industry"] ||
-              "",
+            sub_industry: r.sub_industry || r["Sub Industry"] || "",
           }))
           .filter((r) => r.name);
 
@@ -506,24 +440,22 @@ export default function CorpDB() {
     let failed = 0;
 
     for (const row of importRows) {
-      const { error } = await supabase
-        .from("companies")
-        .insert([
-          {
-            name: row.name,
-            sector: row.sector || null,
-            hr_name: row.hr_name || null,
-            hq_location: row.hq_location || null,
-            hiring_status: row.hiring_status || "Active",
-            city: row.city || null,
-            hr_phone: row.hr_phone || null,
-            hr_email: row.hr_email || null,
-            website: row.website || null,
-            gst_no: row.gst_no || null,
-            industry: row.industry || null,
-            sub_industry: row.sub_industry || null,
-          },
-        ]);
+      const { error } = await supabase.from("companies").insert([
+        {
+          name: row.name,
+          sector: row.sector || null,
+          hr_name: row.hr_name || null,
+          hq_location: row.hq_location || null,
+          hiring_status: row.hiring_status || "Active",
+          city: row.city || null,
+          hr_phone: row.hr_phone || null,
+          hr_email: row.hr_email || null,
+          website: row.website || null,
+          gst_no: row.gst_no || null,
+          industry: row.industry || null,
+          sub_industry: row.sub_industry || null,
+        },
+      ]);
 
       if (error) {
         console.error("Import row failed:", error);
@@ -564,7 +496,6 @@ export default function CorpDB() {
 
   return (
     <div className="page active" id="page-corpdb">
-
       {/* PAGE HEADER */}
       <div className="page-head">
         <div>
@@ -598,14 +529,38 @@ export default function CorpDB() {
             Import Excel
           </button>
 
-          <button
-            className="btn-gold"
-            onClick={startAddCompany}
-          >
+          <button className="btn-gold" onClick={startAddCompany}>
             + Add Company
           </button>
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              className="btn-outline"
+              onClick={() => setShowImport((v) => !v)}
+            >
+              {showImport ? "✕ Close Import" : "🤖 AI Import Excel/PDF"}
+            </button>
+            <button className="btn-gold">+ Add Company</button>
+          </div>
         </div>
       </div>
+
+      {showImport && (
+        <div className="panel">
+          <div className="panel-title">AI Import — Corporate Database</div>
+          <div className="panel-sub">
+            Upload any Excel or PDF with company data — AI will read and format
+            it automatically
+          </div>
+          <AIImport
+            type="corporate"
+            onImported={() => {
+              setShowImport(false);
+              window.location.reload();
+            }}
+          />
+        </div>
+      )}
 
       {/* ERROR */}
       {error && (
@@ -629,15 +584,11 @@ export default function CorpDB() {
           }}
         >
           <p>
-            Import done:{" "}
-            <b>{importResult.success}</b> added,{" "}
+            Import done: <b>{importResult.success}</b> added,{" "}
             <b>{importResult.failed}</b> failed.
           </p>
 
-          <button
-            className="btn-outline"
-            onClick={() => setImportResult(null)}
-          >
+          <button className="btn-outline" onClick={() => setImportResult(null)}>
             Dismiss
           </button>
         </div>
@@ -686,9 +637,7 @@ export default function CorpDB() {
           </div>
 
           {importRows.length > 10 && (
-            <p>
-              ...and {importRows.length - 10} more rows
-            </p>
+            <p>...and {importRows.length - 10} more rows</p>
           )}
 
           <div
@@ -708,10 +657,7 @@ export default function CorpDB() {
                 : `Import ${importRows.length} Companies`}
             </button>
 
-            <button
-              className="btn-outline"
-              onClick={cancelImport}
-            >
+            <button className="btn-outline" onClick={cancelImport}>
               Cancel
             </button>
           </div>
@@ -742,7 +688,6 @@ export default function CorpDB() {
               position: "relative",
             }}
           >
-
             {/* POPUP HEADER */}
             <div
               style={{
@@ -759,9 +704,7 @@ export default function CorpDB() {
                     fontSize: 20,
                   }}
                 >
-                  {editingId
-                    ? "Edit Company"
-                    : "Add New Company"}
+                  {editingId ? "Edit Company" : "Add New Company"}
                 </h2>
 
                 <p
@@ -791,12 +734,10 @@ export default function CorpDB() {
 
             {/* COMPANY FORM */}
             <form onSubmit={handleSaveCompany}>
-
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns:
-                    "repeat(2, minmax(0, 1fr))",
+                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                   gap: 12,
                 }}
               >
@@ -805,36 +746,21 @@ export default function CorpDB() {
                   placeholder="Company name *"
                   required
                   value={form.name}
-                  onChange={(e) =>
-                    handleFormChange(
-                      "name",
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => handleFormChange("name", e.target.value)}
                 />
 
                 <input
                   className="search-box"
                   placeholder="Sector (e.g. IT Services)"
                   value={form.sector}
-                  onChange={(e) =>
-                    handleFormChange(
-                      "sector",
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => handleFormChange("sector", e.target.value)}
                 />
 
                 <input
                   className="search-box"
                   placeholder="Industry"
                   value={form.industry}
-                  onChange={(e) =>
-                    handleFormChange(
-                      "industry",
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => handleFormChange("industry", e.target.value)}
                 />
 
                 <input
@@ -842,10 +768,7 @@ export default function CorpDB() {
                   placeholder="Sub Industry"
                   value={form.sub_industry}
                   onChange={(e) =>
-                    handleFormChange(
-                      "sub_industry",
-                      e.target.value
-                    )
+                    handleFormChange("sub_industry", e.target.value)
                   }
                 />
 
@@ -853,12 +776,7 @@ export default function CorpDB() {
                   className="search-box"
                   placeholder="City"
                   value={form.city}
-                  onChange={(e) =>
-                    handleFormChange(
-                      "city",
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => handleFormChange("city", e.target.value)}
                 />
 
                 <input
@@ -866,10 +784,7 @@ export default function CorpDB() {
                   placeholder="HQ location"
                   value={form.hq_location}
                   onChange={(e) =>
-                    handleFormChange(
-                      "hq_location",
-                      e.target.value
-                    )
+                    handleFormChange("hq_location", e.target.value)
                   }
                 />
 
@@ -877,12 +792,7 @@ export default function CorpDB() {
                   className="search-box"
                   placeholder="HR Manager name"
                   value={form.hr_name}
-                  onChange={(e) =>
-                    handleFormChange(
-                      "hr_name",
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => handleFormChange("hr_name", e.target.value)}
                 />
 
                 <input
@@ -890,10 +800,7 @@ export default function CorpDB() {
                   placeholder="HR mobile no."
                   value={form.hr_phone}
                   onChange={(e) =>
-                    handleFormChange(
-                      "hr_phone",
-                      sanitizePhone(e.target.value)
-                    )
+                    handleFormChange("hr_phone", sanitizePhone(e.target.value))
                   }
                   inputMode="numeric"
                   maxLength={10}
@@ -904,55 +811,33 @@ export default function CorpDB() {
                   placeholder="HR email ID"
                   type="email"
                   value={form.hr_email}
-                  onChange={(e) =>
-                    handleFormChange(
-                      "hr_email",
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => handleFormChange("hr_email", e.target.value)}
                 />
 
                 <input
                   className="search-box"
                   placeholder="Website (https://...)"
                   value={form.website}
-                  onChange={(e) =>
-                    handleFormChange(
-                      "website",
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => handleFormChange("website", e.target.value)}
                 />
 
                 <input
                   className="search-box"
                   placeholder="GST No."
                   value={form.gst_no}
-                  onChange={(e) =>
-                    handleFormChange(
-                      "gst_no",
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => handleFormChange("gst_no", e.target.value)}
                 />
 
                 <select
                   className="search-box"
                   value={form.hiring_status}
                   onChange={(e) =>
-                    handleFormChange(
-                      "hiring_status",
-                      e.target.value
-                    )
+                    handleFormChange("hiring_status", e.target.value)
                   }
                 >
-                  <option value="Active">
-                    Hiring: Active
-                  </option>
+                  <option value="Active">Hiring: Active</option>
 
-                  <option value="Paused">
-                    Hiring: Paused
-                  </option>
+                  <option value="Paused">Hiring: Paused</option>
                 </select>
               </div>
 
@@ -962,8 +847,7 @@ export default function CorpDB() {
                   style={{
                     marginTop: 18,
                     paddingTop: 16,
-                    borderTop:
-                      "1px solid var(--border-default, #eee)",
+                    borderTop: "1px solid var(--border-default, #eee)",
                   }}
                 >
                   <div
@@ -986,13 +870,11 @@ export default function CorpDB() {
                       <div
                         style={{
                           fontSize: 12,
-                          color:
-                            "var(--text-muted)",
+                          color: "var(--text-muted)",
                           marginTop: 2,
                         }}
                       >
-                        Add a new HR contact for this
-                        company.
+                        Add a new HR contact for this company.
                       </div>
                     </div>
 
@@ -1018,10 +900,8 @@ export default function CorpDB() {
                         marginTop: 12,
                         padding: 14,
                         borderRadius: 8,
-                        border:
-                          "1px dashed var(--border-default, #ddd)",
-                        background:
-                          "var(--bg-soft, #fafafc)",
+                        border: "1px dashed var(--border-default, #ddd)",
+                        background: "var(--bg-soft, #fafafc)",
                       }}
                     >
                       <div
@@ -1037,8 +917,7 @@ export default function CorpDB() {
                       <div
                         style={{
                           display: "grid",
-                          gridTemplateColumns:
-                            "repeat(2, minmax(0, 1fr))",
+                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                           gap: 10,
                         }}
                       >
@@ -1074,9 +953,7 @@ export default function CorpDB() {
                           onChange={(e) =>
                             setHrForm((prev) => ({
                               ...prev,
-                              phone: sanitizePhone(
-                                e.target.value
-                              ),
+                              phone: sanitizePhone(e.target.value),
                             }))
                           }
                           inputMode="numeric"
@@ -1110,14 +987,11 @@ export default function CorpDB() {
                           onClick={handleAddHr}
                           disabled={savingHr}
                           style={{
-                            padding:
-                              "6px 14px",
+                            padding: "6px 14px",
                             fontSize: 12,
                           }}
                         >
-                          {savingHr
-                            ? "Saving…"
-                            : "Save HR"}
+                          {savingHr ? "Saving…" : "Save HR"}
                         </button>
 
                         <button
@@ -1125,8 +999,7 @@ export default function CorpDB() {
                           className="btn-outline"
                           onClick={cancelHrForm}
                           style={{
-                            padding:
-                              "6px 14px",
+                            padding: "6px 14px",
                             fontSize: 12,
                           }}
                         >
@@ -1146,8 +1019,7 @@ export default function CorpDB() {
                   gap: 8,
                   marginTop: 20,
                   paddingTop: 14,
-                  borderTop:
-                    "1px solid var(--border-default, #eee)",
+                  borderTop: "1px solid var(--border-default, #eee)",
                 }}
               >
                 <button
@@ -1158,16 +1030,12 @@ export default function CorpDB() {
                   Cancel
                 </button>
 
-                <button
-                  className="btn-gold"
-                  type="submit"
-                  disabled={saving}
-                >
+                <button className="btn-gold" type="submit" disabled={saving}>
                   {saving
                     ? "Saving…"
                     : editingId
-                    ? "Update Company"
-                    : "Save Company"}
+                      ? "Update Company"
+                      : "Save Company"}
                 </button>
               </div>
             </form>
@@ -1189,8 +1057,7 @@ export default function CorpDB() {
         <div
           style={{
             padding: "16px 18px",
-            borderBottom:
-              "1px solid var(--border-default, #eee)",
+            borderBottom: "1px solid var(--border-default, #eee)",
           }}
         >
           <div
@@ -1209,8 +1076,7 @@ export default function CorpDB() {
               marginTop: 3,
             }}
           >
-            Corporate companies and their current HR
-            contact details.
+            Corporate companies and their current HR contact details.
           </div>
         </div>
 
@@ -1272,64 +1138,45 @@ export default function CorpDB() {
                       <strong>{c.name}</strong>
                     </td>
 
-                    <td>
-                      {c.sector || "—"}
-                    </td>
+                    <td>{c.sector || "—"}</td>
 
                     <td>
                       {c.industry || c.sub_industry
-                        ? [
-                            c.industry,
-                            c.sub_industry,
-                          ]
+                        ? [c.industry, c.sub_industry]
                             .filter(Boolean)
                             .join(" / ")
                         : "—"}
                     </td>
 
-                    <td>
-                      {c.city || "—"}
-                    </td>
+                    <td>{c.city || "—"}</td>
 
-                    <td>
-                      {c.hq_location || "—"}
-                    </td>
+                    <td>{c.hq_location || "—"}</td>
 
-                    <td>
-                      {c.hr_name || "Not assigned"}
-                    </td>
+                    <td>{c.hr_name || "Not assigned"}</td>
 
-                    <td>
-                      {c.hr_phone || "—"}
-                    </td>
+                    <td>{c.hr_phone || "—"}</td>
 
-                    <td>
-                      {c.hr_email || "—"}
-                    </td>
+                    <td>{c.hr_email || "—"}</td>
 
                     <td>
                       <span
                         style={{
                           display: "inline-block",
-                          padding:
-                            "3px 8px",
+                          padding: "3px 8px",
                           borderRadius: 999,
                           fontSize: 11,
                           fontWeight: 700,
                           background:
-                            c.hiring_status ===
-                            "Active"
+                            c.hiring_status === "Active"
                               ? "#E8F7EE"
                               : "#FFF3E0",
                           color:
-                            c.hiring_status ===
-                            "Active"
+                            c.hiring_status === "Active"
                               ? "#16803A"
                               : "#A15C00",
                         }}
                       >
-                        {c.hiring_status ||
-                          "—"}
+                        {c.hiring_status || "—"}
                       </span>
                     </td>
 
@@ -1340,10 +1187,8 @@ export default function CorpDB() {
                           target="_blank"
                           rel="noreferrer"
                           style={{
-                            color:
-                              "var(--primary)",
-                            whiteSpace:
-                              "nowrap",
+                            color: "var(--primary)",
+                            whiteSpace: "nowrap",
                           }}
                         >
                           Visit ↗
@@ -1353,30 +1198,24 @@ export default function CorpDB() {
                       )}
                     </td>
 
-                    <td>
-                      {c.gst_no || "—"}
-                    </td>
+                    <td>{c.gst_no || "—"}</td>
 
                     <td>
                       <div
                         style={{
                           display: "flex",
                           gap: 6,
-                          whiteSpace:
-                            "nowrap",
+                          whiteSpace: "nowrap",
                         }}
                       >
                         <button
                           type="button"
                           className="btn-outline"
                           style={{
-                            padding:
-                              "4px 10px",
+                            padding: "4px 10px",
                             fontSize: 12,
                           }}
-                          onClick={() =>
-                            startEdit(c)
-                          }
+                          onClick={() => startEdit(c)}
                         >
                           Edit
                         </button>
@@ -1385,17 +1224,11 @@ export default function CorpDB() {
                           type="button"
                           className="btn-outline"
                           style={{
-                            padding:
-                              "4px 10px",
+                            padding: "4px 10px",
                             fontSize: 12,
                             color: "crimson",
                           }}
-                          onClick={() =>
-                            handleDeleteCompany(
-                              c.id,
-                              c.name
-                            )
-                          }
+                          onClick={() => handleDeleteCompany(c.id, c.name)}
                         >
                           Delete
                         </button>
