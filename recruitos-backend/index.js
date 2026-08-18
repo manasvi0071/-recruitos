@@ -987,3 +987,51 @@ app.get('/api/calls/performance', async (req, res) => {
 
   res.json(result);
 });
+
+app.post('/api/bid/suggest', async (req, res) => {
+  const { candidateName, currentSalary, companyCost, performance, reason, history } = req.body;
+
+  try {
+    const historyText = history?.length
+      ? history.map(h => `- ${new Date(h.created_at).toLocaleDateString()}: +${h.raise_percent}% raise (${h.performance})`).join('\n')
+      : 'No previous raises';
+
+    const prompt = `
+You are a compensation advisor for a campus recruitment company in India.
+
+Candidate: ${candidateName}
+Current Annual Salary: ₹${currentSalary}
+Current Company Cost (CTC): ₹${companyCost || currentSalary * 1.2}
+Performance Rating: ${performance}
+Reason given: ${reason || 'Not specified'}
+Previous raise history:
+${historyText}
+
+Based on this information, recommend a salary raise percentage.
+Respond ONLY in this exact JSON format:
+{
+  "raise_percent": <number between 0 and 40>,
+  "new_salary": <calculated new salary>,
+  "new_cost": <calculated new company cost>,
+  "reasoning": "<2-3 sentences explaining why this raise is appropriate>"
+}`;
+
+    const Groq = require('groq-sdk');
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.1-8b-instant',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+    });
+
+    const raw = completion.choices[0].message.content;
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const suggestion = JSON.parse(clean);
+
+    res.json({ suggestion });
+  } catch (err) {
+    console.error('Bid suggest error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
