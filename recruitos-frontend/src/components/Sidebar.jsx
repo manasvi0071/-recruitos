@@ -8,6 +8,7 @@ const NAV = {
       { key: 'campusdb', icon: '▤', label: 'Campus Database' },
       { key: 'corpdb', icon: '▤', label: 'Corporate Database' },
       { key: 'jobs', icon: '▤', label: 'Job Profiles' },
+      { key: 'bidportal', icon: '💰', label: 'Bid Portal' },
     ]},
     { section: 'Recruitment', items: [
       { key: 'resume', icon: '→', label: 'Resume Analyzer (AI)' },

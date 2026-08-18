@@ -27,7 +27,7 @@ import LoginSelect from "./pages/LoginSelect";
 import CorporateDashboard from "./pages/CorporateDashboard";
 import Notifications from './pages/Notifications';
 import CalendarTasks from './pages/CalendarTasks';
-
+import BidPortal from './pages/BidPortal';
 // Pages available to admin / recruiter
 const pages = {
   dashboard: Dashboard,
@@ -49,6 +49,7 @@ const pages = {
   callrecords: CallRecord,
   notifications: Notifications,
   calendartasks: CalendarTasks,
+  bidportal: BidPortal,
 };
 
 export default function App() {
