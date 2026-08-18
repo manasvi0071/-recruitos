@@ -1,20 +1,18 @@
 const NAV = {
   admin: [
     { section: 'Overview', items: [{ key: 'dashboard', icon: '◆', label: 'Dashboard' }] },
-    { section: 'Setup', items: [
+    { section: 'Databases', items: [
       { key: 'campusdb', icon: '▤', label: 'Campus Database' },
       { key: 'corpdb', icon: '▤', label: 'Corporate Database' },
       { key: 'jobs', icon: '▤', label: 'Job Profiles' },
     ]},
-    { section: 'Recruitment', items: [
-      { key: 'resume', icon: '→', label: 'Resume Analyzer (AI)' },
-      { key: 'aptitude', icon: '→', label: 'Aptitude Test' },
-      { key: 'gd', icon: '→', label: 'Group Discussion' },
-      { key: 'interview', icon: '→', label: 'Interviews' },
-      { key: 'offers', icon: '→', label: 'Offer Letters' },
-    ]},
-    { section: 'Tracking', items: [
+    { section: 'Control', items: [
+      { key: 'users', icon: '●', label: 'User Management' },
+      { key: 'pipeline', icon: '→', label: 'Recruitment Pipeline' },
       { key: 'joining', icon: '●', label: 'Joining Tracker' },
+    ]},
+    { section: 'Engagement', items: [
+      { key: 'calls', icon: '☎', label: 'Call Records' },
       { key: 'comm', icon: '●', label: 'Communication CRM' },
       { key: 'reports', icon: '●', label: 'Reports & Analytics' },
     ]},
@@ -26,51 +24,40 @@ const NAV = {
       { key: 'campusdb', icon: '▤', label: 'Candidate Database' },
       { key: 'resume', icon: '→', label: 'Resume Analyzer (AI)' },
       { key: 'jobs', icon: '▤', label: 'Job Profiles' },
-    ]},
-    { section: 'Recruitment', items: [
-      { key: 'aptitude', icon: '→', label: 'Aptitude Test' },
-      { key: 'gd', icon: '→', label: 'Group Discussion' },
-      { key: 'interview', icon: '→', label: 'Interviews' },
-      { key: 'offers', icon: '→', label: 'Offer Letters' },
-    ]},
-    { section: 'Tracking', items: [
-      { key: 'joining', icon: '●', label: 'Joining Tracker' },
-      { key: 'comm', icon: '●', label: 'Communication CRM' },
-      { key: 'reports', icon: '●', label: 'Reports & Analytics' },
-    ]},
-  ],
-
-  corporate: [
-    { section: 'Overview', items: [{ key: 'corporateDashboard', icon: '◆', label: 'Company Dashboard' }] },
-    { section: 'Hiring', items: [
-      { key: 'corpJobs', icon: '▤', label: 'Job Postings' },
-      { key: 'corpApplications', icon: '→', label: 'Applications' },
-      { key: 'corpCandidates', icon: '→', label: 'Candidates' },
-      { key: 'corpShortlisted', icon: '→', label: 'Shortlisted' },
-      { key: 'interview', icon: '→', label: 'Interviews' },
-    ]},
-    { section: 'Tracking', items: [
-      { key: 'offers', icon: '●', label: 'Offer Letters' },
-      { key: 'joining', icon: '●', label: 'Joining Tracker' },
-      { key: 'reports', icon: '●', label: 'Reports & Analytics' },
-    ]},
-  ],
-
-  candidate: [
-    { section: 'My Journey', items: [
-      { key: 'candidateDashboard', icon: '◆', label: 'Dashboard' },
-      { key: 'myProfile', icon: '▤', label: 'My Profile' },
-      { key: 'jobs', icon: '▤', label: 'Job Opportunities' },
-      { key: 'myApplications', icon: '→', label: 'My Applications' },
+      { key: 'applications', icon: '→', label: 'Applications' },
     ]},
     { section: 'Rounds', items: [
       { key: 'aptitude', icon: '→', label: 'Aptitude Test' },
       { key: 'gd', icon: '→', label: 'Group Discussion' },
       { key: 'interview', icon: '→', label: 'Interviews' },
+      { key: 'pipeline', icon: '→', label: 'Hiring Pipeline' },
     ]},
-    { section: 'Offers', items: [
+    { section: 'Tracking', items: [
       { key: 'offers', icon: '●', label: 'Offer Letters' },
-      { key: 'joining', icon: '●', label: 'Joining Status' },
+      { key: 'joining', icon: '●', label: 'Joining Tracker' },
+      { key: 'calls', icon: '☎', label: 'Call Records' },
+      { key: 'comm', icon: '●', label: 'Communication / CRM' },
+      { key: 'reports', icon: '●', label: 'Reports & Analytics' },
+    ]},
+  ],
+
+  corporate: [
+    { section: 'Overview', items: [{ key: 'corporateDashboard', icon: '◆', label: 'Dashboard' }] },
+    { section: 'Company', items: [
+      { key: 'corpProfile', icon: '▤', label: 'Company Profile' },
+      { key: 'corpJobs', icon: '▤', label: 'Job Profiles / Post Job' },
+    ]},
+    { section: 'Hiring', items: [
+      { key: 'corpApplications', icon: '→', label: 'Applications' },
+      { key: 'corpCandidates', icon: '→', label: 'Candidates' },
+      { key: 'corpShortlisted', icon: '→', label: 'Shortlisted Candidates' },
+      { key: 'interview', icon: '→', label: 'Interviews' },
+      { key: 'corpPipeline', icon: '→', label: 'Hiring Pipeline' },
+    ]},
+    { section: 'Tracking', items: [
+      { key: 'offers', icon: '●', label: 'Offer Letters' },
+      { key: 'joining', icon: '●', label: 'Joining Tracker' },
+      { key: 'reports', icon: '●', label: 'Reports & Analytics' },
     ]},
   ],
 };

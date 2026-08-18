@@ -3,11 +3,11 @@ async function getRequestProfile(supabase, req) {
   if (!userId) return null;
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, role, company_id')
+    .select('id, role, company_id, candidate_id')
     .eq('id', userId)
     .single();
   if (error) return null;
   return data;
 }
-
+ 
 module.exports = { getRequestProfile };

@@ -24,9 +24,9 @@ import AuthPanel from "./components/AuthPanel";
 import CallRecord from "./pages/CallRecord";
 import SaarthiLogo from "./components/SaarthiLogo";
 import LoginSelect from "./pages/LoginSelect";
-import CandidateDashboard from "./pages/CandidateDashboard";
 import CorporateDashboard from "./pages/CorporateDashboard";
 
+// Pages available to admin / recruiter
 const pages = {
   dashboard: Dashboard,
   campusdb: CampusDB,
@@ -92,6 +92,9 @@ export default function App() {
 
       setProfileApproved(data?.approved === true);
       setUserRole(data?.role || "user");
+
+      if (data?.role === "corporate") setActivePage("corporateDashboard");
+      else setActivePage("dashboard");
     };
 
     checkApproval();
@@ -121,9 +124,6 @@ export default function App() {
   }
   if (window.location.pathname === "/login/admin") {
     return <AuthPanel role="admin" />;
-  }
-  if (window.location.pathname === "/login/candidate") {
-    return <AuthPanel role="candidate" />;
   }
   if (window.location.pathname === "/login/corporate") {
     return <AuthPanel role="corporate" />;
@@ -164,15 +164,26 @@ export default function App() {
       );
     }
 
-    if (userRole === "candidate") {
-      return <CandidateDashboard />;
-    }
+    // Corporate-only pages
+    const corporatePages = {
+      corporateDashboard: () => <CorporateDashboard user={session.user} />,
+      jobs: Jobs,
+      interview: Interview,
+      offers: Offers,
+      joining: Joining,
+      reports: Reports,
+    };
+
+    let PageComponent;
+    let sidebarRole = "admin";
 
     if (userRole === "corporate") {
-      return <CorporateDashboard />;
+      sidebarRole = "corporate";
+      PageComponent = corporatePages[activePage] || corporatePages.corporateDashboard;
+    } else {
+      sidebarRole = userRole === "recruiter" ? "recruiter" : "admin";
+      PageComponent = pages[activePage] || Dashboard;
     }
-
-    const PageComponent = pages[activePage];
 
     return (
       <div id="screen-app" style={{ display: "block" }}>
@@ -189,7 +200,7 @@ export default function App() {
           </div>
         </div>
         <div className="app">
-          <Sidebar activePage={activePage} setActivePage={setActivePage} isAdmin={userRole === "admin"} />
+          <Sidebar activePage={activePage} setActivePage={setActivePage} role={sidebarRole} />
           <div className="main">
             <PageComponent />
           </div>

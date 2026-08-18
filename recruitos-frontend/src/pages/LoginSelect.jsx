@@ -1,17 +1,13 @@
 import campusBg from "../assets/campus-bg.png";
 import {
   Briefcase,
-  User,
   Building2,
   ShieldCheck,
-  Search,
   ClipboardCheck,
   ListChecks,
   CalendarClock,
   BarChart3,
-  Bell,
   LayoutDashboard,
-  FileSpreadsheet,
   ClipboardList,
   Users,
   UserCog,
@@ -40,22 +36,6 @@ const cards = [
       { icon: BarChart3, label: "Analytics & Reports" },
     ],
     featureColor: "#8B5CF6",
-  },
-  {
-    role: "Candidate",
-    icon: User,
-    path: "/login/candidate",
-    ringColor: "linear-gradient(135deg, #60A5FA, #2563EB)",
-    buttonColor: "linear-gradient(90deg, #2563EB, #3B82F6)",
-    desc: "Find opportunities, track applications and advance your career.",
-    features: [
-      { icon: Search, label: "Browse Jobs" },
-      { icon: ListChecks, label: "Track Applications" },
-      { icon: CalendarClock, label: "Interview Updates" },
-      { icon: FileSpreadsheet, label: "Profile & Resume" },
-      { icon: Bell, label: "Job Alerts" },
-    ],
-    featureColor: "#2563EB",
   },
   {
     role: "Corporate",
@@ -208,7 +188,7 @@ export default function SaarthiCampusLanding() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
               gap: 20,
             }}
           >
