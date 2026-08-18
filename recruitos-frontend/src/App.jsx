@@ -25,6 +25,8 @@ import CallRecord from "./pages/CallRecord";
 import SaarthiLogo from "./components/SaarthiLogo";
 import LoginSelect from "./pages/LoginSelect";
 import CorporateDashboard from "./pages/CorporateDashboard";
+import Notifications from './pages/Notifications';
+import CalendarTasks from './pages/CalendarTasks';
 
 // Pages available to admin / recruiter
 const pages = {
@@ -45,6 +47,8 @@ const pages = {
   gdroom: GDRoom,
   usermanagement: UserManagement,
   callrecords: CallRecord,
+  notifications: Notifications,
+  calendartasks: CalendarTasks,
 };
 
 export default function App() {
@@ -172,18 +176,20 @@ export default function App() {
       offers: Offers,
       joining: Joining,
       reports: Reports,
+      notifications: Notifications,
+      calendartasks: CalendarTasks,
     };
 
     let PageComponent;
-    let sidebarRole = "admin";
+const sidebarRole = userRole === "corporate" ? "corporate"
+  : userRole === "recruiter" ? "recruiter"
+  : "admin";
 
-    if (userRole === "corporate") {
-      sidebarRole = "corporate";
-      PageComponent = corporatePages[activePage] || corporatePages.corporateDashboard;
-    } else {
-      sidebarRole = userRole === "recruiter" ? "recruiter" : "admin";
-      PageComponent = pages[activePage] || Dashboard;
-    }
+if (userRole === "corporate") {
+  PageComponent = corporatePages[activePage] || corporatePages.corporateDashboard;
+} else {
+  PageComponent = pages[activePage] || Dashboard;
+}
 
     return (
       <div id="screen-app" style={{ display: "block" }}>
