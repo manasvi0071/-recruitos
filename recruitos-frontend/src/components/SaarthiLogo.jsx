@@ -1,5 +1,5 @@
 
-export default function SaarthiLogo({ size = 96 }) {
+export default function SaarthiLogo({ size = 46 }) {
   return (
     <svg
       width={size}
