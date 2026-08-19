@@ -1007,11 +1007,11 @@ function StatCard({ value, label, helper, tone = "purple" }) {
       <div className="stat-decoration" />
 
       <div className="stat-icon">
-        {tone === "purple"
+        {tone === "electric magenta"
           ? "✦"
-          : tone === "cyan"
+          : tone === "lime green"
             ? "↗"
-            : tone === "orange"
+            : tone === "yellow"
               ? "◈"
               : "✓"}
       </div>
