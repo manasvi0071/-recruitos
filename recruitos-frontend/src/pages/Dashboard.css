@@ -1408,11 +1408,11 @@ textarea:focus-visible {
 [data-theme="light"] {
   --dash-bg: #f8f6f1;
   --dash-surface: #ffffff;
-  --dash-surface-soft: #fdfcff;
+  --dash-surface-soft: #edf0f5;
   --dash-text: #241b31;
-  --dash-muted: #776d83;
+  --dash-muted: #e0e3eb;
   --dash-border: #e8e1ef;
-  --dash-border-strong: #dcd3e8;
+  --dash-border-strong: #c1c8d7;
   --dash-primary: #65428e;
   --dash-primary-dark: #402961;
   --dash-cyan: #128da8;
