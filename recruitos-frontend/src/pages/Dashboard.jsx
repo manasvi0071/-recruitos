@@ -6,6 +6,7 @@ import {
   deleteDrive,
   getColleges,
 } from "../lib/api";
+
 import {
   LineChart,
   Line,
@@ -22,6 +23,26 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import "./Dashboard.css";
+
+const CHART_COLORS = [
+  "#7657E8",
+  "#12A7C7",
+  "#E59A21",
+  "#EC6E9B",
+  "#15A878",
+  "#8A75DB",
+];
+
+const stageBadgeClass = {
+  "Resume Review": "gray",
+  Aptitude: "gold",
+  GD: "gold",
+  Interview: "blue",
+  Selected: "green",
+  Rejected: "gray",
+};
+
 export default function Dashboard() {
   const [mode, setMode] = useState("inhouse");
   const isInhouse = mode === "inhouse";
@@ -32,6 +53,7 @@ export default function Dashboard() {
     selections: 0,
     joined: 0,
   });
+
   const [corpStats, setCorpStats] = useState({
     companies: 0,
     companyNames: [],
@@ -41,13 +63,18 @@ export default function Dashboard() {
     joined: 0,
     conversion: 0,
   });
+
   const [applications, setApplications] = useState([]);
+  const [growthData, setGrowthData] = useState([]);
+  const [stageBreakdown, setStageBreakdown] = useState([]);
+
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
 
   const [drives, setDrives] = useState([]);
   const [drivesLoading, setDrivesLoading] = useState(true);
   const [showDriveForm, setShowDriveForm] = useState(false);
+
   const [driveForm, setDriveForm] = useState({
     title: "",
     type: "Aptitude Test",
@@ -55,13 +82,11 @@ export default function Dashboard() {
     college_id: "",
     notes: "",
   });
+
   const [colleges, setColleges] = useState([]);
   const [savingDrive, setSavingDrive] = useState(false);
   const [driveError, setDriveError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
-  const [growthData, setGrowthData] = useState([]);
-  const [stageBreakdown, setStageBreakdown] = useState([]);
-const CHART_COLORS = ['#7C3AED', '#06B6D4', '#F59E0B', '#EC4899', '#10B981', '#6366F1'];
 
   const [minDateTime] = useState(() =>
     new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
@@ -69,32 +94,40 @@ const CHART_COLORS = ['#7C3AED', '#06B6D4', '#F59E0B', '#EC4899', '#10B981', '#6
       .slice(0, 16),
   );
 
-  function loadDrives() {
+  async function loadDrives() {
     setDrivesLoading(true);
-    getUpcomingDrives()
-      .then(setDrives)
-      .catch(() => {})
-      .finally(() => setDrivesLoading(false));
+
+    try {
+      const data = await getUpcomingDrives();
+      setDrives(data);
+    } catch (err) {
+      console.error("Load drives error:", err);
+    } finally {
+      setDrivesLoading(false);
+    }
   }
 
-  async function handleAddDrive(e) {
-    e.preventDefault();
+  async function handleAddDrive(event) {
+    event.preventDefault();
     setDriveError("");
 
     if (!driveForm.title || !driveForm.scheduled_at) {
-      setDriveError("Title and date/time are required");
+      setDriveError("Title and date/time are required.");
       return;
     }
 
-    const chosen = new Date(driveForm.scheduled_at);
-    if (chosen.getTime() < Date.now()) {
-      setDriveError("Date & time cannot be in the past");
+    const selectedDate = new Date(driveForm.scheduled_at);
+
+    if (selectedDate.getTime() < Date.now()) {
+      setDriveError("Date and time cannot be in the past.");
       return;
     }
 
     setSavingDrive(true);
+
     try {
       await addDrive(driveForm);
+
       setDriveForm({
         title: "",
         type: "Aptitude Test",
@@ -102,10 +135,11 @@ const CHART_COLORS = ['#7C3AED', '#06B6D4', '#F59E0B', '#EC4899', '#10B981', '#6
         college_id: "",
         notes: "",
       });
+
       setShowDriveForm(false);
-      loadDrives();
+      await loadDrives();
     } catch (err) {
-      setDriveError(err.message);
+      setDriveError(err.message || "Could not save the drive.");
     } finally {
       setSavingDrive(false);
     }
@@ -113,13 +147,15 @@ const CHART_COLORS = ['#7C3AED', '#06B6D4', '#F59E0B', '#EC4899', '#10B981', '#6
 
   async function handleDeleteDrive(id) {
     if (!window.confirm("Cancel this drive?")) return;
+
     setDeletingId(id);
+
     try {
       await deleteDrive(id);
-      setDrives((prev) => prev.filter((d) => d.id !== id));
+      setDrives((previous) => previous.filter((drive) => drive.id !== id));
     } catch (err) {
       console.error("Delete drive error:", err);
-      alert("Could not cancel the drive. Please try again.");
+      window.alert("Could not cancel the drive. Please try again.");
     } finally {
       setDeletingId(null);
     }
@@ -130,34 +166,52 @@ const CHART_COLORS = ['#7C3AED', '#06B6D4', '#F59E0B', '#EC4899', '#10B981', '#6
 
     async function loadDashboardData() {
       setLoading(true);
-      setError(null);
+      setError("");
+
       try {
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
         const [
-          { count: collegesCount, error: collegesErr },
-          { count: resumesCount, error: resumesErr },
-          { count: selectionsCount, error: selectionsErr },
-          { count: joinedCount, error: joinedErr },
-          { data: recentApps, error: appsErr },
-          { count: companiesCount, error: companiesErr },
-          { data: companyRows, error: companyRowsErr },
-          { count: positionsCount, error: positionsErr },
-          { count: selectionsThisWeekCount, error: selectionsWeekErr },
+          { count: collegesCount, error: collegesError },
+          { count: resumesCount, error: resumesError },
+          { count: selectionsCount, error: selectionsError },
+          { count: joinedCount, error: joinedError },
+          { data: recentApplications, error: applicationsError },
+          { count: companiesCount, error: companiesError },
+          { data: companyRows, error: companyRowsError },
+          { count: positionsCount, error: positionsError },
+          {
+            count: selectionsThisWeekCount,
+            error: selectionsThisWeekError,
+          },
         ] = await Promise.all([
-          supabase.from("colleges").select("*", { count: "exact", head: true }),
-          supabase
-            .from("candidates")
-            .select("*", { count: "exact", head: true }),
+          supabase.from("colleges").select("*", {
+            count: "exact",
+            head: true,
+          }),
+
+          supabase.from("candidates").select("*", {
+            count: "exact",
+            head: true,
+          }),
+
           supabase
             .from("applications")
-            .select("*", { count: "exact", head: true })
+            .select("*", {
+              count: "exact",
+              head: true,
+            })
             .eq("stage", "Selected"),
+
           supabase
             .from("joining")
-            .select("*", { count: "exact", head: true })
+            .select("*", {
+              count: "exact",
+              head: true,
+            })
             .eq("status", "Joined"),
+
           supabase
             .from("applications")
             .select(
@@ -165,94 +219,123 @@ const CHART_COLORS = ['#7C3AED', '#06B6D4', '#F59E0B', '#EC4899', '#10B981', '#6
             )
             .order("created_at", { ascending: false })
             .limit(4),
-          supabase
-            .from("companies")
-            .select("*", { count: "exact", head: true }),
+
+          supabase.from("companies").select("*", {
+            count: "exact",
+            head: true,
+          }),
+
           supabase
             .from("companies")
             .select("name")
             .order("created_at", { ascending: false })
             .limit(2),
-          supabase
-            .from("job_profiles")
-            .select("*", { count: "exact", head: true }),
+
+          supabase.from("job_profiles").select("*", {
+            count: "exact",
+            head: true,
+          }),
+
           supabase
             .from("applications")
-            .select("*", { count: "exact", head: true })
+            .select("*", {
+              count: "exact",
+              head: true,
+            })
             .eq("stage", "Selected")
             .gte("created_at", oneWeekAgo.toISOString()),
         ]);
 
-       const { data: allApps } = await supabase
-  .from("applications")
-  .select("created_at, stage")
-  .order("created_at", { ascending: true });
-
-if (!ignore && allApps) {
-  const weeks = {};
-  const stages = {};
-  allApps.forEach((a) => {
-    const d = new Date(a.created_at);
-    const weekStart = new Date(d);
-    weekStart.setDate(d.getDate() - d.getDay());
-    const key = weekStart.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-    });
-    weeks[key] = (weeks[key] || 0) + 1;
-    stages[a.stage] = (stages[a.stage] || 0) + 1;
-  });
-  const sorted = Object.entries(weeks)
-    .slice(-8)
-    .map(([week, count]) => ({ week, count }));
-  setGrowthData(sorted);
-  setStageBreakdown(Object.entries(stages).map(([name, value]) => ({ name, value })));
-}
+        const { data: allApplications, error: allApplicationsError } =
+          await supabase
+            .from("applications")
+            .select("created_at, stage")
+            .order("created_at", { ascending: true });
 
         if (
-          collegesErr ||
-          resumesErr ||
-          selectionsErr ||
-          joinedErr ||
-          appsErr ||
-          companiesErr ||
-          companyRowsErr ||
-          positionsErr ||
-          selectionsWeekErr
+          collegesError ||
+          resumesError ||
+          selectionsError ||
+          joinedError ||
+          applicationsError ||
+          companiesError ||
+          companyRowsError ||
+          positionsError ||
+          selectionsThisWeekError ||
+          allApplicationsError
         ) {
           throw (
-            collegesErr ||
-            resumesErr ||
-            selectionsErr ||
-            joinedErr ||
-            appsErr ||
-            companiesErr ||
-            companyRowsErr ||
-            positionsErr ||
-            selectionsWeekErr
+            collegesError ||
+            resumesError ||
+            selectionsError ||
+            joinedError ||
+            applicationsError ||
+            companiesError ||
+            companyRowsError ||
+            positionsError ||
+            selectionsThisWeekError ||
+            allApplicationsError
           );
         }
 
         if (ignore) return;
 
-        setStats({
-          colleges: collegesCount ?? 0,
-          resumes: resumesCount ?? 0,
-          selections: selectionsCount ?? 0,
-          joined: joinedCount ?? 0,
+        const weeks = {};
+        const stages = {};
+
+        (allApplications || []).forEach((application) => {
+          const date = new Date(application.created_at);
+          const weekStart = new Date(date);
+
+          weekStart.setDate(date.getDate() - date.getDay());
+
+          const weekKey = weekStart.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+          });
+
+          weeks[weekKey] = (weeks[weekKey] || 0) + 1;
+
+          const stage = application.stage || "Unknown";
+          stages[stage] = (stages[stage] || 0) + 1;
         });
-        setApplications(recentApps ?? []);
+
+        setGrowthData(
+          Object.entries(weeks)
+            .slice(-8)
+            .map(([week, count]) => ({
+              week,
+              count,
+            })),
+        );
+
+        setStageBreakdown(
+          Object.entries(stages).map(([name, value]) => ({
+            name,
+            value,
+          })),
+        );
 
         const totalSelections = selectionsCount ?? 0;
         const totalJoined = joinedCount ?? 0;
+
         const conversion =
           totalSelections > 0
             ? Math.round((totalJoined / totalSelections) * 100)
             : 0;
 
+        setStats({
+          colleges: collegesCount ?? 0,
+          resumes: resumesCount ?? 0,
+          selections: totalSelections,
+          joined: totalJoined,
+        });
+
+        setApplications(recentApplications ?? []);
+
         setCorpStats({
           companies: companiesCount ?? 0,
-          companyNames: (companyRows ?? []).map((c) => c.name),
+          companyNames: (companyRows ?? []).map((company) => company.name),
           positions: positionsCount ?? 0,
           selections: totalSelections,
           selectionsThisWeek: selectionsThisWeekCount ?? 0,
@@ -261,68 +344,76 @@ if (!ignore && allApps) {
         });
       } catch (err) {
         console.error("Dashboard load error:", err);
-        if (!ignore)
+
+        if (!ignore) {
           setError(
             "Could not load dashboard data. Check your Supabase connection.",
           );
+        }
       } finally {
-        if (!ignore) setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     }
 
-    async function init() {
+    async function initDashboard() {
       setDrivesLoading(true);
+
       try {
-        const d = await getUpcomingDrives();
-        if (!ignore) setDrives(d);
-      } catch {
-        // ignore drive load errors, same as before
+        const upcomingDrives = await getUpcomingDrives();
+
+        if (!ignore) {
+          setDrives(upcomingDrives);
+        }
+      } catch (err) {
+        console.error("Upcoming drives error:", err);
       } finally {
-        if (!ignore) setDrivesLoading(false);
+        if (!ignore) {
+          setDrivesLoading(false);
+        }
       }
 
       try {
-        const c = await getColleges();
-        if (!ignore) setColleges(c);
-      } catch {
-        // ignore college load errors, same as before
+        const collegeRows = await getColleges();
+
+        if (!ignore) {
+          setColleges(collegeRows);
+        }
+      } catch (err) {
+        console.error("Colleges error:", err);
       }
     }
 
     loadDashboardData();
-    init();
+    initDashboard();
 
     return () => {
       ignore = true;
     };
   }, []);
 
-  const stageBadgeClass = {
-    "Resume Review": "gray",
-    Aptitude: "gold",
-    GD: "gold",
-    Interview: "blue",
-    Selected: "green",
-    Rejected: "gray",
-  };
-
   return (
-    <div className="page active" id="page-dashboard">
-      <div className="page-head">
+    <div className="dashboard-page" id="page-dashboard">
+      <header className="dashboard-header">
         <div>
+          <p className="dashboard-kicker">SAARTHI ANALYTICS</p>
+
           <h1>Recruitment Dashboard</h1>
+
           <p>
-            Track campus & corporate drives end-to-end, from job posting to
-            joining.
+            Track campus and corporate drives from job posting to joining.
           </p>
         </div>
-        <div className="mode-toggle">
+
+        <div className="mode-toggle" aria-label="Dashboard mode">
           <button
             className={`mode-btn ${isInhouse ? "active" : ""}`}
             onClick={() => setMode("inhouse")}
           >
             In-house
           </button>
+
           <button
             className={`mode-btn ${!isInhouse ? "active" : ""}`}
             onClick={() => setMode("corporate")}
@@ -330,269 +421,438 @@ if (!ignore && allApps) {
             Corporate
           </button>
         </div>
-      </div>
+      </header>
 
-      {error && (
-        <div className="panel" style={{ color: "crimson" }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="dashboard-error">{error}</div>}
 
       {isInhouse ? (
-        <div className="stat-row">
-          <div className="stat-card">
-            <div className="num">{loading ? "—" : stats.colleges}</div>
-            <div className="lbl">Colleges Engaged</div>
-          </div>
-          <div className="stat-card">
-            <div className="num">{loading ? "—" : stats.resumes}</div>
-            <div className="lbl">Resumes Received</div>
-          </div>
-          <div className="stat-card">
-            <div className="num">{loading ? "—" : stats.selections}</div>
-            <div className="lbl">Final Selections</div>
-          </div>
-          <div className="stat-card">
-            <div className="num">{loading ? "—" : stats.joined}</div>
-            <div className="lbl">Joined</div>
-          </div>
+        <div className="dashboard-stat-grid">
+          <StatCard
+            value={loading ? "—" : stats.colleges}
+            label="Colleges Engaged"
+            tone="purple"
+          />
+
+          <StatCard
+            value={loading ? "—" : stats.resumes}
+            label="Resumes Received"
+            tone="cyan"
+          />
+
+          <StatCard
+            value={loading ? "—" : stats.selections}
+            label="Final Selections"
+            tone="orange"
+          />
+
+          <StatCard
+            value={loading ? "—" : stats.joined}
+            label="Joined"
+            tone="green"
+          />
         </div>
       ) : (
-        <div className="stat-row">
-          <div className="stat-card">
-            <div className="num">{loading ? "—" : corpStats.companies}</div>
-            <div className="lbl">Active Companies</div>
-            <div className="delta up">
-              {loading ? "—" : corpStats.companyNames.join(", ") || "—"}
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="num">{loading ? "—" : corpStats.positions}</div>
-            <div className="lbl">Open Positions</div>
-            <div className="delta flat">
-              {loading ? "—" : `Across ${corpStats.positions} JDs`}
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="num">{loading ? "—" : corpStats.selections}</div>
-            <div className="lbl">Final Selections</div>
-            <div className="delta up">
-              {loading ? "—" : `▲ ${corpStats.selectionsThisWeek} this week`}
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="num">{loading ? "—" : corpStats.joined}</div>
-            <div className="lbl">Joined</div>
-            <div className="delta up">
-              {loading ? "—" : `${corpStats.conversion}% conversion`}
-            </div>
-          </div>
+        <div className="dashboard-stat-grid">
+          <StatCard
+            value={loading ? "—" : corpStats.companies}
+            label="Active Companies"
+            helper={
+              loading
+                ? "Loading..."
+                : corpStats.companyNames.join(", ") || "No companies yet"
+            }
+            tone="purple"
+          />
+
+          <StatCard
+            value={loading ? "—" : corpStats.positions}
+            label="Open Positions"
+            helper={
+              loading ? "Loading..." : `Across ${corpStats.positions} JDs`
+            }
+            tone="cyan"
+          />
+
+          <StatCard
+            value={loading ? "—" : corpStats.selections}
+            label="Final Selections"
+            helper={
+              loading
+                ? "Loading..."
+                : `▲ ${corpStats.selectionsThisWeek} this week`
+            }
+            tone="orange"
+          />
+
+          <StatCard
+            value={loading ? "—" : corpStats.joined}
+            label="Joined"
+            helper={
+              loading ? "Loading..." : `${corpStats.conversion}% conversion`
+            }
+            tone="green"
+          />
         </div>
       )}
 
-      <div className="panel">
-        <div className="panel-title">
+      <section className="dashboard-panel pipeline-panel">
+        <div className="dashboard-panel-title">
           {isInhouse
             ? "In-house Recruitment Pipeline"
             : "Corporate Recruitment Pipeline"}
         </div>
-        <div className="panel-sub">
+
+        <div className="dashboard-panel-subtitle">
           {isInhouse
             ? "Campus DB → Requirements → JD → College Email → Resumes → Analysis → Assessments → Interviews → Selection → Offer → Joining → Report"
             : "Client Requirement → Sourcing → Screening → Client Submission → Interview → Selection → Offer → Joining → Report"}
         </div>
-      </div>
 
-      <div
-        className="chart-card"
-        style={{
-          width: "100%",
-          maxWidth: 700,
-          height: 260,
-          margin: "0 auto 20px",
-        }}
-      >
-        <div className="panel-title" style={{ marginBottom: 8 }}>
-          Applications Growth
+        <div className="pipeline-track">
+          {(isInhouse
+            ? [
+                "Campus DB",
+                "Requirements",
+                "JD",
+                "Resumes",
+                "Assessments",
+                "Interview",
+                "Selection",
+                "Joining",
+              ]
+            : [
+                "Requirement",
+                "Sourcing",
+                "Screening",
+                "Submission",
+                "Interview",
+                "Selection",
+                "Offer",
+                "Joining",
+              ]
+          ).map((stage, index) => (
+            <div className="pipeline-step" key={stage}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <strong>{stage}</strong>
+            </div>
+          ))}
         </div>
-        <ResponsiveContainer width="100%" height="85%">
-          <LineChart
-            data={growthData}
-            margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="var(--border-default)"
-            />
-            <XAxis dataKey="week" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-            <Tooltip
-              contentStyle={{
-                background: "var(--bg-surface)",
-                border: "1px solid var(--border-default)",
-                borderRadius: 8,
-                fontSize: 12,
+      </section>
+
+      <section className="dashboard-chart-card growth-card">
+        <div className="chart-heading">
+          <div>
+            <div className="dashboard-panel-title">
+              Applications Growth
+            </div>
+            <div className="chart-caption">
+              Applications received by week
+            </div>
+          </div>
+
+          <span className="chart-chip">Last 8 weeks</span>
+        </div>
+
+        <div className="growth-chart">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={growthData}
+              margin={{
+                top: 10,
+                right: 15,
+                left: -20,
+                bottom: 0,
               }}
-            />
-            <Line
-              type="monotone"
-              dataKey="count"
-              stroke="#7C3AED"
-              strokeWidth={2.5}
-              dot={{ r: 3, fill: "#7C3AED" }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--dash-border)"
+              />
 
-      <div className="grid2" style={{ marginBottom: 20 }}>
-        <div className="chart-card" style={{ height: 280 }}>
-          <div className="panel-title" style={{ marginBottom: 8 }}>
-            Candidates by Stage
-          </div>
-          <ResponsiveContainer width="100%" height="85%">
-            <BarChart data={stageBreakdown} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" />
-              <XAxis dataKey="name" tick={{ fontSize: 10.5 }} angle={-15} textAnchor="end" height={50} />
-              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: 8, fontSize: 12 }} />
-              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                {stageBreakdown.map((entry, i) => (
-                  <Cell key={entry.name} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
+              <XAxis
+                dataKey="week"
+                tick={{
+                  fontSize: 10,
+                  fill: "var(--dash-muted)",
+                }}
+                axisLine={false}
+                tickLine={false}
+              />
+
+              <YAxis
+                tick={{
+                  fontSize: 10,
+                  fill: "var(--dash-muted)",
+                }}
+                allowDecimals={false}
+                axisLine={false}
+                tickLine={false}
+              />
+
+              <Tooltip content={<DashboardTooltip />} />
+
+              <Line
+                type="monotone"
+                dataKey="count"
+                name="Applications"
+                stroke="#7657E8"
+                strokeWidth={3}
+                dot={{
+                  r: 4,
+                  fill: "#7657E8",
+                  stroke: "var(--dash-surface)",
+                  strokeWidth: 2,
+                }}
+                activeDot={{
+                  r: 6,
+                }}
+              />
+            </LineChart>
           </ResponsiveContainer>
         </div>
+      </section>
 
-        <div className="chart-card" style={{ height: 280 }}>
-          <div className="panel-title" style={{ marginBottom: 8 }}>
-            Stage Distribution
+      <section className="dashboard-grid-two">
+        <div className="dashboard-chart-card mini-chart-card">
+          <div className="chart-heading">
+            <div>
+              <div className="dashboard-panel-title">
+                Candidates by Stage
+              </div>
+              <div className="chart-caption">
+                Current recruitment pipeline
+              </div>
+            </div>
           </div>
-          <ResponsiveContainer width="100%" height="85%">
-            <PieChart>
-              <Pie
+
+          <div className="mini-chart">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
                 data={stageBreakdown}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                label={(entry) => entry.name}
-                labelLine={false}
+                margin={{
+                  top: 10,
+                  right: 10,
+                  left: -20,
+                  bottom: 0,
+                }}
               >
-                {stageBreakdown.map((entry, i) => (
-                  <Cell key={entry.name} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: 8, fontSize: 12 }} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--dash-border)"
+                />
 
-      <div className="grid2">
-        <div className="panel">
-          <div className="panel-title">Recent Applications</div>
-          <table>
-            <tbody>
-              <tr>
-                <th>Candidate</th>
-                <th>Campus</th>
-                <th>Applied For</th>
-                <th>Stage</th>
-                <th>Score</th>
-              </tr>
-              {loading ? (
+                <XAxis
+                  dataKey="name"
+                  tick={{
+                    fontSize: 9,
+                    fill: "var(--dash-muted)",
+                  }}
+                  angle={-15}
+                  textAnchor="end"
+                  height={48}
+                  axisLine={false}
+                  tickLine={false}
+                />
+
+                <YAxis
+                  tick={{
+                    fontSize: 10,
+                    fill: "var(--dash-muted)",
+                  }}
+                  allowDecimals={false}
+                  axisLine={false}
+                  tickLine={false}
+                />
+
+                <Tooltip content={<DashboardTooltip />} />
+
+                <Bar dataKey="value" name="Candidates" radius={[7, 7, 0, 0]}>
+                  {stageBreakdown.map((entry, index) => (
+                    <Cell
+                      key={entry.name}
+                      fill={CHART_COLORS[index % CHART_COLORS.length]}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="dashboard-chart-card mini-chart-card">
+          <div className="chart-heading">
+            <div>
+              <div className="dashboard-panel-title">
+                Stage Distribution
+              </div>
+              <div className="chart-caption">
+                Share of all applications
+              </div>
+            </div>
+          </div>
+
+          <div className="mini-chart">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={stageBreakdown}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="45%"
+                  outerRadius={76}
+                  innerRadius={42}
+                  paddingAngle={3}
+                  label={false}
+                >
+                  {stageBreakdown.map((entry, index) => (
+                    <Cell
+                      key={entry.name}
+                      fill={CHART_COLORS[index % CHART_COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+
+                <Tooltip content={<DashboardTooltip />} />
+
+                <Legend
+                  wrapperStyle={{
+                    fontSize: 10,
+                    color: "var(--dash-muted)",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </section>
+
+      <section className="dashboard-grid-two dashboard-bottom-grid">
+        <div className="dashboard-panel applications-panel">
+          <div className="dashboard-section-heading">
+            <div>
+              <div className="dashboard-panel-title">
+                Recent Applications
+              </div>
+
+              <div className="chart-caption">
+                Latest candidate activity
+              </div>
+            </div>
+
+            <span className="section-icon">↗</span>
+          </div>
+
+          <div className="table-scroll">
+            <table>
+              <thead>
                 <tr>
-                  <td colSpan={5}>Loading...</td>
+                  <th>Candidate</th>
+                  <th>Campus</th>
+                  <th>Applied For</th>
+                  <th>Stage</th>
+                  <th>Score</th>
                 </tr>
-              ) : applications.length === 0 ? (
-                <tr>
-                  <td colSpan={5}>No applications yet.</td>
-                </tr>
-              ) : (
-                applications.map((app) => (
-                  <tr key={app.id}>
-                    <td>{app.candidates?.name ?? "—"}</td>
-                    <td>{app.candidates?.colleges?.name ?? "—"}</td>
-                    <td>{app.job_profiles?.title ?? "—"}</td>
-                    <td>
-                      <span
-                        className={`badge ${stageBadgeClass[app.stage] ?? "gray"}`}
-                      >
-                        {app.stage}
-                      </span>
-                    </td>
-                    <td>{app.resume_score ?? "—"}</td>
+              </thead>
+
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={5}>Loading...</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : applications.length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>No applications yet.</td>
+                  </tr>
+                ) : (
+                  applications.map((application) => (
+                    <tr key={application.id}>
+                      <td>
+                        <div className="candidate-cell">
+                          <span className="candidate-avatar">
+                            {(application.candidates?.name || "?")
+                              .charAt(0)
+                              .toUpperCase()}
+                          </span>
+
+                          <span>
+                            {application.candidates?.name || "—"}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td>
+                        {application.candidates?.colleges?.name || "—"}
+                      </td>
+
+                      <td>{application.job_profiles?.title || "—"}</td>
+
+                      <td>
+                        <span
+                          className={`badge ${
+                            stageBadgeClass[application.stage] || "gray"
+                          }`}
+                        >
+                          {application.stage}
+                        </span>
+                      </td>
+
+                      <td>{application.resume_score ?? "—"}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div
-          className="panel"
-          style={{ boxSizing: "border-box", width: "100%", overflow: "hidden" }}
-        >
-          <div
-            className="panel-title"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            Upcoming Drives
+        <div className="dashboard-panel drives-panel">
+          <div className="dashboard-section-heading">
+            <div>
+              <div className="dashboard-panel-title">
+                Upcoming Drives
+              </div>
+
+              <div className="chart-caption">
+                Schedule and manage recruitment events
+              </div>
+            </div>
+
             <button
               className="btn-outline"
-              style={{ fontSize: 11.5, padding: "4px 10px" }}
-              onClick={() => setShowDriveForm((v) => !v)}
+              onClick={() => setShowDriveForm((value) => !value)}
             >
-              {showDriveForm ? "Cancel" : "+ Schedule Drive"}
+              {showDriveForm ? "Cancel" : "+ Schedule"}
             </button>
           </div>
 
           {showDriveForm && (
-            <form
-              onSubmit={handleAddDrive}
-              style={{
-                marginBottom: 16,
-                display: "grid",
-                gap: 10,
-                width: "100%",
-                maxWidth: "100%",
-                boxSizing: "border-box",
-              }}
-            >
-              <div
-                className="field"
-                style={{ width: "100%", boxSizing: "border-box" }}
-              >
+            <form className="drive-form" onSubmit={handleAddDrive}>
+              <div className="field">
                 <label>Title *</label>
                 <input
                   value={driveForm.title}
-                  onChange={(e) =>
-                    setDriveForm({ ...driveForm, title: e.target.value })
+                  onChange={(event) =>
+                    setDriveForm({
+                      ...driveForm,
+                      title: event.target.value,
+                    })
                   }
                   placeholder="e.g. SVCE Campus Drive"
                   required
-                  style={{ width: "100%", boxSizing: "border-box" }}
                 />
               </div>
-              <div
-                className="field"
-                style={{ width: "100%", boxSizing: "border-box" }}
-              >
+
+              <div className="field">
                 <label>Type *</label>
                 <select
                   value={driveForm.type}
-                  onChange={(e) =>
-                    setDriveForm({ ...driveForm, type: e.target.value })
+                  onChange={(event) =>
+                    setDriveForm({
+                      ...driveForm,
+                      type: event.target.value,
+                    })
                   }
-                  style={{ width: "100%", boxSizing: "border-box" }}
                 >
                   <option value="Aptitude Test">Aptitude Test</option>
                   <option value="GD Round">GD Round</option>
@@ -602,136 +862,178 @@ if (!ignore && allApps) {
                   <option value="Other">Other</option>
                 </select>
               </div>
-              <div
-                className="field"
-                style={{ width: "100%", boxSizing: "border-box" }}
-              >
+
+              <div className="field">
                 <label>Date & Time *</label>
                 <input
                   type="datetime-local"
                   value={driveForm.scheduled_at}
                   min={minDateTime}
-                  onChange={(e) =>
-                    setDriveForm({ ...driveForm, scheduled_at: e.target.value })
+                  onChange={(event) =>
+                    setDriveForm({
+                      ...driveForm,
+                      scheduled_at: event.target.value,
+                    })
                   }
                   required
-                  style={{ width: "100%", boxSizing: "border-box" }}
                 />
               </div>
-              <div
-                className="field"
-                style={{ width: "100%", boxSizing: "border-box" }}
-              >
+
+              <div className="field">
                 <label>College</label>
                 <select
                   value={driveForm.college_id}
-                  onChange={(e) =>
-                    setDriveForm({ ...driveForm, college_id: e.target.value })
+                  onChange={(event) =>
+                    setDriveForm({
+                      ...driveForm,
+                      college_id: event.target.value,
+                    })
                   }
-                  style={{ width: "100%", boxSizing: "border-box" }}
                 >
-                  <option value="">Optional…</option>
-                  {colleges.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
+                  <option value="">Optional...</option>
+
+                  {colleges.map((college) => (
+                    <option key={college.id} value={college.id}>
+                      {college.name}
                     </option>
                   ))}
                 </select>
               </div>
-              <div
-                className="field"
-                style={{ width: "100%", boxSizing: "border-box" }}
-              >
+
+              <div className="field">
                 <label>Notes</label>
                 <textarea
                   rows={2}
                   value={driveForm.notes}
-                  onChange={(e) =>
-                    setDriveForm({ ...driveForm, notes: e.target.value })
+                  onChange={(event) =>
+                    setDriveForm({
+                      ...driveForm,
+                      notes: event.target.value,
+                    })
                   }
-                  placeholder="Optional details for the team…"
-                  style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    resize: "vertical",
-                  }}
+                  placeholder="Optional details for the team..."
                 />
               </div>
+
               {driveError && (
-                <p style={{ color: "var(--red, #d64545)", fontSize: 12.5 }}>
-                  {driveError}
-                </p>
+                <p className="drive-error">{driveError}</p>
               )}
+
               <button
                 className="btn-primary"
                 type="submit"
                 disabled={savingDrive}
-                style={{ width: "100%", boxSizing: "border-box" }}
               >
-                {savingDrive ? "Saving…" : "Save Drive"}
+                {savingDrive ? "Saving..." : "Save Drive"}
               </button>
             </form>
           )}
 
-          {drivesLoading ? (
-            <p style={{ color: "var(--slate-light)" }}>Loading…</p>
-          ) : drives.length === 0 ? (
-            <p style={{ color: "var(--slate-light)" }}>
-              No upcoming drives scheduled
-            </p>
-          ) : (
-            drives.map((d) => (
-              <div
-                className="timeline-item"
-                key={d.id}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  gap: 8,
-                }}
-              >
-                <div style={{ display: "flex", gap: 8 }}>
-                  <div className="timeline-dot"></div>
-                  <div>
-                    <div className="t">
-                      {d.title} — {d.type}
-                      {d.colleges?.name ? ` · ${d.colleges.name}` : ""}
+          <div className="drive-list">
+            {drivesLoading ? (
+              <p className="empty-state">Loading drives...</p>
+            ) : drives.length === 0 ? (
+              <p className="empty-state">No upcoming drives scheduled.</p>
+            ) : (
+              drives.map((drive) => (
+                <div className="timeline-item" key={drive.id}>
+                  <div className="timeline-marker">
+                    <span className="timeline-dot" />
+                    <span className="timeline-line" />
+                  </div>
+
+                  <div className="timeline-content">
+                    <div className="timeline-top">
+                      <div>
+                        <div className="timeline-title">
+                          {drive.title}
+                        </div>
+
+                        <div className="timeline-meta">
+                          {drive.type}
+                          {drive.colleges?.name
+                            ? ` · ${drive.colleges.name}`
+                            : ""}
+                        </div>
+                      </div>
+
+                      <button
+                        className="cancel-drive-button"
+                        onClick={() => handleDeleteDrive(drive.id)}
+                        disabled={deletingId === drive.id}
+                      >
+                        {deletingId === drive.id ? "..." : "Cancel"}
+                      </button>
                     </div>
-                    <div className="d">
-                      {new Date(d.scheduled_at).toLocaleDateString("en-GB", {
+
+                    <div className="timeline-date">
+                      {new Date(
+                        drive.scheduled_at,
+                      ).toLocaleDateString("en-GB", {
                         day: "2-digit",
                         month: "short",
                         year: "numeric",
                       })}
+
                       {" · "}
-                      {new Date(d.scheduled_at).toLocaleTimeString("en-GB", {
+
+                      {new Date(
+                        drive.scheduled_at,
+                      ).toLocaleTimeString("en-GB", {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
                     </div>
-                    {d.notes && (
-                      <div
-                        className="d"
-                        style={{ marginTop: 2, fontStyle: "italic" }}
-                      >
-                        {d.notes}
+
+                    {drive.notes && (
+                      <div className="timeline-notes">
+                        {drive.notes}
                       </div>
                     )}
                   </div>
                 </div>
-                <button
-                  className="btn-outline"
-                  style={{ fontSize: 11, padding: "3px 8px", flexShrink: 0 }}
-                  onClick={() => handleDeleteDrive(d.id)}
-                  disabled={deletingId === d.id}
-                >
-                  {deletingId === d.id ? "…" : "Cancel"}
-                </button>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
         </div>
+      </section>
+    </div>
+  );
+}
+
+function StatCard({ value, label, helper, tone = "purple" }) {
+  return (
+    <article className={`stat-card stat-${tone}`}>
+      <div className="stat-decoration" />
+
+      <div className="stat-icon">
+        {tone === "purple"
+          ? "✦"
+          : tone === "cyan"
+            ? "↗"
+            : tone === "orange"
+              ? "◈"
+              : "✓"}
+      </div>
+
+      <div className="num">{value}</div>
+      <div className="lbl">{label}</div>
+
+      {helper && <div className="delta">{helper}</div>}
+    </article>
+  );
+}
+
+function DashboardTooltip({ active, payload, label }) {
+  if (!active || !payload || !payload.length) {
+    return null;
+  }
+
+  return (
+    <div className="dashboard-tooltip">
+      <div className="tooltip-label">{label}</div>
+      <div className="tooltip-value">
+        {payload[0].name}: {payload[0].value}
       </div>
     </div>
   );
