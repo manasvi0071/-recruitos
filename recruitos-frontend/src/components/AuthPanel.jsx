@@ -46,65 +46,86 @@ export default function AuthPanel({ role = "recruiter" }) {
   }
 
   async function handleLogin(event) {
-    event.preventDefault();
+  event.preventDefault();
 
-    setLoginError("");
-    setLoginResult("");
-    setLoggingIn(true);
+  setLoginError("");
+  setLoginResult("");
+  setLoggingIn(true);
 
-    const { data: authData, error: loginError } =
-      await supabase.auth.signInWithPassword({
-        email: loginForm.email.trim(),
-        password: loginForm.password,
-      });
+  const email = loginForm.email.trim();
 
-    if (loginError) {
-      console.error("Login error:", loginError);
-      setLoginError(loginError.message);
-      setLoggingIn(false);
-      return;
-    }
+  console.log("Attempting login with:", email);
 
-    if (!authData?.user) {
-      setLoginError("Login failed. No user session was returned.");
-      setLoggingIn(false);
-      return;
-    }
+  const { data: authData, error: authError } =
+    await supabase.auth.signInWithPassword({
+      email,
+      password: loginForm.password,
+    });
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role, approved")
-      .eq("id", authData.user.id)
-      .single();
+  console.log("Supabase auth response:", {
+    authData,
+    authError,
+  });
 
-    if (profileError) {
-      console.error("Profile lookup error:", profileError);
-
-      await supabase.auth.signOut();
-
-      setLoginError(
-        `Your account was authenticated, but your profile could not be loaded: ${profileError.message}`,
-      );
-      setLoggingIn(false);
-      return;
-    }
-
-    const actualRole = profile?.role;
-
-    if (actualRole && actualRole !== role) {
-      await supabase.auth.signOut();
-
-      setLoginError(
-        `This account is registered as "${actualRole}", not "${role}". Please use the ${actualRole} login page.`,
-      );
-      setLoggingIn(false);
-      return;
-    }
-
-    setLoginResult("Login successful");
+  if (authError) {
+    setLoginError(`${authError.code || "AUTH_ERROR"}: ${authError.message}`);
     setLoggingIn(false);
-    changeMode("result");
+    return;
   }
+
+  if (!authData?.user) {
+    setLoginError("No authenticated user was returned.");
+    setLoggingIn(false);
+    return;
+  }
+
+  console.log("Authenticated user ID:", authData.user.id);
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role, approved")
+    .eq("id", authData.user.id)
+    .maybeSingle();
+
+  console.log("Profile response:", {
+    profile,
+    profileError,
+  });
+
+  if (profileError) {
+    await supabase.auth.signOut();
+
+    setLoginError(
+      `Profile error: ${profileError.code || ""} ${profileError.message}`,
+    );
+    setLoggingIn(false);
+    return;
+  }
+
+  if (!profile) {
+    await supabase.auth.signOut();
+
+    setLoginError(
+      "Login succeeded, but no profile was found for this user. Create a row in the profiles table.",
+    );
+    setLoggingIn(false);
+    return;
+  }
+
+  if (profile.role && profile.role !== role) {
+    await supabase.auth.signOut();
+
+    setLoginError(
+      `This account is registered as "${profile.role}", not "${role}".`,
+    );
+    setLoggingIn(false);
+    return;
+  }
+
+  setLoginResult("Login successful");
+  setLoggingIn(false);
+  changeMode("result");
+}
 
   function continueToWorkspace() {
     window.location.href = "/app";
