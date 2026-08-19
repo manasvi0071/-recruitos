@@ -99,9 +99,10 @@ export default function Dashboard() {
 
     try {
       const data = await getUpcomingDrives();
-      setDrives(data);
+      setDrives(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Load drives error:", err);
+      setDrives([]);
     } finally {
       setDrivesLoading(false);
     }
@@ -111,12 +112,17 @@ export default function Dashboard() {
     event.preventDefault();
     setDriveError("");
 
-    if (!driveForm.title || !driveForm.scheduled_at) {
+    if (!driveForm.title.trim() || !driveForm.scheduled_at) {
       setDriveError("Title and date/time are required.");
       return;
     }
 
     const selectedDate = new Date(driveForm.scheduled_at);
+
+    if (Number.isNaN(selectedDate.getTime())) {
+      setDriveError("Please select a valid date and time.");
+      return;
+    }
 
     if (selectedDate.getTime() < Date.now()) {
       setDriveError("Date and time cannot be in the past.");
@@ -126,7 +132,12 @@ export default function Dashboard() {
     setSavingDrive(true);
 
     try {
-      await addDrive(driveForm);
+      await addDrive({
+        ...driveForm,
+        title: driveForm.title.trim(),
+        college_id: driveForm.college_id || null,
+        notes: driveForm.notes.trim() || null,
+      });
 
       setDriveForm({
         title: "",
@@ -139,6 +150,7 @@ export default function Dashboard() {
       setShowDriveForm(false);
       await loadDrives();
     } catch (err) {
+      console.error("Add drive error:", err);
       setDriveError(err.message || "Could not save the drive.");
     } finally {
       setSavingDrive(false);
@@ -152,7 +164,9 @@ export default function Dashboard() {
 
     try {
       await deleteDrive(id);
-      setDrives((previous) => previous.filter((drive) => drive.id !== id));
+      setDrives((previous) =>
+        previous.filter((drive) => drive.id !== id),
+      );
     } catch (err) {
       console.error("Delete drive error:", err);
       window.alert("Could not cancel the drive. Please try again.");
@@ -246,13 +260,15 @@ export default function Dashboard() {
             .gte("created_at", oneWeekAgo.toISOString()),
         ]);
 
-        const { data: allApplications, error: allApplicationsError } =
-          await supabase
-            .from("applications")
-            .select("created_at, stage")
-            .order("created_at", { ascending: true });
+        const {
+          data: allApplications,
+          error: allApplicationsError,
+        } = await supabase
+          .from("applications")
+          .select("created_at, stage")
+          .order("created_at", { ascending: true });
 
-        if (
+        const firstError =
           collegesError ||
           resumesError ||
           selectionsError ||
@@ -262,20 +278,10 @@ export default function Dashboard() {
           companyRowsError ||
           positionsError ||
           selectionsThisWeekError ||
-          allApplicationsError
-        ) {
-          throw (
-            collegesError ||
-            resumesError ||
-            selectionsError ||
-            joinedError ||
-            applicationsError ||
-            companiesError ||
-            companyRowsError ||
-            positionsError ||
-            selectionsThisWeekError ||
-            allApplicationsError
-          );
+          allApplicationsError;
+
+        if (firstError) {
+          throw firstError;
         }
 
         if (ignore) return;
@@ -285,9 +291,13 @@ export default function Dashboard() {
 
         (allApplications || []).forEach((application) => {
           const date = new Date(application.created_at);
-          const weekStart = new Date(date);
 
-          weekStart.setDate(date.getDate() - date.getDay());
+          if (Number.isNaN(date.getTime())) return;
+
+          const weekStart = new Date(date);
+          weekStart.setDate(
+            date.getDate() - date.getDay(),
+          );
 
           const weekKey = weekStart.toLocaleDateString("en-GB", {
             day: "2-digit",
@@ -321,7 +331,9 @@ export default function Dashboard() {
 
         const conversion =
           totalSelections > 0
-            ? Math.round((totalJoined / totalSelections) * 100)
+            ? Math.round(
+                (totalJoined / totalSelections) * 100,
+              )
             : 0;
 
         setStats({
@@ -335,7 +347,9 @@ export default function Dashboard() {
 
         setCorpStats({
           companies: companiesCount ?? 0,
-          companyNames: (companyRows ?? []).map((company) => company.name),
+          companyNames: (companyRows ?? []).map(
+            (company) => company.name,
+          ),
           positions: positionsCount ?? 0,
           selections: totalSelections,
           selectionsThisWeek: selectionsThisWeekCount ?? 0,
@@ -347,7 +361,8 @@ export default function Dashboard() {
 
         if (!ignore) {
           setError(
-            "Could not load dashboard data. Check your Supabase connection.",
+            err?.message ||
+              "Could not load dashboard data. Check your Supabase connection.",
           );
         }
       } finally {
@@ -364,10 +379,18 @@ export default function Dashboard() {
         const upcomingDrives = await getUpcomingDrives();
 
         if (!ignore) {
-          setDrives(upcomingDrives);
+          setDrives(
+            Array.isArray(upcomingDrives)
+              ? upcomingDrives
+              : [],
+          );
         }
       } catch (err) {
         console.error("Upcoming drives error:", err);
+
+        if (!ignore) {
+          setDrives([]);
+        }
       } finally {
         if (!ignore) {
           setDrivesLoading(false);
@@ -378,10 +401,16 @@ export default function Dashboard() {
         const collegeRows = await getColleges();
 
         if (!ignore) {
-          setColleges(collegeRows);
+          setColleges(
+            Array.isArray(collegeRows) ? collegeRows : [],
+          );
         }
       } catch (err) {
         console.error("Colleges error:", err);
+
+        if (!ignore) {
+          setColleges([]);
+        }
       }
     }
 
@@ -395,6 +424,8 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-page" id="page-dashboard">
+      <StarticleBackground />
+
       <header className="dashboard-header">
         <div>
           <p className="dashboard-kicker">SAARTHI ANALYTICS</p>
@@ -406,16 +437,25 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="mode-toggle" aria-label="Dashboard mode">
+        <div
+          className="mode-toggle"
+          aria-label="Dashboard mode"
+        >
           <button
-            className={`mode-btn ${isInhouse ? "active" : ""}`}
+            type="button"
+            className={`mode-btn ${
+              isInhouse ? "active" : ""
+            }`}
             onClick={() => setMode("inhouse")}
           >
             In-house
           </button>
 
           <button
-            className={`mode-btn ${!isInhouse ? "active" : ""}`}
+            type="button"
+            className={`mode-btn ${
+              !isInhouse ? "active" : ""
+            }`}
             onClick={() => setMode("corporate")}
           >
             Corporate
@@ -423,7 +463,11 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {error && <div className="dashboard-error">{error}</div>}
+      {error && (
+        <div className="dashboard-error" role="alert">
+          {error}
+        </div>
+      )}
 
       {isInhouse ? (
         <div className="dashboard-stat-grid">
@@ -459,7 +503,8 @@ export default function Dashboard() {
             helper={
               loading
                 ? "Loading..."
-                : corpStats.companyNames.join(", ") || "No companies yet"
+                : corpStats.companyNames.join(", ") ||
+                  "No companies yet"
             }
             tone="purple"
           />
@@ -468,7 +513,9 @@ export default function Dashboard() {
             value={loading ? "—" : corpStats.positions}
             label="Open Positions"
             helper={
-              loading ? "Loading..." : `Across ${corpStats.positions} JDs`
+              loading
+                ? "Loading..."
+                : `Across ${corpStats.positions} JDs`
             }
             tone="cyan"
           />
@@ -488,7 +535,9 @@ export default function Dashboard() {
             value={loading ? "—" : corpStats.joined}
             label="Joined"
             helper={
-              loading ? "Loading..." : `${corpStats.conversion}% conversion`
+              loading
+                ? "Loading..."
+                : `${corpStats.conversion}% conversion`
             }
             tone="green"
           />
@@ -545,6 +594,7 @@ export default function Dashboard() {
             <div className="dashboard-panel-title">
               Applications Growth
             </div>
+
             <div className="chart-caption">
               Applications received by week
             </div>
@@ -554,84 +604,15 @@ export default function Dashboard() {
         </div>
 
         <div className="growth-chart">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={growthData}
-              margin={{
-                top: 10,
-                right: 15,
-                left: -20,
-                bottom: 0,
-              }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="var(--dash-border)"
-              />
-
-              <XAxis
-                dataKey="week"
-                tick={{
-                  fontSize: 10,
-                  fill: "var(--dash-muted)",
-                }}
-                axisLine={false}
-                tickLine={false}
-              />
-
-              <YAxis
-                tick={{
-                  fontSize: 10,
-                  fill: "var(--dash-muted)",
-                }}
-                allowDecimals={false}
-                axisLine={false}
-                tickLine={false}
-              />
-
-              <Tooltip content={<DashboardTooltip />} />
-
-              <Line
-                type="monotone"
-                dataKey="count"
-                name="Applications"
-                stroke="#7657E8"
-                strokeWidth={3}
-                dot={{
-                  r: 4,
-                  fill: "#7657E8",
-                  stroke: "var(--dash-surface)",
-                  strokeWidth: 2,
-                }}
-                activeDot={{
-                  r: 6,
-                }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
-
-      <section className="dashboard-grid-two">
-        <div className="dashboard-chart-card mini-chart-card">
-          <div className="chart-heading">
-            <div>
-              <div className="dashboard-panel-title">
-                Candidates by Stage
-              </div>
-              <div className="chart-caption">
-                Current recruitment pipeline
-              </div>
-            </div>
-          </div>
-
-          <div className="mini-chart">
+          {growthData.length === 0 && !loading ? (
+            <ChartEmptyState message="No application growth data yet." />
+          ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={stageBreakdown}
+              <LineChart
+                data={growthData}
                 margin={{
                   top: 10,
-                  right: 10,
+                  right: 15,
                   left: -20,
                   bottom: 0,
                 }}
@@ -642,14 +623,11 @@ export default function Dashboard() {
                 />
 
                 <XAxis
-                  dataKey="name"
+                  dataKey="week"
                   tick={{
-                    fontSize: 9,
+                    fontSize: 10,
                     fill: "var(--dash-muted)",
                   }}
-                  angle={-15}
-                  textAnchor="end"
-                  height={48}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -666,16 +644,105 @@ export default function Dashboard() {
 
                 <Tooltip content={<DashboardTooltip />} />
 
-                <Bar dataKey="value" name="Candidates" radius={[7, 7, 0, 0]}>
-                  {stageBreakdown.map((entry, index) => (
-                    <Cell
-                      key={entry.name}
-                      fill={CHART_COLORS[index % CHART_COLORS.length]}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  name="Applications"
+                  stroke="var(--dash-chart-primary)"
+                  strokeWidth={3}
+                  dot={{
+                    r: 4,
+                    fill: "var(--dash-chart-primary)",
+                    stroke: "var(--dash-surface)",
+                    strokeWidth: 2,
+                  }}
+                  activeDot={{
+                    r: 6,
+                  }}
+                />
+              </LineChart>
             </ResponsiveContainer>
+          )}
+        </div>
+      </section>
+
+      <section className="dashboard-grid-two">
+        <div className="dashboard-chart-card mini-chart-card">
+          <div className="chart-heading">
+            <div>
+              <div className="dashboard-panel-title">
+                Candidates by Stage
+              </div>
+
+              <div className="chart-caption">
+                Current recruitment pipeline
+              </div>
+            </div>
+          </div>
+
+          <div className="mini-chart">
+            {stageBreakdown.length === 0 && !loading ? (
+              <ChartEmptyState message="No stage data yet." />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={stageBreakdown}
+                  margin={{
+                    top: 10,
+                    right: 10,
+                    left: -20,
+                    bottom: 0,
+                  }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="var(--dash-border)"
+                  />
+
+                  <XAxis
+                    dataKey="name"
+                    tick={{
+                      fontSize: 9,
+                      fill: "var(--dash-muted)",
+                    }}
+                    angle={-15}
+                    textAnchor="end"
+                    height={48}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+
+                  <YAxis
+                    tick={{
+                      fontSize: 10,
+                      fill: "var(--dash-muted)",
+                    }}
+                    allowDecimals={false}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+
+                  <Tooltip content={<DashboardTooltip />} />
+
+                  <Bar
+                    dataKey="value"
+                    name="Candidates"
+                    radius={[7, 7, 0, 0]}
+                  >
+                    {stageBreakdown.map((entry, index) => (
+                      <Cell
+                        key={entry.name}
+                        fill={
+                          CHART_COLORS[
+                            index % CHART_COLORS.length
+                          ]
+                        }
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -685,6 +752,7 @@ export default function Dashboard() {
               <div className="dashboard-panel-title">
                 Stage Distribution
               </div>
+
               <div className="chart-caption">
                 Share of all applications
               </div>
@@ -692,37 +760,45 @@ export default function Dashboard() {
           </div>
 
           <div className="mini-chart">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={stageBreakdown}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="45%"
-                  outerRadius={76}
-                  innerRadius={42}
-                  paddingAngle={3}
-                  label={false}
-                >
-                  {stageBreakdown.map((entry, index) => (
-                    <Cell
-                      key={entry.name}
-                      fill={CHART_COLORS[index % CHART_COLORS.length]}
-                    />
-                  ))}
-                </Pie>
+            {stageBreakdown.length === 0 && !loading ? (
+              <ChartEmptyState message="No stage distribution yet." />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={stageBreakdown}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="45%"
+                    outerRadius={76}
+                    innerRadius={42}
+                    paddingAngle={3}
+                    label={false}
+                  >
+                    {stageBreakdown.map((entry, index) => (
+                      <Cell
+                        key={entry.name}
+                        fill={
+                          CHART_COLORS[
+                            index % CHART_COLORS.length
+                          ]
+                        }
+                      />
+                    ))}
+                  </Pie>
 
-                <Tooltip content={<DashboardTooltip />} />
+                  <Tooltip content={<DashboardTooltip />} />
 
-                <Legend
-                  wrapperStyle={{
-                    fontSize: 10,
-                    color: "var(--dash-muted)",
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+                  <Legend
+                    wrapperStyle={{
+                      fontSize: 10,
+                      color: "var(--dash-muted)",
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
       </section>
@@ -770,7 +846,9 @@ export default function Dashboard() {
                       <td>
                         <div className="candidate-cell">
                           <span className="candidate-avatar">
-                            {(application.candidates?.name || "?")
+                            {(
+                              application.candidates?.name || "?"
+                            )
                               .charAt(0)
                               .toUpperCase()}
                           </span>
@@ -782,18 +860,23 @@ export default function Dashboard() {
                       </td>
 
                       <td>
-                        {application.candidates?.colleges?.name || "—"}
+                        {application.candidates?.colleges?.name ||
+                          "—"}
                       </td>
 
-                      <td>{application.job_profiles?.title || "—"}</td>
+                      <td>
+                        {application.job_profiles?.title || "—"}
+                      </td>
 
                       <td>
                         <span
                           className={`badge ${
-                            stageBadgeClass[application.stage] || "gray"
+                            stageBadgeClass[
+                              application.stage
+                            ] || "gray"
                           }`}
                         >
-                          {application.stage}
+                          {application.stage || "Unknown"}
                         </span>
                       </td>
 
@@ -819,8 +902,11 @@ export default function Dashboard() {
             </div>
 
             <button
+              type="button"
               className="btn-outline"
-              onClick={() => setShowDriveForm((value) => !value)}
+              onClick={() =>
+                setShowDriveForm((value) => !value)
+              }
             >
               {showDriveForm ? "Cancel" : "+ Schedule"}
             </button>
@@ -829,8 +915,9 @@ export default function Dashboard() {
           {showDriveForm && (
             <form className="drive-form" onSubmit={handleAddDrive}>
               <div className="field">
-                <label>Title *</label>
+                <label htmlFor="drive-title">Title *</label>
                 <input
+                  id="drive-title"
                   value={driveForm.title}
                   onChange={(event) =>
                     setDriveForm({
@@ -844,8 +931,9 @@ export default function Dashboard() {
               </div>
 
               <div className="field">
-                <label>Type *</label>
+                <label htmlFor="drive-type">Type *</label>
                 <select
+                  id="drive-type"
                   value={driveForm.type}
                   onChange={(event) =>
                     setDriveForm({
@@ -854,18 +942,27 @@ export default function Dashboard() {
                     })
                   }
                 >
-                  <option value="Aptitude Test">Aptitude Test</option>
+                  <option value="Aptitude Test">
+                    Aptitude Test
+                  </option>
                   <option value="GD Round">GD Round</option>
                   <option value="Interview">Interview</option>
-                  <option value="Offer Rollout">Offer Rollout</option>
-                  <option value="Campus Visit">Campus Visit</option>
+                  <option value="Offer Rollout">
+                    Offer Rollout
+                  </option>
+                  <option value="Campus Visit">
+                    Campus Visit
+                  </option>
                   <option value="Other">Other</option>
                 </select>
               </div>
 
               <div className="field">
-                <label>Date & Time *</label>
+                <label htmlFor="drive-date">
+                  Date &amp; Time *
+                </label>
                 <input
+                  id="drive-date"
                   type="datetime-local"
                   value={driveForm.scheduled_at}
                   min={minDateTime}
@@ -880,8 +977,9 @@ export default function Dashboard() {
               </div>
 
               <div className="field">
-                <label>College</label>
+                <label htmlFor="drive-college">College</label>
                 <select
+                  id="drive-college"
                   value={driveForm.college_id}
                   onChange={(event) =>
                     setDriveForm({
@@ -901,8 +999,9 @@ export default function Dashboard() {
               </div>
 
               <div className="field">
-                <label>Notes</label>
+                <label htmlFor="drive-notes">Notes</label>
                 <textarea
+                  id="drive-notes"
                   rows={2}
                   value={driveForm.notes}
                   onChange={(event) =>
@@ -916,7 +1015,9 @@ export default function Dashboard() {
               </div>
 
               {driveError && (
-                <p className="drive-error">{driveError}</p>
+                <p className="drive-error" role="alert">
+                  {driveError}
+                </p>
               )}
 
               <button
@@ -933,7 +1034,9 @@ export default function Dashboard() {
             {drivesLoading ? (
               <p className="empty-state">Loading drives...</p>
             ) : drives.length === 0 ? (
-              <p className="empty-state">No upcoming drives scheduled.</p>
+              <p className="empty-state">
+                No upcoming drives scheduled.
+              </p>
             ) : (
               drives.map((drive) => (
                 <div className="timeline-item" key={drive.id}>
@@ -958,31 +1061,23 @@ export default function Dashboard() {
                       </div>
 
                       <button
+                        type="button"
                         className="cancel-drive-button"
-                        onClick={() => handleDeleteDrive(drive.id)}
+                        onClick={() =>
+                          handleDeleteDrive(drive.id)
+                        }
                         disabled={deletingId === drive.id}
                       >
-                        {deletingId === drive.id ? "..." : "Cancel"}
+                        {deletingId === drive.id
+                          ? "..."
+                          : "Cancel"}
                       </button>
                     </div>
 
                     <div className="timeline-date">
-                      {new Date(
-                        drive.scheduled_at,
-                      ).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
-
+                      {formatDate(drive.scheduled_at)}
                       {" · "}
-
-                      {new Date(
-                        drive.scheduled_at,
-                      ).toLocaleTimeString("en-GB", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatTime(drive.scheduled_at)}
                     </div>
 
                     {drive.notes && (
@@ -1001,12 +1096,20 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ value, label, helper, tone = "purple" }) {
+function StatCard({
+  value,
+  label,
+  helper,
+  tone = "purple",
+}) {
   return (
     <article className={`stat-card stat-${tone}`}>
       <div className="stat-decoration" />
 
-      <div className="stat-icon">
+      <div
+        className="stat-icon"
+        aria-hidden="true"
+      >
         {tone === "purple"
           ? "✦"
           : tone === "cyan"
@@ -1037,4 +1140,65 @@ function DashboardTooltip({ active, payload, label }) {
       </div>
     </div>
   );
+}
+
+function ChartEmptyState({ message }) {
+  return (
+    <div className="chart-empty-state">
+      <span>◌</span>
+      <p>{message}</p>
+    </div>
+  );
+}
+
+function StarticleBackground() {
+  return (
+    <div
+      className="starticle-background"
+      aria-hidden="true"
+    >
+      <span className="starticle starticle-1" />
+      <span className="starticle starticle-2" />
+      <span className="starticle starticle-3" />
+      <span className="starticle starticle-4" />
+      <span className="starticle starticle-5" />
+      <span className="starticle starticle-6" />
+      <span className="starticle starticle-7" />
+      <span className="starticle starticle-8" />
+      <span className="starticle starticle-9" />
+      <span className="starticle starticle-10" />
+      <span className="starticle starticle-11" />
+      <span className="starticle starticle-12" />
+      <span className="starticle starticle-13" />
+      <span className="starticle starticle-14" />
+      <span className="starticle starticle-15" />
+    </div>
+  );
+}
+
+function formatDate(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Invalid date";
+  }
+
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatTime(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "--:--";
+  }
+
+  return date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
