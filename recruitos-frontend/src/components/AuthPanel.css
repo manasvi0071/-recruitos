@@ -1,13 +1,15 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap");
 
 :root {
-  --canvas-ink: #251b31;
-  --canvas-muted: #7e738b;
+  --canvas-bg: #e9e4f4;
   --canvas-purple: #65428e;
   --canvas-purple-dark: #402961;
   --canvas-lilac: #ad91d4;
   --canvas-cream: #fbf7ed;
-  --canvas-gold: #f5d48b;
+  --canvas-muted: #7e738b;
+  --canvas-ink: #251b31;
+  --canvas-green: #93ab9c;
+  --canvas-gold: #d1a75c;
 }
 
 * {
@@ -21,236 +23,33 @@
   display: grid;
   place-items: center;
   padding: 30px;
-  isolation: isolate;
   background:
     radial-gradient(
       circle at 20% 20%,
-      rgba(255, 255, 255, 0.62),
+      rgba(255, 255, 255, 0.6),
       transparent 28%
     ),
-    linear-gradient(135deg, #ded5eb 0%, #eee8dc 52%, #cfdde0 100%);
+    linear-gradient(
+      135deg,
+      #ded5eb 0%,
+      #eee8dc 52%,
+      #cfdde0 100%
+    );
   font-family: "Manrope", sans-serif;
+  isolation: isolate;
 }
 
-/* Canvas background */
-
-.campus-background {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-}
-
-.canvas-grid {
-  position: absolute;
-  inset: 0;
-  opacity: 0.18;
-  background-image:
-    linear-gradient(rgba(101, 66, 142, 0.35) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(101, 66, 142, 0.35) 1px, transparent 1px);
-  background-size: 52px 52px;
-  mask-image: linear-gradient(to bottom, black, transparent 85%);
-}
-
-.soft-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(5px);
-}
-
-.orb-left {
-  top: -160px;
-  left: -120px;
-  width: 470px;
-  height: 470px;
-  background: rgba(179, 144, 211, 0.42);
-}
-
-.orb-right {
-  right: -160px;
-  bottom: -160px;
-  width: 520px;
-  height: 520px;
-  background: rgba(158, 190, 183, 0.42);
-}
-
-.campus-sun {
-  position: absolute;
-  top: 13%;
-  right: 13%;
-  width: 92px;
-  height: 92px;
-  border-radius: 50%;
-  background: rgba(235, 201, 132, 0.42);
-  box-shadow: 0 0 0 17px rgba(235, 201, 132, 0.08);
-}
-
-.campus-hill {
-  position: absolute;
-  bottom: -180px;
-  border-radius: 50% 50% 0 0;
-  transform: rotate(-5deg);
-}
-
-.hill-back {
-  right: -10%;
-  width: 72%;
-  height: 340px;
-  background: rgba(120, 154, 142, 0.28);
-}
-
-.hill-front {
-  bottom: -250px;
-  left: -10%;
-  width: 74%;
-  height: 360px;
-  background: rgba(91, 119, 109, 0.24);
-  transform: rotate(5deg);
-}
-
-/* Campus buildings */
-
-.campus-building {
-  position: absolute;
-  bottom: 17%;
-  opacity: 0.42;
-}
-
-.building-main {
-  right: 11%;
-  width: 220px;
-}
-
-.building-small {
-  bottom: 23%;
-  left: 10%;
-  width: 135px;
-  transform: scale(0.72);
-  transform-origin: bottom center;
-}
-
-.building-roof {
-  width: 0;
-  height: 0;
-  margin: 0 auto;
-  border-right: 112px solid transparent;
-  border-bottom: 45px solid rgba(101, 66, 142, 0.54);
-  border-left: 112px solid transparent;
-}
-
-.building-body {
-  display: flex;
-  height: 124px;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 16px;
-  padding: 16px 22px;
-  border: 1px solid rgba(101, 66, 142, 0.35);
-  border-top: 0;
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.building-body span {
-  width: 19px;
-  height: 38px;
-  border: 1px solid rgba(101, 66, 142, 0.3);
-  background: rgba(238, 214, 159, 0.4);
-}
-
-.building-door {
-  position: absolute;
-  bottom: 0;
-  left: calc(50% - 18px);
-  width: 36px;
-  height: 62px;
-  border-radius: 22px 22px 0 0;
-  background: rgba(101, 66, 142, 0.33);
-}
-
-/* Campus trees */
-
-.campus-tree {
-  position: absolute;
-  bottom: 17%;
-  opacity: 0.48;
-}
-
-.tree-one {
-  left: 24%;
-  transform: scale(1.05);
-}
-
-.tree-two {
-  right: 27%;
-  bottom: 20%;
-  transform: scale(0.75);
-}
-
-.tree-top {
-  width: 60px;
-  height: 70px;
-  border-radius: 52% 48% 45% 55%;
-  background: rgba(87, 126, 101, 0.45);
-  box-shadow:
-    -20px 12px 0 rgba(87, 126, 101, 0.34),
-    20px 12px 0 rgba(87, 126, 101, 0.32);
-}
-
-.tree-trunk {
-  width: 8px;
-  height: 53px;
-  margin: -2px auto 0;
-  background: rgba(109, 75, 62, 0.38);
-}
-
-/* Campus paths and decorative elements */
-
-.campus-path {
-  position: absolute;
-  bottom: -50px;
-  width: 120px;
-  height: 480px;
-  border-radius: 50%;
-  background: rgba(244, 226, 185, 0.3);
-}
-
-.path-one {
-  left: 42%;
-  transform: rotate(31deg);
-}
-
-.path-two {
-  right: 38%;
-  width: 75px;
-  opacity: 0.7;
-  transform: rotate(-26deg);
-}
-
-.campus-cap {
-  position: absolute;
-  top: 26%;
-  left: 15%;
-  display: grid;
-  width: 55px;
-  height: 55px;
-  place-items: center;
-  border: 1px solid rgba(101, 66, 142, 0.22);
-  border-radius: 14px;
-  color: rgba(101, 66, 142, 0.56);
-  background: rgba(255, 255, 255, 0.25);
-  transform: rotate(12deg);
-  font-size: 25px;
-}
-
-/* Circular card */
+/* =========================================================
+   AUTH STAGE
+========================================================= */
 
 .auth-stage {
   position: relative;
   z-index: 10;
   display: grid;
+  place-items: center;
   width: 100%;
   min-height: 760px;
-  place-items: center;
 }
 
 .auth-coin-wrapper {
@@ -259,141 +58,273 @@
   perspective: 1600px;
 }
 
+/* =========================================================
+   COIN
+========================================================= */
+
 .auth-coin {
   position: relative;
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  transition: transform 1400ms cubic-bezier(0.22, 1, 0.36, 1);
+
+  transition:
+    transform 1400ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Login is the front. Register is the back. */
+/*
+  LOGIN
+*/
+.auth-coin-wrapper:not(.show-register):not(.show-result)
+  .auth-coin {
+  transform: rotateY(0deg);
+}
 
+/*
+  REGISTER
+*/
 .auth-coin-wrapper.show-register .auth-coin {
   transform: rotateY(180deg);
 }
 
 /*
-  Extra rotation creates the coin effect.
-  The duration is intentionally slow enough
-  for the register page to be visible.
+  LOGIN SUCCESS
 */
+.auth-coin-wrapper.show-result .auth-coin {
+  transform: rotateY(180deg);
+}
 
+/*
+  During flipping.
+*/
 .auth-coin-wrapper.is-flipping .auth-coin {
   transform: rotateY(900deg);
 }
 
+/*
+  Register flip.
+*/
 .auth-coin-wrapper.is-flipping.show-register .auth-coin {
   transform: rotateY(1080deg);
 }
 
+/*
+  Result flip.
+*/
+.auth-coin-wrapper.is-flipping.show-result .auth-coin {
+  transform: rotateY(1080deg);
+}
+
+/* =========================================================
+   COIN FACES
+========================================================= */
+
 .auth-coin-face {
   position: absolute;
   inset: 0;
+
   display: grid;
   place-items: center;
+
   overflow: hidden;
+
   border: 12px solid rgba(255, 255, 255, 0.58);
   border-radius: 50%;
+
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+
   box-shadow:
     0 35px 80px rgba(63, 39, 86, 0.22),
     0 10px 25px rgba(63, 39, 86, 0.12),
     inset 0 0 0 1px rgba(101, 66, 142, 0.15);
 }
 
-.auth-coin-face::before {
-  position: absolute;
-  inset: 20px;
-  border: 1px dashed rgba(101, 66, 142, 0.2);
-  border-radius: 50%;
-  content: "";
-  pointer-events: none;
-}
+/* =========================================================
+   LOGIN FACE
+========================================================= */
 
 .auth-coin-front {
+  z-index: 3;
+
   color: var(--canvas-ink);
+
   background:
     radial-gradient(
       circle at 30% 18%,
       rgba(255, 255, 255, 0.95),
       transparent 28%
     ),
-    linear-gradient(145deg, #fffdf7, #f2e9db);
+    linear-gradient(
+      145deg,
+      #fffdf7,
+      #f2e9db
+    );
+
+  transform: rotateY(0deg);
 }
 
+/* =========================================================
+   REGISTER FACE
+========================================================= */
+
 .auth-coin-back {
+  z-index: 2;
+
   color: white;
+
   background:
     radial-gradient(
       circle at 35% 20%,
       rgba(255, 255, 255, 0.22),
       transparent 28%
     ),
-    linear-gradient(145deg, #7d5ca2, #4c336c);
+    linear-gradient(
+      145deg,
+      #7d5ca2,
+      #4c336c
+    );
+
   transform: rotateY(180deg);
 }
 
-.auth-coin-back::before {
+/* =========================================================
+   LOGIN RESULT FACE
+========================================================= */
+
+.auth-coin-result-face {
+  z-index: 1;
+
+  color: white;
+
+  background:
+    radial-gradient(
+      circle at 35% 20%,
+      rgba(255, 255, 255, 0.22),
+      transparent 28%
+    ),
+    linear-gradient(
+      145deg,
+      #7d5ca2,
+      #4c336c
+    );
+
+  transform: rotateY(180deg);
+}
+
+/*
+  Circular inner border.
+*/
+.auth-coin-face::before {
+  position: absolute;
+  inset: 20px;
+
+  border: 1px dashed rgba(101, 66, 142, 0.2);
+  border-radius: 50%;
+
+  content: "";
+  pointer-events: none;
+}
+
+.auth-coin-back::before,
+.auth-coin-result-face::before {
   border-color: rgba(255, 255, 255, 0.25);
 }
 
-/* Card content */
+/* =========================================================
+   CONTENT
+========================================================= */
 
-.auth-inner-content {
+.auth-inner-content,
+.result-content {
   position: relative;
   z-index: 2;
+
   width: 64%;
+
   text-align: center;
 }
+
+/* =========================================================
+   LOGO
+========================================================= */
 
 .auth-logo {
   display: flex;
   justify-content: center;
-  margin-bottom: 9px;
+
+  margin-bottom: 10px;
 }
+
+/* =========================================================
+   EYEBROW
+========================================================= */
 
 .auth-eyebrow {
   margin: 0 0 9px;
+
   color: var(--canvas-purple);
+
   font-family: "DM Mono", monospace;
+
   font-size: 9px;
   letter-spacing: 0.16em;
 }
 
-.auth-coin-back .auth-eyebrow {
+.auth-coin-back .auth-eyebrow,
+.auth-coin-result-face .auth-eyebrow {
   color: #dfcafa;
 }
 
+/* =========================================================
+   HEADINGS
+========================================================= */
+
 .auth-inner-content h1,
-.auth-inner-content h2 {
+.auth-inner-content h2,
+.result-content h2 {
   margin: 0;
+
   color: var(--canvas-ink);
+
   font-size: clamp(27px, 4vw, 43px);
   font-weight: 500;
+
   letter-spacing: -0.07em;
   line-height: 1;
 }
 
-.auth-inner-content h2 {
+.auth-coin-back h2,
+.auth-coin-result-face h2,
+.result-content h2 {
   color: white;
 }
 
+/* =========================================================
+   DESCRIPTION
+========================================================= */
+
 .auth-description,
-.back-description {
+.back-description,
+.result-content > p:not(.auth-eyebrow) {
   max-width: 270px;
+
   margin: 13px auto 22px;
+
   color: var(--canvas-muted);
+
   font-size: 11px;
   line-height: 1.6;
 }
 
-.back-description {
+.auth-coin-back .back-description,
+.auth-coin-result-face .result-content > p:not(.auth-eyebrow) {
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* Forms */
+/* =========================================================
+   FORM
+========================================================= */
 
 .circle-auth-form {
   width: 100%;
@@ -401,16 +332,26 @@
 
 .circle-field {
   margin-bottom: 12px;
+
   text-align: left;
 }
 
+/* =========================================================
+   LABEL
+========================================================= */
+
 .circle-field label {
   display: block;
+
   margin: 0 0 6px 4px;
+
   color: #716879;
+
   font-family: "DM Mono", monospace;
+
   font-size: 8px;
   letter-spacing: 0.1em;
+
   text-transform: uppercase;
 }
 
@@ -418,17 +359,28 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
+/* =========================================================
+   INPUT
+========================================================= */
+
 .circle-field input {
   width: 100%;
   height: 38px;
+
   padding: 0 12px;
+
   border: 1px solid rgba(37, 27, 49, 0.15);
   border-radius: 7px;
+
   outline: none;
+
   color: var(--canvas-ink);
+
   background: rgba(255, 255, 255, 0.65);
+
   font-family: "Manrope", sans-serif;
   font-size: 10px;
+
   transition:
     border-color 180ms ease,
     background 180ms ease,
@@ -436,12 +388,16 @@
 }
 
 .circle-field input::placeholder {
-  color: #aaa1ad;
+  color: #ada4af;
 }
+
+/* REGISTER INPUT */
 
 .auth-coin-back .circle-field input {
   border-color: rgba(255, 255, 255, 0.25);
+
   color: white;
+
   background: rgba(255, 255, 255, 0.15);
 }
 
@@ -449,83 +405,35 @@
   color: rgba(255, 255, 255, 0.55);
 }
 
+/* INPUT FOCUS */
+
 .circle-field input:focus {
   border-color: var(--canvas-purple);
+
   background: white;
-  box-shadow: 0 0 0 3px rgba(101, 66, 142, 0.12);
+
+  box-shadow:
+    0 0 0 3px rgba(101, 66, 142, 0.12);
 }
 
 .auth-coin-back .circle-field input:focus {
-  border-color: var(--canvas-gold);
-  background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 0 3px rgba(245, 212, 139, 0.18);
+  border-color: #f5d48b;
+
+  background: rgba(255, 255, 255, 0.18);
+
+  box-shadow:
+    0 0 0 3px rgba(245, 212, 139, 0.18);
 }
 
-/* Buttons */
-
-.circle-login-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  width: 100%;
-  height: 40px;
-  margin-top: 5px;
-  border: 0;
-  border-radius: 999px;
-  cursor: pointer;
-  color: white;
-  background: var(--canvas-purple);
-  box-shadow: 0 9px 17px rgba(101, 66, 142, 0.2);
-  font-family: "Manrope", sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  transition:
-    transform 180ms ease,
-    background 180ms ease;
-}
-
-.circle-login-button:hover:not(:disabled) {
-  background: var(--canvas-purple-dark);
-  transform: translateY(-2px);
-}
-
-.auth-coin-back .circle-login-button {
-  color: #51336b;
-  background: var(--canvas-gold);
-}
-
-.circle-login-button:disabled {
-  cursor: wait;
-  opacity: 0.65;
-}
-
-.circle-bottom-link {
-  margin-top: 15px;
-  padding: 0;
-  border: 0;
-  cursor: pointer;
-  color: var(--canvas-purple);
-  background: transparent;
-  font-family: "Manrope", sans-serif;
-  font-size: 9px;
-  font-weight: 700;
-}
-
-.circle-bottom-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.auth-coin-back .circle-bottom-link {
-  color: #e5cef5;
-}
-
-/* Error message */
+/* =========================================================
+   ERROR
+========================================================= */
 
 .circle-error {
   margin: 4px 0 9px;
+
   color: #b8445e;
+
   font-size: 9px;
   line-height: 1.4;
 }
@@ -534,7 +442,122 @@
   color: #ffd0db;
 }
 
-/* Registration success */
+/* =========================================================
+   BUTTON
+========================================================= */
+
+.circle-login-button {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 18px;
+
+  width: 100%;
+  height: 40px;
+
+  margin-top: 5px;
+
+  border: 0;
+  border-radius: 999px;
+
+  cursor: pointer;
+
+  color: white;
+
+  background: var(--canvas-purple);
+
+  box-shadow:
+    0 9px 17px rgba(101, 66, 142, 0.2);
+
+  font-family: "Manrope", sans-serif;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.circle-login-button:hover:not(:disabled) {
+  background: var(--canvas-purple-dark);
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 12px 22px rgba(101, 66, 142, 0.25);
+}
+
+.circle-login-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.circle-login-button:disabled {
+  cursor: wait;
+
+  opacity: 0.65;
+}
+
+/* REGISTER BUTTON */
+
+.auth-coin-back .circle-login-button,
+.auth-coin-result-face .circle-login-button {
+  color: var(--canvas-purple-dark);
+
+  background: #f5d48b;
+}
+
+.auth-coin-back .circle-login-button:hover:not(:disabled),
+.auth-coin-result-face .circle-login-button:hover:not(:disabled) {
+  background: #f8dda1;
+}
+
+/* =========================================================
+   BOTTOM LINK
+========================================================= */
+
+.circle-bottom-link {
+  margin-top: 15px;
+
+  padding: 0;
+
+  border: 0;
+
+  cursor: pointer;
+
+  color: var(--canvas-purple);
+
+  background: transparent;
+
+  font-family: "Manrope", sans-serif;
+
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.circle-bottom-link:hover:not(:disabled) {
+  text-decoration: underline;
+
+  text-underline-offset: 3px;
+}
+
+.circle-bottom-link:disabled {
+  cursor: wait;
+
+  opacity: 0.6;
+}
+
+.auth-coin-back .circle-bottom-link,
+.auth-coin-result-face .circle-bottom-link {
+  color: #e5cef5;
+}
+
+/* =========================================================
+   REGISTRATION SUCCESS
+========================================================= */
 
 .registration-success {
   text-align: center;
@@ -542,21 +565,485 @@
 
 .success-icon {
   display: grid;
+
   width: 64px;
   height: 64px;
+
   margin: 0 auto 20px;
+
   place-items: center;
+
   border-radius: 50%;
-  color: #51336b;
-  background: var(--canvas-gold);
+
+  color: var(--canvas-purple-dark);
+
+  background: #f5d48b;
+
   font-size: 30px;
+  font-weight: 700;
+
+  box-shadow:
+    0 10px 25px rgba(245, 212, 139, 0.2);
 }
 
-/* Mobile */
+/* =========================================================
+   LOGIN RESULT
+========================================================= */
+
+.result-content {
+  text-align: center;
+}
+
+.result-symbol {
+  display: grid;
+
+  width: 74px;
+  height: 74px;
+
+  margin: 0 auto 22px;
+
+  place-items: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.38);
+
+  border-radius: 50%;
+
+  color: var(--canvas-purple-dark);
+
+  background: #f5d48b;
+
+  font-size: 34px;
+  font-weight: 500;
+
+  box-shadow:
+    0 12px 30px rgba(245, 212, 139, 0.2);
+}
+
+.result-content .circle-login-button {
+  width: 78%;
+
+  margin: 19px auto 0;
+}
+
+/* =========================================================
+   CAMPUS BACKGROUND
+========================================================= */
+
+.campus-background {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: -1;
+
+  overflow: hidden;
+}
+
+/* =========================================================
+   GRID
+========================================================= */
+
+.canvas-grid {
+  position: absolute;
+
+  inset: 0;
+
+  opacity: 0.18;
+
+  background-image:
+    linear-gradient(
+      rgba(101, 66, 142, 0.35) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(101, 66, 142, 0.35) 1px,
+      transparent 1px
+    );
+
+  background-size: 52px 52px;
+
+  mask-image:
+    linear-gradient(
+      to bottom,
+      black,
+      transparent 85%
+    );
+}
+
+/* =========================================================
+   SOFT ORBS
+========================================================= */
+
+.soft-orb {
+  position: absolute;
+
+  border-radius: 50%;
+
+  filter: blur(5px);
+}
+
+.orb-left {
+  top: -160px;
+  left: -120px;
+
+  width: 470px;
+  height: 470px;
+
+  background: rgba(179, 144, 211, 0.42);
+}
+
+.orb-right {
+  right: -160px;
+  bottom: -160px;
+
+  width: 520px;
+  height: 520px;
+
+  background: rgba(158, 190, 183, 0.42);
+}
+
+/* =========================================================
+   SUN
+========================================================= */
+
+.campus-sun {
+  position: absolute;
+
+  top: 13%;
+  right: 13%;
+
+  width: 92px;
+  height: 92px;
+
+  border-radius: 50%;
+
+  background: rgba(235, 201, 132, 0.42);
+
+  box-shadow:
+    0 0 0 17px rgba(235, 201, 132, 0.08);
+}
+
+/* =========================================================
+   HILLS
+========================================================= */
+
+.campus-hill {
+  position: absolute;
+
+  bottom: -180px;
+
+  border-radius: 50% 50% 0 0;
+
+  transform: rotate(-5deg);
+}
+
+.hill-back {
+  right: -10%;
+
+  width: 72%;
+  height: 340px;
+
+  background: rgba(120, 154, 142, 0.28);
+}
+
+.hill-front {
+  bottom: -250px;
+  left: -10%;
+
+  width: 74%;
+  height: 360px;
+
+  background: rgba(91, 119, 109, 0.24);
+
+  transform: rotate(5deg);
+}
+
+/* =========================================================
+   BUILDINGS
+========================================================= */
+
+.campus-building {
+  position: absolute;
+
+  bottom: 17%;
+
+  opacity: 0.42;
+}
+
+.building-main {
+  right: 11%;
+
+  width: 220px;
+}
+
+.building-small {
+  bottom: 23%;
+  left: 10%;
+
+  width: 135px;
+
+  transform: scale(0.72);
+
+  transform-origin: bottom center;
+}
+
+.building-roof {
+  width: 0;
+  height: 0;
+
+  margin: 0 auto;
+
+  border-right: 112px solid transparent;
+  border-bottom: 45px solid rgba(101, 66, 142, 0.54);
+  border-left: 112px solid transparent;
+}
+
+.building-body {
+  display: flex;
+
+  height: 124px;
+
+  align-items: flex-end;
+  justify-content: center;
+
+  gap: 16px;
+
+  padding: 16px 22px;
+
+  border: 1px solid rgba(101, 66, 142, 0.35);
+
+  border-top: 0;
+
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.building-body span {
+  width: 19px;
+  height: 38px;
+
+  border: 1px solid rgba(101, 66, 142, 0.3);
+
+  background: rgba(238, 214, 159, 0.4);
+}
+
+.building-door {
+  position: absolute;
+
+  bottom: 0;
+  left: calc(50% - 18px);
+
+  width: 36px;
+  height: 62px;
+
+  border-radius: 22px 22px 0 0;
+
+  background: rgba(101, 66, 142, 0.33);
+}
+
+/* =========================================================
+   TREES
+========================================================= */
+
+.campus-tree {
+  position: absolute;
+
+  bottom: 17%;
+
+  opacity: 0.48;
+}
+
+.tree-one {
+  left: 24%;
+
+  transform: scale(1.05);
+}
+
+.tree-two {
+  right: 27%;
+  bottom: 20%;
+
+  transform: scale(0.75);
+}
+
+.tree-top {
+  width: 60px;
+  height: 70px;
+
+  border-radius:
+    52% 48% 45% 55%;
+
+  background: rgba(87, 126, 101, 0.45);
+
+  box-shadow:
+    -20px 12px 0 rgba(87, 126, 101, 0.34),
+    20px 12px 0 rgba(87, 126, 101, 0.32);
+}
+
+.tree-trunk {
+  width: 8px;
+  height: 53px;
+
+  margin: -2px auto 0;
+
+  background: rgba(109, 75, 62, 0.38);
+}
+
+/* =========================================================
+   CAMPUS PATH
+========================================================= */
+
+.campus-path {
+  position: absolute;
+
+  bottom: -50px;
+
+  width: 120px;
+  height: 480px;
+
+  border-radius: 50%;
+
+  background: rgba(244, 226, 185, 0.3);
+
+  transform: rotate(31deg);
+}
+
+.path-one {
+  left: 42%;
+}
+
+.path-two {
+  right: 38%;
+
+  width: 75px;
+
+  opacity: 0.7;
+
+  transform: rotate(-26deg);
+}
+
+/* =========================================================
+   GRADUATION CAP
+========================================================= */
+
+.campus-cap {
+  position: absolute;
+
+  top: 26%;
+  left: 15%;
+
+  display: grid;
+
+  width: 55px;
+  height: 55px;
+
+  place-items: center;
+
+  border: 1px solid rgba(101, 66, 142, 0.22);
+
+  border-radius: 14px;
+
+  color: rgba(101, 66, 142, 0.56);
+
+  background: rgba(255, 255, 255, 0.25);
+
+  transform: rotate(12deg);
+
+  font-size: 25px;
+}
+
+.campus-cap span {
+  display: block;
+}
+
+/* =========================================================
+   NETWORK
+========================================================= */
+
+.campus-network {
+  position: absolute;
+
+  top: 17%;
+  left: 33%;
+
+  width: 180px;
+  height: 110px;
+
+  opacity: 0.4;
+}
+
+.campus-network::before,
+.campus-network::after {
+  position: absolute;
+
+  content: "";
+
+  background: rgba(101, 66, 142, 0.4);
+}
+
+.campus-network::before {
+  top: 45px;
+  left: 20px;
+
+  width: 135px;
+  height: 1px;
+
+  transform: rotate(-20deg);
+}
+
+.campus-network::after {
+  top: 20px;
+  left: 90px;
+
+  width: 1px;
+  height: 75px;
+
+  transform: rotate(31deg);
+}
+
+.campus-network span {
+  position: absolute;
+
+  display: block;
+
+  width: 8px;
+  height: 8px;
+
+  border: 1px solid rgba(101, 66, 142, 0.6);
+
+  border-radius: 50%;
+
+  background: #e9e4f4;
+}
+
+.campus-network span:nth-child(1) {
+  top: 39px;
+  left: 15px;
+}
+
+.campus-network span:nth-child(2) {
+  top: 12px;
+  left: 87px;
+}
+
+.campus-network span:nth-child(3) {
+  top: 80px;
+  left: 87px;
+}
+
+.campus-network span:nth-child(4) {
+  top: 47px;
+  right: 12px;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
 
 @media (max-width: 650px) {
   .canvas-auth-page {
     min-height: 100svh;
+
     padding: 16px;
   }
 
@@ -572,18 +1059,30 @@
     border-width: 8px;
   }
 
-  .auth-inner-content {
+  .auth-inner-content,
+  .result-content {
     width: 66%;
+  }
+
+  .auth-inner-content h1,
+  .auth-inner-content h2,
+  .result-content h2 {
+    font-size: 29px;
   }
 
   .campus-building {
     opacity: 0.25;
   }
 
+  .campus-network,
   .campus-cap {
     display: none;
   }
 }
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
 
 @media (max-width: 430px) {
   .auth-coin-wrapper {
@@ -598,19 +1097,23 @@
     inset: 12px;
   }
 
-  .auth-inner-content {
+  .auth-inner-content,
+  .result-content {
     width: 65%;
   }
 
   .auth-inner-content h1,
-  .auth-inner-content h2 {
+  .auth-inner-content h2,
+  .result-content h2 {
     font-size: 24px;
   }
 
   .auth-description,
-  .back-description {
+  .back-description,
+  .result-content > p:not(.auth-eyebrow) {
     margin-top: 9px;
     margin-bottom: 16px;
+
     font-size: 9px;
   }
 
@@ -620,26 +1123,51 @@
 
   .circle-field input {
     height: 34px;
+
     font-size: 9px;
   }
 
   .circle-login-button {
     height: 36px;
+
     font-size: 9px;
   }
 
   .circle-bottom-link {
     margin-top: 11px;
+
     font-size: 8px;
+  }
+
+  .result-symbol {
+    width: 58px;
+    height: 58px;
+
+    margin-bottom: 15px;
+
+    font-size: 27px;
   }
 }
 
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
 @media (prefers-reduced-motion: reduce) {
-  .auth-coin {
+  *,
+  *::before,
+  *::after {
     transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 
-  .auth-coin-wrapper.show-register .auth-coin {
+  .auth-coin-wrapper.show-register .auth-coin,
+  .auth-coin-wrapper.show-result .auth-coin {
     transform: rotateY(180deg);
+  }
+
+  .auth-coin-wrapper:not(.show-register):not(.show-result)
+    .auth-coin {
+    transform: rotateY(0deg);
   }
 }
