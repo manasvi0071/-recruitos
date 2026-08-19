@@ -26,7 +26,7 @@ const NAV = {
     { section: 'System', items: [
       { key: 'usermanagement', icon: '⚙', label: 'User Management' },
       { key: 'notifications', icon: '🔔', label: 'Notifications' },
-      { key: 'calendar', icon: '📅', label: 'Calendar & Tasks' },
+      { key: 'calendartasks', icon: '📅', label: 'Calendar & Tasks' },
     ]},
   ],
 
@@ -43,7 +43,7 @@ const NAV = {
     ]},
     { section: 'Tools', items: [
       { key: 'notifications', icon: '🔔', label: 'Notifications' },
-      { key: 'calendar', icon: '📅', label: 'Calendar & Tasks' },
+      { key: 'calendartasks', icon: '📅', label: 'Calendar & Tasks' },
     ]},
   ],
 
@@ -58,7 +58,6 @@ const NAV = {
     ]},
     { section: 'Tools', items: [
       { key: 'notifications', icon: '🔔', label: 'Notifications' },
-      { key: 'calendar', icon: '📅', label: 'Calendar & Tasks' },
     ]},
   ],
 
@@ -75,7 +74,6 @@ const NAV = {
     ]},
     { section: 'Tools', items: [
       { key: 'notifications', icon: '🔔', label: 'Notifications' },
-      { key: 'calendar', icon: '📅', label: 'Calendar & Tasks' },
     ]},
   ],
 };
