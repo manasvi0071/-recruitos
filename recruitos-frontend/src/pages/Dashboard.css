@@ -1408,11 +1408,11 @@ textarea:focus-visible {
 [data-theme="light"] {
   --dash-bg: #f8f6f1;
   --dash-surface: #ffffff;
-  --dash-surface-soft: #edf0f5;
+  --dash-surface-soft: #fdfcff;
   --dash-text: #241b31;
-  --dash-muted: #e0e3eb;
+  --dash-muted: #776d83;
   --dash-border: #e8e1ef;
-  --dash-border-strong: #c1c8d7;
+  --dash-border-strong: #dcd3e8;
   --dash-primary: #65428e;
   --dash-primary-dark: #402961;
   --dash-cyan: #128da8;
@@ -1492,4 +1492,38 @@ textarea:focus-visible {
   .starticle {
     animation: none;
   }
+}
+.pipeline-step {
+  width: 100%;
+  min-width: 0;
+
+  border: 1px solid var(--dash-border);
+  border-radius: 13px;
+
+  cursor: pointer;
+  text-align: left;
+
+  background: var(--dash-surface-soft);
+
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.pipeline-step:hover {
+  border-color: var(--dash-primary);
+  background: rgba(118, 87, 232, 0.08);
+  box-shadow: 0 8px 20px rgba(118, 87, 232, 0.12);
+  transform: translateY(-3px);
+}
+
+.pipeline-step:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.pipeline-step:focus-visible {
+  outline: 3px solid rgba(118, 87, 232, 0.35);
+  outline-offset: 3px;
 }

@@ -139,6 +139,40 @@ export default function App() {
     return <AuthPanel role="corporate" />;
   }
 
+  const currentPath = window.location.pathname;
+
+if (currentPath === "/app/campusdb") {
+  return <CampusDB />;
+}
+
+if (currentPath === "/app/requirements") {
+  return <Pipeline />;
+}
+
+if (currentPath === "/app/jobs") {
+  return <Jobs />;
+}
+
+if (currentPath === "/app/resume") {
+  return <Resume />;
+}
+
+if (currentPath === "/app/aptitude") {
+  return <Aptitude />;
+}
+
+if (currentPath === "/app/interview") {
+  return <Interview />;
+}
+
+if (currentPath === "/app/offers") {
+  return <Offers />;
+}
+
+if (currentPath === "/app/joining") {
+  return <Joining />;
+}
+
   const isAppRoute = window.location.pathname.startsWith("/app");
 
   if (window.location.pathname === "/") {
@@ -214,7 +248,7 @@ if (userRole === "corporate") {
         <div className="app">
           <Sidebar activePage={activePage} setActivePage={setActivePage} role={sidebarRole} />
           <div className="main">
-            <PageComponent />
+            <PageComponent setActivePage={setActivePage} />
           </div>
         </div>
       </div>

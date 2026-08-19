@@ -24,6 +24,7 @@ import {
 } from "recharts";
 
 import "./Dashboard.css";
+import { useNavigate } from "react-router-dom";
 
 const CHART_COLORS = [
   "#7657E8",
@@ -44,8 +45,81 @@ const stageBadgeClass = {
 };
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+
   const [mode, setMode] = useState("inhouse");
   const isInhouse = mode === "inhouse";
+  const inhousePipeline = [
+    {
+      label: "Campus DB",
+      route: "/app/campusdb",
+    },
+    {
+      label: "Requirements",
+      route: "/app/requirements",
+    },
+    {
+      label: "JD",
+      route: "/app/jobs",
+    },
+    {
+      label: "Resumes",
+      route: "/app/resume",
+    },
+    {
+      label: "Assessments",
+      route: "/app/aptitude",
+    },
+    {
+      label: "Interview",
+      route: "/app/interview",
+    },
+    {
+      label: "Selection",
+      route: "/app/offers",
+    },
+    {
+      label: "Joining",
+      route: "/app/joining",
+    },
+  ];
+
+  const corporatePipeline = [
+    {
+      label: "Requirement",
+      route: "/app/corpdb",
+    },
+    {
+      label: "Sourcing",
+      route: "/app/jobs",
+    },
+    {
+      label: "Screening",
+      route: "/app/resume",
+    },
+    {
+      label: "Submission",
+      route: "/app/pipeline",
+    },
+    {
+      label: "Interview",
+      route: "/app/interview",
+    },
+    {
+      label: "Selection",
+      route: "/app/offers",
+    },
+    {
+      label: "Offer",
+      route: "/app/offers",
+    },
+    {
+      label: "Joining",
+      route: "/app/joining",
+    },
+  ];
+
+  const activePipeline = isInhouse ? inhousePipeline : corporatePipeline;
 
   const [stats, setStats] = useState({
     colleges: 0,
@@ -164,9 +238,7 @@ export default function Dashboard() {
 
     try {
       await deleteDrive(id);
-      setDrives((previous) =>
-        previous.filter((drive) => drive.id !== id),
-      );
+      setDrives((previous) => previous.filter((drive) => drive.id !== id));
     } catch (err) {
       console.error("Delete drive error:", err);
       window.alert("Could not cancel the drive. Please try again.");
@@ -195,10 +267,7 @@ export default function Dashboard() {
           { count: companiesCount, error: companiesError },
           { data: companyRows, error: companyRowsError },
           { count: positionsCount, error: positionsError },
-          {
-            count: selectionsThisWeekCount,
-            error: selectionsThisWeekError,
-          },
+          { count: selectionsThisWeekCount, error: selectionsThisWeekError },
         ] = await Promise.all([
           supabase.from("colleges").select("*", {
             count: "exact",
@@ -260,13 +329,11 @@ export default function Dashboard() {
             .gte("created_at", oneWeekAgo.toISOString()),
         ]);
 
-        const {
-          data: allApplications,
-          error: allApplicationsError,
-        } = await supabase
-          .from("applications")
-          .select("created_at, stage")
-          .order("created_at", { ascending: true });
+        const { data: allApplications, error: allApplicationsError } =
+          await supabase
+            .from("applications")
+            .select("created_at, stage")
+            .order("created_at", { ascending: true });
 
         const firstError =
           collegesError ||
@@ -295,9 +362,7 @@ export default function Dashboard() {
           if (Number.isNaN(date.getTime())) return;
 
           const weekStart = new Date(date);
-          weekStart.setDate(
-            date.getDate() - date.getDay(),
-          );
+          weekStart.setDate(date.getDate() - date.getDay());
 
           const weekKey = weekStart.toLocaleDateString("en-GB", {
             day: "2-digit",
@@ -331,9 +396,7 @@ export default function Dashboard() {
 
         const conversion =
           totalSelections > 0
-            ? Math.round(
-                (totalJoined / totalSelections) * 100,
-              )
+            ? Math.round((totalJoined / totalSelections) * 100)
             : 0;
 
         setStats({
@@ -347,9 +410,7 @@ export default function Dashboard() {
 
         setCorpStats({
           companies: companiesCount ?? 0,
-          companyNames: (companyRows ?? []).map(
-            (company) => company.name,
-          ),
+          companyNames: (companyRows ?? []).map((company) => company.name),
           positions: positionsCount ?? 0,
           selections: totalSelections,
           selectionsThisWeek: selectionsThisWeekCount ?? 0,
@@ -379,11 +440,7 @@ export default function Dashboard() {
         const upcomingDrives = await getUpcomingDrives();
 
         if (!ignore) {
-          setDrives(
-            Array.isArray(upcomingDrives)
-              ? upcomingDrives
-              : [],
-          );
+          setDrives(Array.isArray(upcomingDrives) ? upcomingDrives : []);
         }
       } catch (err) {
         console.error("Upcoming drives error:", err);
@@ -401,9 +458,7 @@ export default function Dashboard() {
         const collegeRows = await getColleges();
 
         if (!ignore) {
-          setColleges(
-            Array.isArray(collegeRows) ? collegeRows : [],
-          );
+          setColleges(Array.isArray(collegeRows) ? collegeRows : []);
         }
       } catch (err) {
         console.error("Colleges error:", err);
@@ -432,20 +487,13 @@ export default function Dashboard() {
 
           <h1>Recruitment Dashboard</h1>
 
-          <p>
-            Track campus and corporate drives from job posting to joining.
-          </p>
+          <p>Track campus and corporate drives from job posting to joining.</p>
         </div>
 
-        <div
-          className="mode-toggle"
-          aria-label="Dashboard mode"
-        >
+        <div className="mode-toggle" aria-label="Dashboard mode">
           <button
             type="button"
-            className={`mode-btn ${
-              isInhouse ? "active" : ""
-            }`}
+            className={`mode-btn ${isInhouse ? "active" : ""}`}
             onClick={() => setMode("inhouse")}
           >
             In-house
@@ -453,9 +501,7 @@ export default function Dashboard() {
 
           <button
             type="button"
-            className={`mode-btn ${
-              !isInhouse ? "active" : ""
-            }`}
+            className={`mode-btn ${!isInhouse ? "active" : ""}`}
             onClick={() => setMode("corporate")}
           >
             Corporate
@@ -503,8 +549,7 @@ export default function Dashboard() {
             helper={
               loading
                 ? "Loading..."
-                : corpStats.companyNames.join(", ") ||
-                  "No companies yet"
+                : corpStats.companyNames.join(", ") || "No companies yet"
             }
             tone="purple"
           />
@@ -513,9 +558,7 @@ export default function Dashboard() {
             value={loading ? "—" : corpStats.positions}
             label="Open Positions"
             helper={
-              loading
-                ? "Loading..."
-                : `Across ${corpStats.positions} JDs`
+              loading ? "Loading..." : `Across ${corpStats.positions} JDs`
             }
             tone="cyan"
           />
@@ -535,9 +578,7 @@ export default function Dashboard() {
             value={loading ? "—" : corpStats.joined}
             label="Joined"
             helper={
-              loading
-                ? "Loading..."
-                : `${corpStats.conversion}% conversion`
+              loading ? "Loading..." : `${corpStats.conversion}% conversion`
             }
             tone="green"
           />
@@ -558,32 +599,17 @@ export default function Dashboard() {
         </div>
 
         <div className="pipeline-track">
-          {(isInhouse
-            ? [
-                "Campus DB",
-                "Requirements",
-                "JD",
-                "Resumes",
-                "Assessments",
-                "Interview",
-                "Selection",
-                "Joining",
-              ]
-            : [
-                "Requirement",
-                "Sourcing",
-                "Screening",
-                "Submission",
-                "Interview",
-                "Selection",
-                "Offer",
-                "Joining",
-              ]
-          ).map((stage, index) => (
-            <div className="pipeline-step" key={stage}>
+          {activePipeline.map((stage, index) => (
+            <button
+              type="button"
+              className="pipeline-step"
+              key={stage.label}
+              onClick={() => navigate(stage.route)}
+              aria-label={`Open ${stage.label}`}
+            >
               <span>{String(index + 1).padStart(2, "0")}</span>
-              <strong>{stage}</strong>
-            </div>
+              <strong>{stage.label}</strong>
+            </button>
           ))}
         </div>
       </section>
@@ -591,13 +617,9 @@ export default function Dashboard() {
       <section className="dashboard-chart-card growth-card">
         <div className="chart-heading">
           <div>
-            <div className="dashboard-panel-title">
-              Applications Growth
-            </div>
+            <div className="dashboard-panel-title">Applications Growth</div>
 
-            <div className="chart-caption">
-              Applications received by week
-            </div>
+            <div className="chart-caption">Applications received by week</div>
           </div>
 
           <span className="chart-chip">Last 8 weeks</span>
@@ -670,13 +692,9 @@ export default function Dashboard() {
         <div className="dashboard-chart-card mini-chart-card">
           <div className="chart-heading">
             <div>
-              <div className="dashboard-panel-title">
-                Candidates by Stage
-              </div>
+              <div className="dashboard-panel-title">Candidates by Stage</div>
 
-              <div className="chart-caption">
-                Current recruitment pipeline
-              </div>
+              <div className="chart-caption">Current recruitment pipeline</div>
             </div>
           </div>
 
@@ -724,19 +742,11 @@ export default function Dashboard() {
 
                   <Tooltip content={<DashboardTooltip />} />
 
-                  <Bar
-                    dataKey="value"
-                    name="Candidates"
-                    radius={[7, 7, 0, 0]}
-                  >
+                  <Bar dataKey="value" name="Candidates" radius={[7, 7, 0, 0]}>
                     {stageBreakdown.map((entry, index) => (
                       <Cell
                         key={entry.name}
-                        fill={
-                          CHART_COLORS[
-                            index % CHART_COLORS.length
-                          ]
-                        }
+                        fill={CHART_COLORS[index % CHART_COLORS.length]}
                       />
                     ))}
                   </Bar>
@@ -749,13 +759,9 @@ export default function Dashboard() {
         <div className="dashboard-chart-card mini-chart-card">
           <div className="chart-heading">
             <div>
-              <div className="dashboard-panel-title">
-                Stage Distribution
-              </div>
+              <div className="dashboard-panel-title">Stage Distribution</div>
 
-              <div className="chart-caption">
-                Share of all applications
-              </div>
+              <div className="chart-caption">Share of all applications</div>
             </div>
           </div>
 
@@ -779,11 +785,7 @@ export default function Dashboard() {
                     {stageBreakdown.map((entry, index) => (
                       <Cell
                         key={entry.name}
-                        fill={
-                          CHART_COLORS[
-                            index % CHART_COLORS.length
-                          ]
-                        }
+                        fill={CHART_COLORS[index % CHART_COLORS.length]}
                       />
                     ))}
                   </Pie>
@@ -807,13 +809,9 @@ export default function Dashboard() {
         <div className="dashboard-panel applications-panel">
           <div className="dashboard-section-heading">
             <div>
-              <div className="dashboard-panel-title">
-                Recent Applications
-              </div>
+              <div className="dashboard-panel-title">Recent Applications</div>
 
-              <div className="chart-caption">
-                Latest candidate activity
-              </div>
+              <div className="chart-caption">Latest candidate activity</div>
             </div>
 
             <span className="section-icon">↗</span>
@@ -846,34 +844,23 @@ export default function Dashboard() {
                       <td>
                         <div className="candidate-cell">
                           <span className="candidate-avatar">
-                            {(
-                              application.candidates?.name || "?"
-                            )
+                            {(application.candidates?.name || "?")
                               .charAt(0)
                               .toUpperCase()}
                           </span>
 
-                          <span>
-                            {application.candidates?.name || "—"}
-                          </span>
+                          <span>{application.candidates?.name || "—"}</span>
                         </div>
                       </td>
 
-                      <td>
-                        {application.candidates?.colleges?.name ||
-                          "—"}
-                      </td>
+                      <td>{application.candidates?.colleges?.name || "—"}</td>
 
-                      <td>
-                        {application.job_profiles?.title || "—"}
-                      </td>
+                      <td>{application.job_profiles?.title || "—"}</td>
 
                       <td>
                         <span
                           className={`badge ${
-                            stageBadgeClass[
-                              application.stage
-                            ] || "gray"
+                            stageBadgeClass[application.stage] || "gray"
                           }`}
                         >
                           {application.stage || "Unknown"}
@@ -892,9 +879,7 @@ export default function Dashboard() {
         <div className="dashboard-panel drives-panel">
           <div className="dashboard-section-heading">
             <div>
-              <div className="dashboard-panel-title">
-                Upcoming Drives
-              </div>
+              <div className="dashboard-panel-title">Upcoming Drives</div>
 
               <div className="chart-caption">
                 Schedule and manage recruitment events
@@ -904,9 +889,7 @@ export default function Dashboard() {
             <button
               type="button"
               className="btn-outline"
-              onClick={() =>
-                setShowDriveForm((value) => !value)
-              }
+              onClick={() => setShowDriveForm((value) => !value)}
             >
               {showDriveForm ? "Cancel" : "+ Schedule"}
             </button>
@@ -942,25 +925,17 @@ export default function Dashboard() {
                     })
                   }
                 >
-                  <option value="Aptitude Test">
-                    Aptitude Test
-                  </option>
+                  <option value="Aptitude Test">Aptitude Test</option>
                   <option value="GD Round">GD Round</option>
                   <option value="Interview">Interview</option>
-                  <option value="Offer Rollout">
-                    Offer Rollout
-                  </option>
-                  <option value="Campus Visit">
-                    Campus Visit
-                  </option>
+                  <option value="Offer Rollout">Offer Rollout</option>
+                  <option value="Campus Visit">Campus Visit</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
 
               <div className="field">
-                <label htmlFor="drive-date">
-                  Date &amp; Time *
-                </label>
+                <label htmlFor="drive-date">Date &amp; Time *</label>
                 <input
                   id="drive-date"
                   type="datetime-local"
@@ -1034,9 +1009,7 @@ export default function Dashboard() {
             {drivesLoading ? (
               <p className="empty-state">Loading drives...</p>
             ) : drives.length === 0 ? (
-              <p className="empty-state">
-                No upcoming drives scheduled.
-              </p>
+              <p className="empty-state">No upcoming drives scheduled.</p>
             ) : (
               drives.map((drive) => (
                 <div className="timeline-item" key={drive.id}>
@@ -1048,9 +1021,7 @@ export default function Dashboard() {
                   <div className="timeline-content">
                     <div className="timeline-top">
                       <div>
-                        <div className="timeline-title">
-                          {drive.title}
-                        </div>
+                        <div className="timeline-title">{drive.title}</div>
 
                         <div className="timeline-meta">
                           {drive.type}
@@ -1063,14 +1034,10 @@ export default function Dashboard() {
                       <button
                         type="button"
                         className="cancel-drive-button"
-                        onClick={() =>
-                          handleDeleteDrive(drive.id)
-                        }
+                        onClick={() => handleDeleteDrive(drive.id)}
                         disabled={deletingId === drive.id}
                       >
-                        {deletingId === drive.id
-                          ? "..."
-                          : "Cancel"}
+                        {deletingId === drive.id ? "..." : "Cancel"}
                       </button>
                     </div>
 
@@ -1081,9 +1048,7 @@ export default function Dashboard() {
                     </div>
 
                     {drive.notes && (
-                      <div className="timeline-notes">
-                        {drive.notes}
-                      </div>
+                      <div className="timeline-notes">{drive.notes}</div>
                     )}
                   </div>
                 </div>
@@ -1096,20 +1061,12 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({
-  value,
-  label,
-  helper,
-  tone = "purple",
-}) {
+function StatCard({ value, label, helper, tone = "purple" }) {
   return (
     <article className={`stat-card stat-${tone}`}>
       <div className="stat-decoration" />
 
-      <div
-        className="stat-icon"
-        aria-hidden="true"
-      >
+      <div className="stat-icon" aria-hidden="true">
         {tone === "purple"
           ? "✦"
           : tone === "cyan"
@@ -1153,10 +1110,7 @@ function ChartEmptyState({ message }) {
 
 function StarticleBackground() {
   return (
-    <div
-      className="starticle-background"
-      aria-hidden="true"
-    >
+    <div className="starticle-background" aria-hidden="true">
       <span className="starticle starticle-1" />
       <span className="starticle starticle-2" />
       <span className="starticle starticle-3" />
