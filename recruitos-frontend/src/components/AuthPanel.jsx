@@ -32,67 +32,53 @@ export default function AuthPanel({ role = "recruiter" }) {
           ? "Admin"
           : "Recruiter";
 
-  async function handleLogin(event) {
-    event.preventDefault();
+ async function handleLogin(event) {
+  event.preventDefault();
 
-    setLoginError("");
-    setLoggingIn(true);
+  setLoginError("");
+  setLoggingIn(true);
 
-    const email = loginForm.email.trim();
+  const { data: authData, error } =
+    await supabase.auth.signInWithPassword({
+      email: loginForm.email,
+      password: loginForm.password,
+    });
 
-    const { data: authData, error: authError } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password: loginForm.password,
-      });
-
-    if (authError) {
-      console.error("Supabase login error:", authError);
-      setLoginError(authError.message);
-      setLoggingIn(false);
-      return;
-    }
-
-    if (!authData?.user) {
-      setLoginError("Login failed. No user session was returned.");
-      setLoggingIn(false);
-      return;
-    }
-
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role, approved")
-      .eq("id", authData.user.id)
-      .maybeSingle();
-
-    if (profileError) {
-      console.error("Profile error:", profileError);
-      await supabase.auth.signOut();
-      setLoginError(`Profile error: ${profileError.message}`);
-      setLoggingIn(false);
-      return;
-    }
-
-    if (!profile) {
-      await supabase.auth.signOut();
-      setLoginError(
-        "Login succeeded, but no profile was found for this account.",
-      );
-      setLoggingIn(false);
-      return;
-    }
-
-    if (profile.role && profile.role !== role) {
-      await supabase.auth.signOut();
-      setLoginError(
-        `This account is registered as "${profile.role}". Please use the correct login page.`,
-      );
-      setLoggingIn(false);
-      return;
-    }
-
-    window.location.replace("/app");
+  if (error) {
+    setLoginError(error.message);
+    setLoggingIn(false);
+    return;
   }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role, approved")
+    .eq("id", authData.user.id)
+    .single();
+
+  if (profileError) {
+    console.error("Profile error:", profileError);
+    setLoginError(profileError.message);
+    setLoggingIn(false);
+    return;
+  }
+
+  const actualRole = profile?.role;
+
+  if (actualRole && actualRole !== role) {
+    await supabase.auth.signOut();
+
+    setLoginError(
+      `This account is registered as "${actualRole}", not "${role}". Please log in from the ${actualRole} login page instead.`,
+    );
+
+    setLoggingIn(false);
+    return;
+  }
+
+  // This is the important missing line.
+  window.location.href = "/app";
+}
 
   async function handleRegister(event) {
     event.preventDefault();
