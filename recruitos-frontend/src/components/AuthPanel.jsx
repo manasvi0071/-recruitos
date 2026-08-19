@@ -5,7 +5,6 @@ import "./AuthPanel.css";
 
 export default function AuthPanel({ role = "recruiter" }) {
   const [mode, setMode] = useState("login");
-  const [isFlipping, setIsFlipping] = useState(false);
 
   const [loginForm, setLoginForm] = useState({
     email: "",
@@ -14,7 +13,6 @@ export default function AuthPanel({ role = "recruiter" }) {
 
   const [loginError, setLoginError] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
-  const [loginResult, setLoginResult] = useState("");
 
   const [regForm, setRegForm] = useState({
     name: "",
@@ -34,107 +32,66 @@ export default function AuthPanel({ role = "recruiter" }) {
           ? "Admin"
           : "Recruiter";
 
-  function changeMode(nextMode) {
-    if (isFlipping || mode === nextMode) return;
-
-    setIsFlipping(true);
-
-    window.setTimeout(() => {
-      setMode(nextMode);
-      setIsFlipping(false);
-    }, 700);
-  }
-
   async function handleLogin(event) {
-  event.preventDefault();
+    event.preventDefault();
 
-  setLoginError("");
-  setLoginResult("");
-  setLoggingIn(true);
-
-  const email = loginForm.email.trim();
-
-  console.log("Attempting login with:", email);
-
-  const { data: authData, error: authError } =
-    await supabase.auth.signInWithPassword({
-      email,
-      password: loginForm.password,
-    });
-
-  console.log("Supabase auth response:", {
-    authData,
-    authError,
-  });
-
-  if (authError) {
-    setLoginError(`${authError.code || "AUTH_ERROR"}: ${authError.message}`);
-    setLoggingIn(false);
-    return;
-  }
-
-  if (!authData?.user) {
-    setLoginError("No authenticated user was returned.");
-    setLoggingIn(false);
-    return;
-  }
-
-  console.log("Authenticated user ID:", authData.user.id);
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("role, approved")
-    .eq("id", authData.user.id)
-    .maybeSingle();
-
-  console.log("Profile response:", {
-    profile,
-    profileError,
-  });
-
-  if (profileError) {
-    await supabase.auth.signOut();
-
-    setLoginError(
-      `Profile error: ${profileError.code || ""} ${profileError.message}`,
-    );
-    setLoggingIn(false);
-    return;
-  }
-
-  if (!profile) {
-    await supabase.auth.signOut();
-
-    setLoginError(
-      "Login succeeded, but no profile was found for this user. Create a row in the profiles table.",
-    );
-    setLoggingIn(false);
-    return;
-  }
-
-  if (profile.role && profile.role !== role) {
-    await supabase.auth.signOut();
-
-    setLoginError(
-      `This account is registered as "${profile.role}", not "${role}".`,
-    );
-    setLoggingIn(false);
-    return;
-  }
-
-  setLoginResult("Login successful");
-  setLoggingIn(false);
-  changeMode("result");
-}
-
-  function continueToWorkspace() {
-    window.location.href = "/app";
-  }
-
-  function handleLoginAgain() {
-    setLoginResult("");
     setLoginError("");
-    changeMode("login");
+    setLoggingIn(true);
+
+    const email = loginForm.email.trim();
+
+    const { data: authData, error: authError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password: loginForm.password,
+      });
+
+    if (authError) {
+      console.error("Supabase login error:", authError);
+      setLoginError(authError.message);
+      setLoggingIn(false);
+      return;
+    }
+
+    if (!authData?.user) {
+      setLoginError("Login failed. No user session was returned.");
+      setLoggingIn(false);
+      return;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role, approved")
+      .eq("id", authData.user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error("Profile error:", profileError);
+      await supabase.auth.signOut();
+      setLoginError(`Profile error: ${profileError.message}`);
+      setLoggingIn(false);
+      return;
+    }
+
+    if (!profile) {
+      await supabase.auth.signOut();
+      setLoginError(
+        "Login succeeded, but no profile was found for this account.",
+      );
+      setLoggingIn(false);
+      return;
+    }
+
+    if (profile.role && profile.role !== role) {
+      await supabase.auth.signOut();
+      setLoginError(
+        `This account is registered as "${profile.role}". Please use the correct login page.`,
+      );
+      setLoggingIn(false);
+      return;
+    }
+
+    window.location.replace("/app");
   }
 
   async function handleRegister(event) {
@@ -172,17 +129,15 @@ export default function AuthPanel({ role = "recruiter" }) {
     }
   }
 
-  function handleRegistrationLogin() {
+  function resetRegistration() {
     setRegStatus("idle");
     setRegError("");
-
     setRegForm({
       name: "",
       email: "",
       password: "",
     });
-
-    changeMode("login");
+    setMode("login");
   }
 
   return (
@@ -190,95 +145,86 @@ export default function AuthPanel({ role = "recruiter" }) {
       <CampusBackground />
 
       <section className="auth-stage">
-        <div
-          className={`auth-coin-wrapper ${
-            mode === "register" ? "show-register" : ""
-          } ${mode === "result" ? "show-result" : ""} ${
-            isFlipping ? "is-flipping" : ""
-          }`}
-        >
-          <div className="auth-coin">
-            <section className="auth-coin-face auth-coin-front">
-              <div className="auth-inner-content">
-                <div className="auth-logo">
-                  <SaarthiLogo size={44} />
+        <div className="auth-simple-card">
+          {mode === "login" && (
+            <div className="auth-inner-content">
+              <div className="auth-logo">
+                <SaarthiLogo size={44} />
+              </div>
+
+              <p className="auth-eyebrow">SAARTHI PLATFORM</p>
+
+              <h1>{roleLabel} Login</h1>
+
+              <p className="auth-description">
+                Log in to continue to your workspace.
+              </p>
+
+              <form className="circle-auth-form" onSubmit={handleLogin}>
+                <div className="circle-field">
+                  <label htmlFor="login-email">Email</label>
+                  <input
+                    id="login-email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={loginForm.email}
+                    onChange={(event) =>
+                      setLoginForm({
+                        ...loginForm,
+                        email: event.target.value,
+                      })
+                    }
+                    required
+                  />
                 </div>
 
-                <p className="auth-eyebrow">SAARTHI PLATFORM</p>
+                <div className="circle-field">
+                  <label htmlFor="login-password">Password</label>
+                  <input
+                    id="login-password"
+                    type="password"
+                    placeholder="Your password"
+                    value={loginForm.password}
+                    onChange={(event) =>
+                      setLoginForm({
+                        ...loginForm,
+                        password: event.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
 
-                <h1>{roleLabel} Login</h1>
-
-                <p className="auth-description">
-                  Log in to continue to your workspace.
-                </p>
-
-                <form className="circle-auth-form" onSubmit={handleLogin}>
-                  <div className="circle-field">
-                    <label htmlFor="login-email">Email</label>
-
-                    <input
-                      id="login-email"
-                      type="email"
-                      placeholder="name@example.com"
-                      value={loginForm.email}
-                      onChange={(event) =>
-                        setLoginForm({
-                          ...loginForm,
-                          email: event.target.value,
-                        })
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div className="circle-field">
-                    <label htmlFor="login-password">Password</label>
-
-                    <input
-                      id="login-password"
-                      type="password"
-                      placeholder="Your password"
-                      value={loginForm.password}
-                      onChange={(event) =>
-                        setLoginForm({
-                          ...loginForm,
-                          password: event.target.value,
-                        })
-                      }
-                      required
-                    />
-                  </div>
-
-                  {loginError && (
-                    <p className="circle-error" role="alert">
-                      {loginError}
-                    </p>
-                  )}
-
-                  <button
-                    className="circle-login-button"
-                    type="submit"
-                    disabled={loggingIn || isFlipping}
-                  >
-                    {loggingIn ? "Checking..." : "Log In"}
-                    <span>↗</span>
-                  </button>
-                </form>
+                {loginError && (
+                  <p className="circle-error" role="alert">
+                    {loginError}
+                  </p>
+                )}
 
                 <button
-                  className="circle-bottom-link"
-                  type="button"
-                  onClick={() => changeMode("register")}
-                  disabled={isFlipping}
+                  className="circle-login-button"
+                  type="submit"
+                  disabled={loggingIn}
                 >
-                  New here? Create an account
+                  {loggingIn ? "Checking..." : "Log In"}
+                  <span>↗</span>
                 </button>
-              </div>
-            </section>
+              </form>
 
-            <section className="auth-coin-face auth-coin-back">
+              <button
+                className="circle-bottom-link"
+                type="button"
+                onClick={() => setMode("register")}
+              >
+                New here? Create an account
+              </button>
+            </div>
+          )}
+
+          {mode === "register" && (
+            <div className="auth-inner-content">
               {regStatus === "done" ? (
-                <div className="auth-inner-content registration-success">
+                <div className="registration-success">
                   <div className="success-icon">✓</div>
 
                   <p className="auth-eyebrow">ALL SET</p>
@@ -291,22 +237,21 @@ export default function AuthPanel({ role = "recruiter" }) {
 
                   <p className="back-description">
                     {role === "candidate"
-                      ? "You're registered. You can now log in with your email and password."
+                      ? "You're registered. You can now log in."
                       : "An admin has been notified. You'll be able to log in once approved."}
                   </p>
 
                   <button
                     className="circle-login-button"
                     type="button"
-                    onClick={handleRegistrationLogin}
-                    disabled={isFlipping}
+                    onClick={resetRegistration}
                   >
                     Go to Login
                     <span>↗</span>
                   </button>
                 </div>
               ) : (
-                <div className="auth-inner-content">
+                <>
                   <div className="auth-logo">
                     <SaarthiLogo size={44} />
                   </div>
@@ -316,9 +261,7 @@ export default function AuthPanel({ role = "recruiter" }) {
                   <h2>{roleLabel} Sign Up</h2>
 
                   <p className="back-description">
-                    {role === "candidate"
-                      ? "Create your account to track applications."
-                      : "Submit your details for admin review."}
+                    Submit your details for admin review.
                   </p>
 
                   <form
@@ -327,7 +270,6 @@ export default function AuthPanel({ role = "recruiter" }) {
                   >
                     <div className="circle-field">
                       <label htmlFor="register-name">Full Name</label>
-
                       <input
                         id="register-name"
                         type="text"
@@ -345,7 +287,6 @@ export default function AuthPanel({ role = "recruiter" }) {
 
                     <div className="circle-field">
                       <label htmlFor="register-email">Email</label>
-
                       <input
                         id="register-email"
                         type="email"
@@ -363,7 +304,6 @@ export default function AuthPanel({ role = "recruiter" }) {
 
                     <div className="circle-field">
                       <label htmlFor="register-password">Password</label>
-
                       <input
                         id="register-password"
                         type="password"
@@ -381,7 +321,7 @@ export default function AuthPanel({ role = "recruiter" }) {
                     </div>
 
                     {regError && (
-                      <p className="circle-error register-error" role="alert">
+                      <p className="circle-error" role="alert">
                         {regError}
                       </p>
                     )}
@@ -389,7 +329,7 @@ export default function AuthPanel({ role = "recruiter" }) {
                     <button
                       className="circle-login-button"
                       type="submit"
-                      disabled={regStatus === "loading" || isFlipping}
+                      disabled={regStatus === "loading"}
                     >
                       {regStatus === "loading"
                         ? "Submitting..."
@@ -401,49 +341,14 @@ export default function AuthPanel({ role = "recruiter" }) {
                   <button
                     className="circle-bottom-link"
                     type="button"
-                    onClick={() => changeMode("login")}
-                    disabled={isFlipping}
+                    onClick={() => setMode("login")}
                   >
                     Already have an account? Log in
                   </button>
-                </div>
+                </>
               )}
-            </section>
-
-            <section className="auth-coin-face auth-coin-result-face">
-              <div className="result-content">
-                <div className="result-symbol">✓</div>
-
-                <p className="auth-eyebrow">WELCOME ABOARD</p>
-
-                <h2>{loginResult || "Ready to begin?"}</h2>
-
-                <p>
-                  Your Saarthi workspace is ready. Keep building your next
-                  chapter.
-                </p>
-
-                <button
-                  className="circle-login-button"
-                  type="button"
-                  onClick={continueToWorkspace}
-                  disabled={isFlipping}
-                >
-                  Continue to workspace
-                  <span>↗</span>
-                </button>
-
-                <button
-                  className="circle-bottom-link"
-                  type="button"
-                  onClick={handleLoginAgain}
-                  disabled={isFlipping}
-                >
-                  Log in again
-                </button>
-              </div>
-            </section>
-          </div>
+            </div>
+          )}
         </div>
       </section>
     </main>
@@ -454,18 +359,14 @@ function CampusBackground() {
   return (
     <div className="campus-background" aria-hidden="true">
       <div className="canvas-grid" />
-
       <div className="soft-orb orb-left" />
       <div className="soft-orb orb-right" />
-
       <div className="campus-sun" />
-
       <div className="campus-hill hill-back" />
       <div className="campus-hill hill-front" />
 
       <div className="campus-building building-main">
         <div className="building-roof" />
-
         <div className="building-body">
           <span />
           <span />
@@ -473,13 +374,11 @@ function CampusBackground() {
           <span />
           <span />
         </div>
-
         <div className="building-door" />
       </div>
 
       <div className="campus-building building-small">
         <div className="building-roof" />
-
         <div className="building-body">
           <span />
           <span />
@@ -499,7 +398,6 @@ function CampusBackground() {
 
       <div className="campus-path path-one" />
       <div className="campus-path path-two" />
-
       <div className="campus-cap">
         <span>✦</span>
       </div>
