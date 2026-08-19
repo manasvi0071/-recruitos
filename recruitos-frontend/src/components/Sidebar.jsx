@@ -1,12 +1,10 @@
-// Delete this line:
-// import { useState } from "react";
-
 const NAV = {
   admin: [
     { section: 'Overview', items: [{ key: 'dashboard', icon: '◆', label: 'Dashboard' }] },
     { section: 'Setup', items: [
       { key: 'campusdb', icon: '▤', label: 'Campus Database' },
       { key: 'corpdb', icon: '▤', label: 'Corporate Database' },
+      { key: 'candidatedb', icon: '▤', label: 'Candidate Database' },
       { key: 'jobs', icon: '▤', label: 'Job Profiles' },
       { key: 'bidportal', icon: '💰', label: 'Bid Portal' },
     ]},
@@ -30,8 +28,13 @@ const NAV = {
     ]},
   ],
 
-  recruiter: [
+recruiter: [
     { section: 'Overview', items: [{ key: 'dashboard', icon: '◆', label: 'Dashboard' }] },
+    { section: 'Database', items: [
+      { key: 'campusdb', icon: '▤', label: 'Campus Database' },
+      { key: 'corpdb', icon: '▤', label: 'Corporate Database' },
+      { key: 'candidatedb', icon: '▤', label: 'Candidate Database' },
+    ]},
     { section: 'Recruitment', items: [
       { key: 'resume', icon: '→', label: 'Resume Analyzer (AI)' },
       { key: 'aptitude', icon: '→', label: 'Aptitude Test' },
@@ -45,7 +48,7 @@ const NAV = {
       { key: 'notifications', icon: '🔔', label: 'Notifications' },
       { key: 'calendartasks', icon: '📅', label: 'Calendar & Tasks' },
     ]},
-  ],
+],
 
   corporate: [
     { section: 'Overview', items: [{ key: 'corporateDashboard', icon: '◆', label: 'Company Dashboard' }] },
@@ -54,12 +57,11 @@ const NAV = {
       { key: 'resume', icon: '→', label: 'Applications' },
       { key: 'interview', icon: '→', label: 'Interviews' },
       { key: 'offers', icon: '●', label: 'Offer Letters' },
-      { key: 'reports', icon: '●', label: 'Reports & Analytics' },
+      { key: 'joining', icon: '●', label: 'Employee (Joined)' },
+      { key: 'approvals', icon: '✓', label: 'Approvals' },
+      { key: 'documents', icon: '📄', label: 'Documents' },
     ]},
-    { section: 'Tools', items: [
-      { key: 'notifications', icon: '🔔', label: 'Notifications' },
-    ]},
-  ],
+],
 
   candidate: [
     { section: 'My Journey', items: [

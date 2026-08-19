@@ -811,18 +811,15 @@ export default function CampusDB() {
           </button>
 
           <button className="btn-gold" onClick={startAdd}>
-            + Add College
-          </button>
+  + Add College
+</button>
 
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              className="btn-outline"
-              onClick={() => setShowImport((v) => !v)}
-            >
-              {showImport ? "✕ Close Import" : "🤖 AI Import Excel/PDF"}
-            </button>
-            <button className="btn-gold">+ Add College</button>
-          </div>
+<button
+  className="btn-outline"
+  onClick={() => setShowImport((v) => !v)}
+>
+  {showImport ? "✕ Close Import" : "🤖 AI Import Excel/PDF"}
+</button>
         </div>
       </div>
 

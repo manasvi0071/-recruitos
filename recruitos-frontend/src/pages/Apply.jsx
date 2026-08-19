@@ -1,13 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
-import { getJobs, getColleges, uploadResume, createCandidate, applyToJob, updateApplicationScore } from '../lib/api';
+import { getJobs, getColleges, uploadResume, uploadPhoto, createCandidate, applyToJob, updateApplicationScore } from '../lib/api';
 import { extractPdfText, scoreResume } from '../lib/resumeScoring';
 import CollegeAutocomplete from './CollegeAutocomplete';
 import { sanitizePhone } from '../lib/phone';
 import { isValidEmail } from '../lib/email';
 
-// Employment type values in the data are inconsistently entered
-// (e.g. "Full-Time", "internship", "Internship Full-Time", "Full-Time / Training Role").
-// Normalize them into a small set of clean categories for the filter dropdown.
 function normalizeEmploymentType(raw) {
   if (!raw) return null;
   const t = raw.toLowerCase();
@@ -28,9 +25,15 @@ export default function Apply() {
   const [appliedJobIds, setAppliedJobIds] = useState([]);
   const [scoringJobIds, setScoringJobIds] = useState([]);
 
-  const [form, setForm] = useState({ name: '', email: '', phone: '', college_id: '', college_other: '' });
-  const [collegeMode, setCollegeMode] = useState('search'); // 'search' | 'manual'
+  const [form, setForm] = useState({
+    name: '', email: '', phone: '', college_id: '', college_other: '',
+    degree: '', branch: '', cgpa: '', passing_year: '',
+    active_backlogs: false, tenth_percentage: '', twelfth_percentage: '',
+  });
+  const [collegeMode, setCollegeMode] = useState('search');
   const [file, setFile] = useState(null);
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [applyingJobId, setApplyingJobId] = useState(null);
@@ -45,6 +48,16 @@ export default function Apply() {
     getColleges().then(setColleges).catch(() => {});
     getJobs().then(setJobs).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!photo) {
+      setPhotoPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(photo);
+    setPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photo]);
 
   const locationOptions = useMemo(
     () => ['all', ...new Set(jobs.map((j) => j.location).filter(Boolean))],
@@ -66,7 +79,30 @@ export default function Apply() {
     });
   }, [jobs, search, locationFilter, experienceFilter, typeFilter]);
 
-async function handleFormSubmit(e) {
+  function handlePhotoChange(e) {
+    const f = e.target.files[0];
+    if (!f) { setPhoto(null); return; }
+    if (!f.type.startsWith('image/')) {
+      setError('Please upload a valid image file for the photo.');
+      e.target.value = '';
+      return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      setError('Photo size must be under 5MB.');
+      e.target.value = '';
+      return;
+    }
+    setError('');
+    setPhoto(f);
+  }
+
+  function handleRemovePhoto() {
+    setPhoto(null);
+    const input = document.getElementById('photo-input');
+    if (input) input.value = '';
+  }
+
+  async function handleFormSubmit(e) {
     e.preventDefault();
     setError('');
     if (!file) { setError('Please upload your resume (PDF).'); return; }
@@ -74,8 +110,13 @@ async function handleFormSubmit(e) {
     if (form.phone && form.phone.length !== 10) { setError('Phone number must be exactly 10 digits.'); return; }
     setLoading(true);
     try {
+      let photo_url = null;
+      if (photo) {
+        photo_url = await uploadPhoto(photo);
+      }
+
       const resume_url = await uploadResume(file);
-      const candidate = await createCandidate({ ...form, resume_url });
+      const candidate = await createCandidate({ ...form, resume_url, photo_url });
       setCandidateId(candidate.id);
 
       try {
@@ -186,13 +227,13 @@ async function handleFormSubmit(e) {
             </div>
             <div className="field">
               <label>Phone</label>
-<input
-  value={form.phone}
-  onChange={(e) => setForm({ ...form, phone: sanitizePhone(e.target.value) })}
-  inputMode="numeric"
-  maxLength={10}
-  placeholder="10-digit mobile number"
-/>
+              <input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: sanitizePhone(e.target.value) })}
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="10-digit mobile number"
+              />
             </div>
             <div className="field">
               <label>College</label>
@@ -230,6 +271,130 @@ async function handleFormSubmit(e) {
                 </div>
               )}
             </div>
+
+            <div className="field">
+              <label>Degree *</label>
+              <select value={form.degree} onChange={(e) => setForm({ ...form, degree: e.target.value })} required>
+                <option value="">Select degree</option>
+                <option value="B.Tech">B.Tech</option>
+                <option value="BCA">BCA</option>
+                <option value="B.Sc">B.Sc</option>
+                <option value="MBA">MBA</option>
+                <option value="MCA">MCA</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div className="field">
+              <label>Branch / Specialization *</label>
+              <input
+                value={form.branch}
+                onChange={(e) => setForm({ ...form, branch: e.target.value })}
+                placeholder="e.g. Computer Science"
+                required
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <div className="field" style={{ flex: 1 }}>
+                <label>CGPA / % *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.cgpa}
+                  onChange={(e) => setForm({ ...form, cgpa: e.target.value })}
+                  placeholder="e.g. 8.2"
+                  required
+                />
+              </div>
+              <div className="field" style={{ flex: 1 }}>
+                <label>Passing Year *</label>
+                <input
+                  type="number"
+                  value={form.passing_year}
+                  onChange={(e) => setForm({ ...form, passing_year: e.target.value })}
+                  placeholder="e.g. 2026"
+                  required
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <div className="field" style={{ flex: 1 }}>
+                <label>10th %</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.tenth_percentage}
+                  onChange={(e) => setForm({ ...form, tenth_percentage: e.target.value })}
+                />
+              </div>
+              <div className="field" style={{ flex: 1 }}>
+                <label>12th %</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.twelfth_percentage}
+                  onChange={(e) => setForm({ ...form, twelfth_percentage: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="field" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type="checkbox"
+                id="backlogs"
+                checked={form.active_backlogs}
+                onChange={(e) => setForm({ ...form, active_backlogs: e.target.checked })}
+                style={{ width: 'auto' }}
+              />
+              <label htmlFor="backlogs" style={{ margin: 0 }}>I have active backlogs</label>
+            </div>
+
+            <div className="field">
+              <label>Profile Photo</label>
+              <input id="photo-input" type="file" accept="image/*" onChange={handlePhotoChange} />
+              {photoPreview && (
+                <div style={{ position: 'relative', display: 'inline-block', marginTop: 8 }}>
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
+                    onClick={() => window.open(photoPreview, '_blank')}
+                    style={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '1px solid var(--line, #e5e5e5)',
+                      cursor: 'zoom-in',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    style={{
+                      position: 'absolute',
+                      top: -6,
+                      right: -6,
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      background: '#d64545',
+                      color: '#fff',
+                      border: '2px solid #fff',
+                      fontSize: 12,
+                      lineHeight: '16px',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                    aria-label="Remove photo"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="field">
               <label>Resume (PDF) *</label>
               <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files[0])} required />

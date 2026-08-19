@@ -301,15 +301,6 @@ export async function getOffers() {
   return data;
 }
 
-export async function getCandidates() {
-  const { data, error } = await supabase
-    .from('candidates')
-    .select('id, name, college_id, colleges ( name )')
-    .order('name', { ascending: true });
-  if (error) throw error;
-  return data;
-}
-
 // Only candidates who currently have an application sitting in the given
 // Pipeline stage (e.g. 'Aptitude', 'GD', 'Interview'). Used to keep the
 // candidate dropdowns in those modules in sync with the Hiring Pipeline board.
@@ -478,7 +469,32 @@ export async function uploadResume(file) {
   return data.publicUrl;
 }
 
-export async function createCandidate({ name, email, phone, college_id, college_other, resume_url }) {
+export async function uploadPhoto(file) {
+  const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+  const { error: uploadError } = await supabase.storage.from('candidate-photos').upload(fileName, file);
+  if (uploadError) throw uploadError;
+  const { data } = supabase.storage.from('candidate-photos').getPublicUrl(fileName);
+  return data.publicUrl;
+}
+
+export async function createCandidate({
+  name, email, phone, college_id, college_other, resume_url, photo_url,
+  degree, branch, cgpa, passing_year, active_backlogs, tenth_percentage, twelfth_percentage,
+}) {
+  const payload = {
+    name, phone,
+    college_id: college_id || null,
+    college_other: college_other || null,
+    resume_url, photo_url,
+    degree: degree || null,
+    branch: branch || null,
+    cgpa: cgpa ? Number(cgpa) : null,
+    passing_year: passing_year ? Number(passing_year) : null,
+    active_backlogs: !!active_backlogs,
+    tenth_percentage: tenth_percentage ? Number(tenth_percentage) : null,
+    twelfth_percentage: twelfth_percentage ? Number(twelfth_percentage) : null,
+  };
+
   const { data: existing, error: lookupError } = await supabase
     .from('candidates')
     .select('id')
@@ -489,7 +505,7 @@ export async function createCandidate({ name, email, phone, college_id, college_
   if (existing) {
     const { data, error } = await supabase
       .from('candidates')
-      .update({ name, phone, college_id: college_id || null, college_other: college_other || null, resume_url })
+      .update(payload)
       .eq('id', existing.id)
       .select()
       .single();
@@ -499,7 +515,7 @@ export async function createCandidate({ name, email, phone, college_id, college_
 
   const { data, error } = await supabase
     .from('candidates')
-    .insert([{ name, email, phone, college_id: college_id || null, college_other: college_other || null, resume_url }])
+    .insert([{ ...payload, email }])
     .select()
     .single();
   if (error) throw error;
@@ -638,4 +654,18 @@ export async function getRecruiterPerformance() {
   const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/calls/performance`);
   if (!res.ok) throw new Error('Failed to load recruiter performance');
   return res.json();
+}
+
+export async function getCandidates() {
+  const { data, error } = await supabase
+    .from('candidates')
+    .select(`
+      id, name, email, phone, photo_url, resume_url,
+      degree, branch, cgpa, passing_year, active_backlogs,
+      tenth_percentage, twelfth_percentage,
+      college_id, college_other, colleges ( name )
+    `)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
 }

@@ -28,11 +28,16 @@ import CorporateDashboard from "./pages/CorporateDashboard";
 import Notifications from './pages/Notifications';
 import CalendarTasks from './pages/CalendarTasks';
 import BidPortal from './pages/BidPortal';
+import CandidateDB from "./pages/CandidateDB";
+import Approvals from "./pages/Approvals";
+import Documents from "./pages/Documents";
+
 // Pages available to admin / recruiter
 const pages = {
   dashboard: Dashboard,
   campusdb: CampusDB,
   corpdb: CorpDB,
+  candidatedb: CandidateDB,   // ← NEW
   jobs: Jobs,
   resume: Resume,
   aptitude: Aptitude,
@@ -171,15 +176,15 @@ export default function App() {
 
     // Corporate-only pages
     const corporatePages = {
-      corporateDashboard: () => <CorporateDashboard user={session.user} />,
-      jobs: Jobs,
-      interview: Interview,
-      offers: Offers,
-      joining: Joining,
-      reports: Reports,
-      notifications: Notifications,
-      calendartasks: CalendarTasks,
-    };
+  corporateDashboard: () => <CorporateDashboard user={session.user} />,
+  jobs: Jobs,
+  resume: Resume,
+  interview: Interview,
+  offers: Offers,
+  joining: Joining,
+  approvals: Approvals,     // ← naya page banana hoga
+  documents: Documents,     // ← naya page banana hoga
+};
 
     let PageComponent;
 const sidebarRole = userRole === "corporate" ? "corporate"

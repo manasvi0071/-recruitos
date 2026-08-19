@@ -530,18 +530,15 @@ export default function CorpDB() {
           </button>
 
           <button className="btn-gold" onClick={startAddCompany}>
-            + Add Company
-          </button>
+  + Add Company
+</button>
 
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              className="btn-outline"
-              onClick={() => setShowImport((v) => !v)}
-            >
-              {showImport ? "✕ Close Import" : "🤖 AI Import Excel/PDF"}
-            </button>
-            <button className="btn-gold">+ Add Company</button>
-          </div>
+<button
+  className="btn-outline"
+  onClick={() => setShowImport((v) => !v)}
+>
+  {showImport ? "✕ Close Import" : "🤖 AI Import Excel/PDF"}
+</button>
         </div>
       </div>
 
