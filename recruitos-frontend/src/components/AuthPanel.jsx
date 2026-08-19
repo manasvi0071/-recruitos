@@ -4,7 +4,9 @@ import SaarthiLogo from "./SaarthiLogo";
 import "./AuthPanel.css";
 
 export default function AuthPanel({ role = "recruiter" }) {
-  const [mode, setMode] = useState("login");
+  const [side, setSide] = useState("login");
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [loginResult, setLoginResult] = useState("");
 
   const [loginForm, setLoginForm] = useState({
     email: "",
@@ -13,19 +15,6 @@ export default function AuthPanel({ role = "recruiter" }) {
 
   const [loginError, setLoginError] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
-
-  const [regForm, setRegForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
-
-  const [regStatus, setRegStatus] = useState("idle");
-  const [regError, setRegError] = useState("");
-
-  const [coinSide, setCoinSide] = useState("front");
-  const [isFlipping, setIsFlipping] = useState(false);
-  const [coinResult, setCoinResult] = useState("");
 
   const roleLabel =
     role === "candidate"
@@ -36,8 +25,20 @@ export default function AuthPanel({ role = "recruiter" }) {
           ? "Admin"
           : "Recruiter";
 
+  function flipPanel(nextSide) {
+    if (isFlipping) return;
+
+    setIsFlipping(true);
+
+    window.setTimeout(() => {
+      setSide(nextSide);
+      setIsFlipping(false);
+    }, 650);
+  }
+
   async function handleLogin(event) {
     event.preventDefault();
+
     setLoginError("");
     setLoggingIn(true);
 
@@ -62,407 +63,208 @@ export default function AuthPanel({ role = "recruiter" }) {
       await supabase.auth.signOut();
 
       setLoginError(
-        `This account is registered as "${actualRole}", not "${role}". Please log in from the ${actualRole} login page instead.`,
+        `This account is registered as "${actualRole}", not "${role}".`,
       );
 
       setLoggingIn(false);
       return;
     }
 
-    window.location.href = "/app";
+    setLoginResult("Login successful");
+    setLoggingIn(false);
+
+    // Flip the circle to the success side.
+    flipPanel("result");
   }
 
-  async function handleRegister(event) {
-    event.preventDefault();
-    setRegError("");
-    setRegStatus("loading");
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/register`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...regForm,
-            role,
-          }),
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Registration failed");
-      }
-
-      setRegStatus("done");
-    } catch (error) {
-      setRegError(error.message);
-      setRegStatus("idle");
-    }
-  }
-
-  function switchMode(nextMode) {
-    setMode(nextMode);
+  function handleLoginAgain() {
+    setLoginResult("");
     setLoginError("");
-    setRegError("");
-  }
-
-  function flipCoin() {
-    if (isFlipping) return;
-
-    const nextSide = Math.random() > 0.5 ? "front" : "back";
-
-    setIsFlipping(true);
-    setCoinResult("");
-
-    window.setTimeout(() => {
-      setCoinSide(nextSide);
-      setIsFlipping(false);
-      setCoinResult(
-        nextSide === "front"
-          ? "A fresh opportunity is waiting."
-          : "Keep moving forward.",
-      );
-    }, 900);
+    flipPanel("login");
   }
 
   return (
-    <main className="auth-page">
-      <div className="campus-orbit campus-orbit-one" />
-      <div className="campus-orbit campus-orbit-two" />
+    <main className="canvas-auth-page">
+      <CampusBackground />
 
-      <div className="campus-dots dots-one" />
-      <div className="campus-dots dots-two" />
+      <section className="auth-stage">
+        <div
+          className={`auth-coin-wrapper ${
+            isFlipping ? "auth-coin-is-flipping" : ""
+          } ${side === "result" ? "auth-coin-result" : ""}`}
+        >
+          <div className="auth-coin">
+            <section className="auth-coin-face auth-coin-front">
+              <div className="auth-inner-content">
+                <div className="auth-logo">
+                  <SaarthiLogo size={42} />
+                </div>
 
-      <div className="campus-building building-one">
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
+                <p className="auth-eyebrow">SAARTHI PLATFORM</p>
 
-      <div className="campus-building building-two">
-        <span />
-        <span />
-        <span />
-      </div>
-
-      <section
-        className={`auth-shell ${
-          mode === "register" ? "auth-shell-register" : ""
-        }`}
-      >
-        <div className="auth-form-area">
-          <div className="form-track">
-            <section className="auth-form-panel login-panel">
-              <div className="brand-mark">
-                <SaarthiLogo size={46} />
-                <span>SAARTHI</span>
-              </div>
-
-              <div className="form-heading">
-                <p className="eyebrow">WELCOME BACK</p>
                 <h1>{roleLabel} Login</h1>
-                <p>Log in to continue to your workspace.</p>
-              </div>
 
-              <form onSubmit={handleLogin} className="auth-form">
-                <div className="field">
-                  <label htmlFor="login-email">Email address</label>
-                  <input
-                    id="login-email"
-                    type="email"
-                    placeholder="name@company.com"
-                    value={loginForm.email}
-                    onChange={(event) =>
-                      setLoginForm({
-                        ...loginForm,
-                        email: event.target.value,
-                      })
-                    }
-                    required
-                  />
-                </div>
+                <p className="auth-description">
+                  Log in to continue to your workspace.
+                </p>
 
-                <div className="field">
-                  <label htmlFor="login-password">Password</label>
-                  <input
-                    id="login-password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={loginForm.password}
-                    onChange={(event) =>
-                      setLoginForm({
-                        ...loginForm,
-                        password: event.target.value,
-                      })
-                    }
-                    required
-                  />
-                </div>
+                <form className="circle-auth-form" onSubmit={handleLogin}>
+                  <div className="circle-field">
+                    <label htmlFor="email">Email</label>
+                    <input
+                      id="email"
+                      type="email"
+                      placeholder="name@example.com"
+                      value={loginForm.email}
+                      onChange={(event) =>
+                        setLoginForm({
+                          ...loginForm,
+                          email: event.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
 
-                {loginError && (
-                  <p className="form-error" role="alert">
-                    {loginError}
-                  </p>
-                )}
+                  <div className="circle-field">
+                    <label htmlFor="password">Password</label>
+                    <input
+                      id="password"
+                      type="password"
+                      placeholder="Your password"
+                      value={loginForm.password}
+                      onChange={(event) =>
+                        setLoginForm({
+                          ...loginForm,
+                          password: event.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
+
+                  {loginError && (
+                    <p className="circle-error" role="alert">
+                      {loginError}
+                    </p>
+                  )}
+
+                  <button
+                    className="circle-login-button"
+                    type="submit"
+                    disabled={loggingIn || isFlipping}
+                  >
+                    {loggingIn ? "Checking..." : "Log in"}
+                    <span>↗</span>
+                  </button>
+                </form>
 
                 <button
-                  className="primary-button"
-                  type="submit"
-                  disabled={loggingIn}
-                >
-                  {loggingIn ? "Logging in..." : "Log in"}
-                  <span aria-hidden="true">↗</span>
-                </button>
-              </form>
-
-              <div className="form-switch">
-                <span>New here?</span>
-                <button
+                  className="circle-bottom-link"
                   type="button"
-                  onClick={() => switchMode("register")}
+                  onClick={() => flipPanel("register")}
                 >
                   Create an account
                 </button>
               </div>
             </section>
 
-            <section className="auth-form-panel register-panel">
-              {regStatus === "done" ? (
-                <div className="registration-success">
-                  <div className="success-icon">✓</div>
-                  <p className="eyebrow">ALL SET</p>
-                  <h1>
-                    {role === "candidate"
-                      ? "Account created"
-                      : "Request submitted"}
-                  </h1>
-                  <p>
-                    {role === "candidate"
-                      ? "Your account is ready. You can now log in with your credentials."
-                      : "An admin has been notified. You can log in once your account is approved."}
-                  </p>
+            <section className="auth-coin-face auth-coin-back">
+              <div className="result-content">
+                <div className="result-symbol">✓</div>
 
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={() => switchMode("login")}
-                  >
-                    Return to login
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="brand-mark">
-                    <SaarthiLogo size={46} />
-                    <span>SAARTHI</span>
-                  </div>
+                <p className="auth-eyebrow">WELCOME ABOARD</p>
 
-                  <div className="form-heading">
-                    <p className="eyebrow">GET STARTED</p>
-                    <h1>{roleLabel} Sign Up</h1>
-                    <p>
-                      {role === "candidate"
-                        ? "Create an account to track your applications."
-                        : "Submit your details for admin review."}
-                    </p>
-                  </div>
+                <h2>{loginResult || "Ready to begin?"}</h2>
 
-                  <form onSubmit={handleRegister} className="auth-form">
-                    <div className="field">
-                      <label htmlFor="register-name">Full name</label>
-                      <input
-                        id="register-name"
-                        type="text"
-                        placeholder="Your full name"
-                        value={regForm.name}
-                        onChange={(event) =>
-                          setRegForm({
-                            ...regForm,
-                            name: event.target.value,
-                          })
-                        }
-                        required
-                      />
-                    </div>
+                <p>
+                  Your Saarthi workspace is ready. Keep building your next
+                  chapter.
+                </p>
 
-                    <div className="field">
-                      <label htmlFor="register-email">Email address</label>
-                      <input
-                        id="register-email"
-                        type="email"
-                        placeholder="name@company.com"
-                        value={regForm.email}
-                        onChange={(event) =>
-                          setRegForm({
-                            ...regForm,
-                            email: event.target.value,
-                          })
-                        }
-                        required
-                      />
-                    </div>
+                <button
+                  className="circle-login-button"
+                  type="button"
+                  onClick={handleLoginAgain}
+                  disabled={isFlipping}
+                >
+                  Log in again
+                  <span>↻</span>
+                </button>
 
-                    <div className="field">
-                      <label htmlFor="register-password">Password</label>
-                      <input
-                        id="register-password"
-                        type="password"
-                        placeholder="Minimum 6 characters"
-                        minLength={6}
-                        value={regForm.password}
-                        onChange={(event) =>
-                          setRegForm({
-                            ...regForm,
-                            password: event.target.value,
-                          })
-                        }
-                        required
-                      />
-                    </div>
-
-                    {regError && (
-                      <p className="form-error" role="alert">
-                        {regError}
-                      </p>
-                    )}
-
-                    <button
-                      className="primary-button"
-                      type="submit"
-                      disabled={regStatus === "loading"}
-                    >
-                      {regStatus === "loading" ? "Submitting..." : "Submit"}
-                      <span aria-hidden="true">↗</span>
-                    </button>
-                  </form>
-
-                  <div className="form-switch">
-                    <span>Already registered?</span>
-                    <button
-                      type="button"
-                      onClick={() => switchMode("login")}
-                    >
-                      Log in
-                    </button>
-                  </div>
-                </>
-              )}
+                <button
+                  className="circle-bottom-link"
+                  type="button"
+                  onClick={() => flipPanel("login")}
+                >
+                  Return to login
+                </button>
+              </div>
             </section>
           </div>
         </div>
-
-        <aside className="campus-panel">
-          <div className="panel-glow glow-one" />
-          <div className="panel-glow glow-two" />
-
-          <div className="campus-content">
-            <div className="panel-topline">
-              <span className="live-dot" />
-              <span>Campus to career</span>
-            </div>
-
-            <div className="campus-copy">
-              <p className="eyebrow panel-eyebrow">ONE PLATFORM</p>
-              <h2>
-                Build your
-                <br />
-                <span>next chapter.</span>
-              </h2>
-              <p>
-                Connect students, recruiters and meaningful opportunities in
-                one focused workspace.
-              </p>
-            </div>
-
-            <div className="career-visual" aria-hidden="true">
-              <div className="visual-line line-one" />
-              <div className="visual-line line-two" />
-              <div className="visual-node node-one">
-                <span>✦</span>
-              </div>
-              <div className="visual-node node-two">
-                <span>⌁</span>
-              </div>
-              <div className="visual-node node-three">
-                <span>↗</span>
-              </div>
-
-              <div className="visual-card profile-card">
-                <div className="avatar">M</div>
-                <div>
-                  <strong>Student profile</strong>
-                  <small>Ready for opportunity</small>
-                </div>
-              </div>
-
-              <div className="visual-card job-card">
-                <div className="job-icon">✦</div>
-                <div>
-                  <strong>New opportunity</strong>
-                  <small>Frontend Developer</small>
-                </div>
-              </div>
-            </div>
-
-            <div className="coin-section">
-              <div className="coin-heading">
-                <div>
-                  <p className="eyebrow panel-eyebrow">CAMPUS COIN</p>
-                  <span>Flip your luck</span>
-                </div>
-                <span className="coin-sparkle">✦</span>
-              </div>
-
-              <div className="coin-scene">
-                <button
-                  type="button"
-                  className={`coin ${coinSide === "back" ? "coin-back" : ""} ${
-                    isFlipping ? "coin-flipping" : ""
-                  }`}
-                  onClick={flipCoin}
-                  aria-label="Flip campus coin"
-                  disabled={isFlipping}
-                >
-                  <span className="coin-face coin-front">
-                    <span className="coin-symbol">S</span>
-                    <span className="coin-label">SAARTHI</span>
-                  </span>
-
-                  <span className="coin-face coin-back-face">
-                    <span className="coin-symbol">✦</span>
-                    <span className="coin-label">CAMPUS</span>
-                  </span>
-                </button>
-              </div>
-
-              <button
-                type="button"
-                className="coin-button"
-                onClick={flipCoin}
-                disabled={isFlipping}
-              >
-                {isFlipping ? "Flipping..." : "Flip the coin"}
-                <span aria-hidden="true">↗</span>
-              </button>
-
-              <p className="coin-result" aria-live="polite">
-                {coinResult || "A little luck never hurts."}
-              </p>
-            </div>
-          </div>
-
-          <div className="panel-footer">
-            <span>SAARTHI PLATFORM</span>
-            <span>2026</span>
-          </div>
-        </aside>
       </section>
     </main>
+  );
+}
+
+function CampusBackground() {
+  return (
+    <div className="campus-background" aria-hidden="true">
+      <div className="canvas-grid" />
+
+      <div className="soft-orb orb-left" />
+      <div className="soft-orb orb-right" />
+
+      <div className="campus-sun" />
+
+      <div className="campus-hill hill-back" />
+      <div className="campus-hill hill-front" />
+
+      <div className="campus-building building-main">
+        <div className="building-roof" />
+        <div className="building-body">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className="building-door" />
+      </div>
+
+      <div className="campus-building building-small">
+        <div className="building-roof" />
+        <div className="building-body">
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+
+      <div className="campus-tree tree-one">
+        <div className="tree-top" />
+        <div className="tree-trunk" />
+      </div>
+
+      <div className="campus-tree tree-two">
+        <div className="tree-top" />
+        <div className="tree-trunk" />
+      </div>
+
+      <div className="campus-path path-one" />
+      <div className="campus-path path-two" />
+
+      <div className="campus-cap">
+        <span>✦</span>
+      </div>
+
+      <div className="campus-network">
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+    </div>
   );
 }
