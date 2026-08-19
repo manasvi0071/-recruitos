@@ -67,50 +67,35 @@
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-
-  transition:
-    transform 1400ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 1400ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/*
-  LOGIN
-*/
-.auth-coin-wrapper:not(.show-register):not(.show-result)
-  .auth-coin {
+/* Login */
+.auth-coin-wrapper:not(.show-register):not(.show-result) .auth-coin {
   transform: rotateY(0deg);
 }
 
-/*
-  REGISTER
-*/
+/* Register */
 .auth-coin-wrapper.show-register .auth-coin {
   transform: rotateY(180deg);
 }
 
-/*
-  LOGIN SUCCESS
-*/
+/* Login success */
 .auth-coin-wrapper.show-result .auth-coin {
-  transform: rotateY(180deg);
+  transform: rotateY(360deg);
 }
 
-/*
-  During flipping.
-*/
+/* During transition */
 .auth-coin-wrapper.is-flipping .auth-coin {
   transform: rotateY(900deg);
 }
 
-/*
-  Register flip.
-*/
+/* Register transition */
 .auth-coin-wrapper.is-flipping.show-register .auth-coin {
   transform: rotateY(1080deg);
 }
 
-/*
-  Result flip.
-*/
+/* Result transition */
 .auth-coin-wrapper.is-flipping.show-result .auth-coin {
   transform: rotateY(1080deg);
 }
@@ -209,12 +194,13 @@
       #4c336c
     );
 
-  transform: rotateY(180deg);
+  transform: rotateY(360deg);
 }
 
-/*
-  Circular inner border.
-*/
+/* =========================================================
+   INNER BORDER
+========================================================= */
+
 .auth-coin-face::before {
   position: absolute;
   inset: 20px;
@@ -252,7 +238,6 @@
 .auth-logo {
   display: flex;
   justify-content: center;
-
   margin-bottom: 10px;
 }
 
@@ -266,7 +251,6 @@
   color: var(--canvas-purple);
 
   font-family: "DM Mono", monospace;
-
   font-size: 9px;
   letter-spacing: 0.16em;
 }
@@ -289,7 +273,6 @@
 
   font-size: clamp(27px, 4vw, 43px);
   font-weight: 500;
-
   letter-spacing: -0.07em;
   line-height: 1;
 }
@@ -332,7 +315,6 @@
 
 .circle-field {
   margin-bottom: 12px;
-
   text-align: left;
 }
 
@@ -348,10 +330,8 @@
   color: #716879;
 
   font-family: "DM Mono", monospace;
-
   font-size: 8px;
   letter-spacing: 0.1em;
-
   text-transform: uppercase;
 }
 
@@ -375,7 +355,6 @@
   outline: none;
 
   color: var(--canvas-ink);
-
   background: rgba(255, 255, 255, 0.65);
 
   font-family: "Manrope", sans-serif;
@@ -391,13 +370,10 @@
   color: #ada4af;
 }
 
-/* REGISTER INPUT */
-
 .auth-coin-back .circle-field input {
   border-color: rgba(255, 255, 255, 0.25);
 
   color: white;
-
   background: rgba(255, 255, 255, 0.15);
 }
 
@@ -405,11 +381,12 @@
   color: rgba(255, 255, 255, 0.55);
 }
 
-/* INPUT FOCUS */
+/* =========================================================
+   INPUT FOCUS
+========================================================= */
 
 .circle-field input:focus {
   border-color: var(--canvas-purple);
-
   background: white;
 
   box-shadow:
@@ -418,7 +395,6 @@
 
 .auth-coin-back .circle-field input:focus {
   border-color: #f5d48b;
-
   background: rgba(255, 255, 255, 0.18);
 
   box-shadow:
@@ -451,7 +427,6 @@
 
   align-items: center;
   justify-content: center;
-
   gap: 18px;
 
   width: 100%;
@@ -465,14 +440,12 @@
   cursor: pointer;
 
   color: white;
-
   background: var(--canvas-purple);
 
   box-shadow:
     0 9px 17px rgba(101, 66, 142, 0.2);
 
   font-family: "Manrope", sans-serif;
-
   font-size: 10px;
   font-weight: 700;
 
@@ -484,7 +457,6 @@
 
 .circle-login-button:hover:not(:disabled) {
   background: var(--canvas-purple-dark);
-
   transform: translateY(-2px);
 
   box-shadow:
@@ -497,16 +469,13 @@
 
 .circle-login-button:disabled {
   cursor: wait;
-
   opacity: 0.65;
 }
 
-/* REGISTER BUTTON */
-
+/* Register and result buttons */
 .auth-coin-back .circle-login-button,
 .auth-coin-result-face .circle-login-button {
   color: var(--canvas-purple-dark);
-
   background: #f5d48b;
 }
 
@@ -521,7 +490,6 @@
 
 .circle-bottom-link {
   margin-top: 15px;
-
   padding: 0;
 
   border: 0;
@@ -529,24 +497,20 @@
   cursor: pointer;
 
   color: var(--canvas-purple);
-
   background: transparent;
 
   font-family: "Manrope", sans-serif;
-
   font-size: 9px;
   font-weight: 700;
 }
 
 .circle-bottom-link:hover:not(:disabled) {
   text-decoration: underline;
-
   text-underline-offset: 3px;
 }
 
 .circle-bottom-link:disabled {
   cursor: wait;
-
   opacity: 0.6;
 }
 
@@ -576,7 +540,6 @@
   border-radius: 50%;
 
   color: var(--canvas-purple-dark);
-
   background: #f5d48b;
 
   font-size: 30px;
@@ -605,11 +568,9 @@
   place-items: center;
 
   border: 1px solid rgba(255, 255, 255, 0.38);
-
   border-radius: 50%;
 
   color: var(--canvas-purple-dark);
-
   background: #f5d48b;
 
   font-size: 34px;
@@ -621,7 +582,6 @@
 
 .result-content .circle-login-button {
   width: 78%;
-
   margin: 19px auto 0;
 }
 
@@ -631,7 +591,6 @@
 
 .campus-background {
   position: absolute;
-
   inset: 0;
 
   z-index: -1;
@@ -645,7 +604,6 @@
 
 .canvas-grid {
   position: absolute;
-
   inset: 0;
 
   opacity: 0.18;
@@ -677,9 +635,7 @@
 
 .soft-orb {
   position: absolute;
-
   border-radius: 50%;
-
   filter: blur(5px);
 }
 
@@ -730,11 +686,9 @@
 
 .campus-hill {
   position: absolute;
-
   bottom: -180px;
 
   border-radius: 50% 50% 0 0;
-
   transform: rotate(-5deg);
 }
 
@@ -755,7 +709,6 @@
   height: 360px;
 
   background: rgba(91, 119, 109, 0.24);
-
   transform: rotate(5deg);
 }
 
@@ -765,15 +718,12 @@
 
 .campus-building {
   position: absolute;
-
   bottom: 17%;
-
   opacity: 0.42;
 }
 
 .building-main {
   right: 11%;
-
   width: 220px;
 }
 
@@ -784,7 +734,6 @@
   width: 135px;
 
   transform: scale(0.72);
-
   transform-origin: bottom center;
 }
 
@@ -806,13 +755,11 @@
 
   align-items: flex-end;
   justify-content: center;
-
   gap: 16px;
 
   padding: 16px 22px;
 
   border: 1px solid rgba(101, 66, 142, 0.35);
-
   border-top: 0;
 
   background: rgba(255, 255, 255, 0.3);
@@ -823,7 +770,6 @@
   height: 38px;
 
   border: 1px solid rgba(101, 66, 142, 0.3);
-
   background: rgba(238, 214, 159, 0.4);
 }
 
@@ -837,7 +783,6 @@
   height: 62px;
 
   border-radius: 22px 22px 0 0;
-
   background: rgba(101, 66, 142, 0.33);
 }
 
@@ -847,22 +792,18 @@
 
 .campus-tree {
   position: absolute;
-
   bottom: 17%;
-
   opacity: 0.48;
 }
 
 .tree-one {
   left: 24%;
-
   transform: scale(1.05);
 }
 
 .tree-two {
   right: 27%;
   bottom: 20%;
-
   transform: scale(0.75);
 }
 
@@ -870,8 +811,7 @@
   width: 60px;
   height: 70px;
 
-  border-radius:
-    52% 48% 45% 55%;
+  border-radius: 52% 48% 45% 55%;
 
   background: rgba(87, 126, 101, 0.45);
 
@@ -904,7 +844,6 @@
   border-radius: 50%;
 
   background: rgba(244, 226, 185, 0.3);
-
   transform: rotate(31deg);
 }
 
@@ -916,7 +855,6 @@
   right: 38%;
 
   width: 75px;
-
   opacity: 0.7;
 
   transform: rotate(-26deg);
@@ -940,15 +878,12 @@
   place-items: center;
 
   border: 1px solid rgba(101, 66, 142, 0.22);
-
   border-radius: 14px;
 
   color: rgba(101, 66, 142, 0.56);
-
   background: rgba(255, 255, 255, 0.25);
 
   transform: rotate(12deg);
-
   font-size: 25px;
 }
 
@@ -975,9 +910,7 @@
 .campus-network::before,
 .campus-network::after {
   position: absolute;
-
   content: "";
-
   background: rgba(101, 66, 142, 0.4);
 }
 
@@ -1010,7 +943,6 @@
   height: 8px;
 
   border: 1px solid rgba(101, 66, 142, 0.6);
-
   border-radius: 50%;
 
   background: #e9e4f4;
@@ -1043,7 +975,6 @@
 @media (max-width: 650px) {
   .canvas-auth-page {
     min-height: 100svh;
-
     padding: 16px;
   }
 
@@ -1113,7 +1044,6 @@
   .result-content > p:not(.auth-eyebrow) {
     margin-top: 9px;
     margin-bottom: 16px;
-
     font-size: 9px;
   }
 
@@ -1123,19 +1053,16 @@
 
   .circle-field input {
     height: 34px;
-
     font-size: 9px;
   }
 
   .circle-login-button {
     height: 36px;
-
     font-size: 9px;
   }
 
   .circle-bottom-link {
     margin-top: 11px;
-
     font-size: 8px;
   }
 
@@ -1144,7 +1071,6 @@
     height: 58px;
 
     margin-bottom: 15px;
-
     font-size: 27px;
   }
 }
@@ -1161,13 +1087,15 @@
     animation-duration: 0.01ms !important;
   }
 
-  .auth-coin-wrapper.show-register .auth-coin,
-  .auth-coin-wrapper.show-result .auth-coin {
+  .auth-coin-wrapper.show-register .auth-coin {
     transform: rotateY(180deg);
   }
 
-  .auth-coin-wrapper:not(.show-register):not(.show-result)
-    .auth-coin {
+  .auth-coin-wrapper.show-result .auth-coin {
+    transform: rotateY(360deg);
+  }
+
+  .auth-coin-wrapper:not(.show-register):not(.show-result) .auth-coin {
     transform: rotateY(0deg);
   }
 }
