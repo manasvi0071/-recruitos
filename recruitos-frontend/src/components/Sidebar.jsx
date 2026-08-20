@@ -14,6 +14,7 @@ const NAV = {
       { key: 'gd', icon: '→', label: 'Group Discussion' },
       { key: 'interview', icon: '→', label: 'Interviews' },
       { key: 'offers', icon: '→', label: 'Offer Letters' },
+      { key : 'pipeline', icon: '●', label: 'Candidate Pipeline' },
     ]},
     { section: 'Tracking', items: [
       { key: 'joining', icon: '●', label: 'Joining Tracker' },
@@ -43,6 +44,7 @@ recruiter: [
       { key: 'offers', icon: '→', label: 'Offer Letters' },
       { key: 'comm', icon: '●', label: 'Communication CRM' },
       { key: 'reports', icon: '●', label: 'Reports & Analytics' },
+      { key: 'pipeline', icon: '●', label: 'Candidate Pipeline' },
     ]},
     { section: 'Tools', items: [
       { key: 'notifications', icon: '🔔', label: 'Notifications' },
