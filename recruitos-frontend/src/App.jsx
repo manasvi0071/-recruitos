@@ -31,13 +31,16 @@ import BidPortal from './pages/BidPortal';
 import CandidateDB from "./pages/CandidateDB";
 import Approvals from "./pages/Approvals";
 import Documents from "./pages/Documents";
+import AdminDashboard from "./pages/AdminDashboard";
+import RecruiterDashboard from "./pages/RecruiterDashboard";
 
-// Pages available to admin / recruiter
+// Pages available to admin
 const pages = {
   dashboard: Dashboard,
+  adminDashboard: AdminDashboard,
   campusdb: CampusDB,
   corpdb: CorpDB,
-  candidatedb: CandidateDB,   // ← NEW
+  candidatedb: CandidateDB,
   jobs: Jobs,
   resume: Resume,
   aptitude: Aptitude,
@@ -55,6 +58,22 @@ const pages = {
   notifications: Notifications,
   calendartasks: CalendarTasks,
   bidportal: BidPortal,
+};
+
+// Pages available to recruiter
+const recruiterPages = {
+  recruiterDashboard: RecruiterDashboard,
+  jobs: Jobs,
+  resume: Resume,
+  aptitude: Aptitude,
+  gd: GDAdmin,
+  interview: Interview,
+  offers: Offers,
+  joining: Joining,
+  candidatedb: CandidateDB,
+  reports: Reports,
+  notifications: Notifications,
+  calendartasks: CalendarTasks,
 };
 
 export default function App() {
@@ -104,6 +123,8 @@ export default function App() {
       setUserRole(data?.role || "user");
 
       if (data?.role === "corporate") setActivePage("corporateDashboard");
+      else if (data?.role === "admin") setActivePage("adminDashboard");
+      else if (data?.role === "recruiter") setActivePage("recruiterDashboard");
       else setActivePage("dashboard");
     };
 
@@ -141,37 +162,37 @@ export default function App() {
 
   const currentPath = window.location.pathname;
 
-if (currentPath === "/app/campusdb") {
-  return <CampusDB />;
-}
+  if (currentPath === "/app/campusdb") {
+    return <CampusDB />;
+  }
 
-if (currentPath === "/app/requirements") {
-  return <Pipeline />;
-}
+  if (currentPath === "/app/requirements") {
+    return <Pipeline />;
+  }
 
-if (currentPath === "/app/jobs") {
-  return <Jobs />;
-}
+  if (currentPath === "/app/jobs") {
+    return <Jobs />;
+  }
 
-if (currentPath === "/app/resume") {
-  return <Resume />;
-}
+  if (currentPath === "/app/resume") {
+    return <Resume />;
+  }
 
-if (currentPath === "/app/aptitude") {
-  return <Aptitude />;
-}
+  if (currentPath === "/app/aptitude") {
+    return <Aptitude />;
+  }
 
-if (currentPath === "/app/interview") {
-  return <Interview />;
-}
+  if (currentPath === "/app/interview") {
+    return <Interview />;
+  }
 
-if (currentPath === "/app/offers") {
-  return <Offers />;
-}
+  if (currentPath === "/app/offers") {
+    return <Offers />;
+  }
 
-if (currentPath === "/app/joining") {
-  return <Joining />;
-}
+  if (currentPath === "/app/joining") {
+    return <Joining />;
+  }
 
   const isAppRoute = window.location.pathname.startsWith("/app");
 
@@ -210,26 +231,35 @@ if (currentPath === "/app/joining") {
 
     // Corporate-only pages
     const corporatePages = {
-  corporateDashboard: () => <CorporateDashboard user={session.user} />,
-  jobs: Jobs,
-  resume: Resume,
-  interview: Interview,
-  offers: Offers,
-  joining: Joining,
-  approvals: Approvals,     // ← naya page banana hoga
-  documents: Documents,     // ← naya page banana hoga
-};
+      corporateDashboard: () => <CorporateDashboard user={session.user} />,
+      jobs: Jobs,
+      pipeline: Pipeline,
+      resume: Resume,
+      interview: Interview,
+      offers: Offers,
+      joining: Joining,
+      approvals: Approvals,
+      documents: Documents,
+    };
 
     let PageComponent;
-const sidebarRole = userRole === "corporate" ? "corporate"
-  : userRole === "recruiter" ? "recruiter"
-  : "admin";
+    const sidebarRole = userRole === "corporate" ? "corporate"
+      : userRole === "recruiter" ? "recruiter"
+      : "admin";
 
-if (userRole === "corporate") {
-  PageComponent = corporatePages[activePage] || corporatePages.corporateDashboard;
-} else {
-  PageComponent = pages[activePage] || Dashboard;
-}
+    if (userRole === "corporate") {
+      PageComponent = corporatePages[activePage] || corporatePages.corporateDashboard;
+    } else if (userRole === "recruiter") {
+      if (activePage === "recruiterDashboard") {
+        PageComponent = () => <RecruiterDashboard user={session.user} />;
+      } else {
+        PageComponent = recruiterPages[activePage] || (() => <RecruiterDashboard user={session.user} />);
+      }
+    } else if (userRole === "admin") {
+      PageComponent = pages[activePage] || AdminDashboard;
+    } else {
+      PageComponent = pages[activePage] || Dashboard;
+    }
 
     return (
       <div id="screen-app" style={{ display: "block" }}>

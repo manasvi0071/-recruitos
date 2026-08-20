@@ -1,6 +1,6 @@
 const NAV = {
   admin: [
-    { section: 'Overview', items: [{ key: 'dashboard', icon: '◆', label: 'Dashboard' }] },
+    { section: 'Overview', items: [{ key: 'adminDashboard', icon: '◆', label: 'Dashboard' }] },
     { section: 'Setup', items: [
       { key: 'campusdb', icon: '▤', label: 'Campus Database' },
       { key: 'corpdb', icon: '▤', label: 'Corporate Database' },
@@ -30,7 +30,7 @@ const NAV = {
   ],
 
 recruiter: [
-    { section: 'Overview', items: [{ key: 'dashboard', icon: '◆', label: 'Dashboard' }] },
+    { section: 'Overview', items: [{ key: 'recruiterDashboard', icon: '◆', label: 'Dashboard' }] },
     { section: 'Database', items: [
       { key: 'campusdb', icon: '▤', label: 'Campus Database' },
       { key: 'corpdb', icon: '▤', label: 'Corporate Database' },
