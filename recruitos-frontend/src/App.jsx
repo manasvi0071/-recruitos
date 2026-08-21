@@ -25,9 +25,9 @@ import CallRecord from "./pages/CallRecord";
 import SaarthiLogo from "./components/SaarthiLogo";
 import LoginSelect from "./pages/LoginSelect";
 import CorporateDashboard from "./pages/CorporateDashboard";
-import Notifications from './pages/Notifications';
-import CalendarTasks from './pages/CalendarTasks';
-import BidPortal from './pages/BidPortal';
+import Notifications from "./pages/Notifications";
+import CalendarTasks from "./pages/CalendarTasks";
+import BidPortal from "./pages/BidPortal";
 import CandidateDB from "./pages/CandidateDB";
 import Approvals from "./pages/Approvals";
 import Documents from "./pages/Documents";
@@ -211,7 +211,14 @@ export default function App() {
 
     if (profileApproved === null) {
       return (
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           Checking approval status...
         </div>
       );
@@ -219,11 +226,27 @@ export default function App() {
 
     if (profileApproved === false) {
       return (
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 24 }}>
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+            padding: 24,
+          }}
+        >
           <div>
             <h2>Awaiting Approval</h2>
-            <p style={{ color: "var(--text-muted)" }}>Your account is pending admin approval.</p>
-            <button className="logout-link" onClick={() => supabase.auth.signOut()}>Log out</button>
+            <p style={{ color: "var(--text-muted)" }}>
+              Your account is pending admin approval.
+            </p>
+            <button
+              className="logout-link"
+              onClick={() => supabase.auth.signOut()}
+            >
+              Log out
+            </button>
           </div>
         </div>
       );
@@ -231,7 +254,7 @@ export default function App() {
 
     // Corporate-only pages
     const corporatePages = {
-      corporateDashboard: () => <CorporateDashboard user={session.user} />,
+      corporateDashboard: CorporateDashboard,
       jobs: Jobs,
       pipeline: Pipeline,
       resume: Resume,
@@ -243,18 +266,18 @@ export default function App() {
     };
 
     let PageComponent;
-    const sidebarRole = userRole === "corporate" ? "corporate"
-      : userRole === "recruiter" ? "recruiter"
-      : "admin";
+    const sidebarRole =
+      userRole === "corporate"
+        ? "corporate"
+        : userRole === "recruiter"
+          ? "recruiter"
+          : "admin";
 
     if (userRole === "corporate") {
-      PageComponent = corporatePages[activePage] || corporatePages.corporateDashboard;
+      PageComponent =
+        corporatePages[activePage] || corporatePages.corporateDashboard;
     } else if (userRole === "recruiter") {
-      if (activePage === "recruiterDashboard") {
-        PageComponent = () => <RecruiterDashboard user={session.user} />;
-      } else {
-        PageComponent = recruiterPages[activePage] || (() => <RecruiterDashboard user={session.user} />);
-      }
+      PageComponent = recruiterPages[activePage] || RecruiterDashboard;
     } else if (userRole === "admin") {
       PageComponent = pages[activePage] || AdminDashboard;
     } else {
@@ -264,21 +287,45 @@ export default function App() {
     return (
       <div id="screen-app" style={{ display: "block" }}>
         <div className="topbar">
-          <div className="brand" style={{ display: "flex", alignItems: "center", height: "150%", minWidth: 170 }}>
-            <SaarthiLogo size={75} className="theme-adaptive-logo" style={{ transform: "scale(1.2)", transformOrigin: "left center" }} />
+          <div
+            className="brand"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              height: "150%",
+              minWidth: 170,
+            }}
+          >
+            <SaarthiLogo
+              size={75}
+              className="theme-adaptive-logo"
+              style={{
+                transform: "scale(1.2)",
+                transformOrigin: "left center",
+              }}
+            />
           </div>
           <div className="top-actions">
             <ThemeToggle />
             <span className="pill">Talent Corner Workspace</span>
             <span>{session.user.email}</span>
-            <span className="logout-link" onClick={() => supabase.auth.signOut()}>Log out</span>
+            <span
+              className="logout-link"
+              onClick={() => supabase.auth.signOut()}
+            >
+              Log out
+            </span>
             <div className="avatar">SC</div>
           </div>
         </div>
         <div className="app">
-          <Sidebar activePage={activePage} setActivePage={setActivePage} role={sidebarRole} />
+          <Sidebar
+            activePage={activePage}
+            setActivePage={setActivePage}
+            role={sidebarRole}
+          />
           <div className="main">
-            <PageComponent setActivePage={setActivePage} />
+            <PageComponent setActivePage={setActivePage} user={session.user} />
           </div>
         </div>
       </div>
