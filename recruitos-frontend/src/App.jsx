@@ -31,7 +31,7 @@ import BidPortal from "./pages/BidPortal";
 import CandidateDB from "./pages/CandidateDB";
 import Approvals from "./pages/Approvals";
 import Documents from "./pages/Documents";
-import AdminDashboard from "./pages/AdminDashboard.jsx";
+import AdminDashboard from "./pages/AdminDashboard";
 import RecruiterDashboard from "./pages/RecruiterDashboard";
 
 // Pages available to admin
