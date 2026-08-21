@@ -1,24 +1,24 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
 import {
-  LineChart,
-  Line,
-  BarChart,
   Bar,
-  PieChart,
-  Pie,
+  BarChart,
+  CartesianGrid,
   Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
 
 import "./Dashboard.css";
-import { useNavigate } from "react-router-dom";
 
 const CHART_COLORS = [
   "#7657E8",
@@ -73,34 +73,55 @@ export default function RecruiterDashboard({ user }) {
 
       try {
         const userId = user?.id;
-        if (!userId) throw new Error("No logged-in user found.");
+
+        if (!userId) {
+          throw new Error("No logged-in user found.");
+        }
 
         const { data: myJobs, error: myJobsError } = await supabase
           .from("job_profiles")
           .select("id, title")
           .eq("recruiter_id", userId);
 
-        if (myJobsError) throw myJobsError;
+        if (myJobsError) {
+          throw myJobsError;
+        }
 
-        const jobIds = (myJobs || []).map((j) => j.id);
+        const jobIds = (myJobs || []).map((job) => job.id);
 
         if (jobIds.length === 0) {
           if (!ignore) {
-            setStats({ myJobs: 0, resumes: 0, selections: 0, joined: 0 });
+            setStats({
+              myJobs: 0,
+              resumes: 0,
+              selections: 0,
+              joined: 0,
+            });
+
             setApplications([]);
             setGrowthData([]);
             setStageBreakdown([]);
             setLoading(false);
           }
+
           return;
         }
 
-        const { data: myApplicationIds } = await supabase
+        const {
+          data: applicationIdRows,
+          error: applicationIdsError,
+        } = await supabase
           .from("applications")
           .select("id")
           .in("job_id", jobIds);
 
-        const applicationIds = (myApplicationIds || []).map((a) => a.id);
+        if (applicationIdsError) {
+          throw applicationIdsError;
+        }
+
+        const applicationIds = (applicationIdRows || []).map(
+          (application) => application.id,
+        );
 
         const [
           { count: resumesCount, error: resumesError },
@@ -111,37 +132,53 @@ export default function RecruiterDashboard({ user }) {
         ] = await Promise.all([
           supabase
             .from("applications")
-            .select("*", { count: "exact", head: true })
+            .select("*", {
+              count: "exact",
+              head: true,
+            })
             .in("job_id", jobIds),
 
           supabase
             .from("applications")
-            .select("*", { count: "exact", head: true })
+            .select("*", {
+              count: "exact",
+              head: true,
+            })
             .in("job_id", jobIds)
             .eq("stage", "Selected"),
 
           supabase
             .from("applications")
             .select(
-              "id, stage, resume_score, candidates(name, colleges(name)), job_profiles(title)"
+              "id, stage, resume_score, created_at, candidates(name, colleges(name)), job_profiles(title)",
             )
             .in("job_id", jobIds)
-            .order("created_at", { ascending: false })
-            .limit(4),
+            .order("created_at", {
+              ascending: false,
+            })
+            .limit(5),
 
           supabase
             .from("applications")
             .select("created_at, stage")
             .in("job_id", jobIds)
-            .order("created_at", { ascending: true }),
+            .order("created_at", {
+              ascending: true,
+            }),
 
           applicationIds.length > 0
             ? supabase
                 .from("joining")
-                .select("*", { count: "exact", head: true })
+                .select("*", {
+                  count: "exact",
+                  head: true,
+                })
                 .in("application_id", applicationIds)
                 .eq("status", "Joined")
-            : Promise.resolve({ count: 0, error: null }),
+            : Promise.resolve({
+                count: 0,
+                error: null,
+              }),
         ]);
 
         const firstError =
@@ -151,39 +188,59 @@ export default function RecruiterDashboard({ user }) {
           allApplicationsError ||
           joinedError;
 
-        if (firstError) throw firstError;
+        if (firstError) {
+          throw firstError;
+        }
 
-        if (ignore) return;
+        if (ignore) {
+          return;
+        }
 
         const weeks = {};
         const stages = {};
 
         (allApplications || []).forEach((application) => {
           const date = new Date(application.created_at);
-          if (Number.isNaN(date.getTime())) return;
+
+          if (Number.isNaN(date.getTime())) {
+            return;
+          }
 
           const weekStart = new Date(date);
-          weekStart.setDate(date.getDate() - date.getDay());
 
-          const weekKey = weekStart.toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-          });
+          weekStart.setDate(
+            date.getDate() - date.getDay(),
+          );
+
+          const weekKey = weekStart.toLocaleDateString(
+            "en-GB",
+            {
+              day: "2-digit",
+              month: "short",
+            },
+          );
 
           weeks[weekKey] = (weeks[weekKey] || 0) + 1;
 
           const stage = application.stage || "Unknown";
+
           stages[stage] = (stages[stage] || 0) + 1;
         });
 
         setGrowthData(
           Object.entries(weeks)
             .slice(-8)
-            .map(([week, count]) => ({ week, count }))
+            .map(([week, count]) => ({
+              week,
+              count,
+            })),
         );
 
         setStageBreakdown(
-          Object.entries(stages).map(([name, value]) => ({ name, value }))
+          Object.entries(stages).map(([name, value]) => ({
+            name,
+            value,
+          })),
         );
 
         setStats({
@@ -194,13 +251,22 @@ export default function RecruiterDashboard({ user }) {
         });
 
         setApplications(recentApplications ?? []);
-      } catch (err) {
-        console.error("Recruiter dashboard load error:", err);
+      } catch (loadError) {
+        console.error(
+          "Recruiter dashboard load error:",
+          loadError,
+        );
+
         if (!ignore) {
-          setError(err?.message || "Could not load your dashboard data.");
+          setError(
+            loadError?.message ||
+              "Could not load your dashboard data.",
+          );
         }
       } finally {
-        if (!ignore) setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     }
 
@@ -212,14 +278,24 @@ export default function RecruiterDashboard({ user }) {
   }, [user]);
 
   return (
-    <div className="dashboard-page" id="page-recruiter-dashboard">
+    <div
+      className="dashboard-page"
+      id="page-recruiter-dashboard"
+    >
       <StarticleBackground />
 
       <header className="dashboard-header">
         <div>
-          <p className="dashboard-kicker">SAARTHI ANALYTICS</p>
+          <p className="dashboard-kicker">
+            SAARTHI ANALYTICS
+          </p>
+
           <h1>My Recruitment Dashboard</h1>
-          <p>Track your own jobs and candidates from posting to joining.</p>
+
+          <p>
+            Track your own jobs and candidates from posting
+            to joining.
+          </p>
         </div>
       </header>
 
@@ -235,16 +311,19 @@ export default function RecruiterDashboard({ user }) {
           label="My Open Jobs"
           tone="purple"
         />
+
         <StatCard
           value={loading ? "—" : stats.resumes}
           label="Applications Received"
           tone="cyan"
         />
+
         <StatCard
           value={loading ? "—" : stats.selections}
           label="My Selections"
           tone="orange"
         />
+
         <StatCard
           value={loading ? "—" : stats.joined}
           label="Joined"
@@ -253,9 +332,13 @@ export default function RecruiterDashboard({ user }) {
       </div>
 
       <section className="dashboard-panel pipeline-panel">
-        <div className="dashboard-panel-title">My Recruitment Pipeline</div>
+        <div className="dashboard-panel-title">
+          My Recruitment Pipeline
+        </div>
+
         <div className="dashboard-panel-subtitle">
-          JD → Resumes → Assessments → Interviews → Selection → Joining
+          JD → Resumes → Assessments → Interviews →
+          Selection → Joining
         </div>
 
         <div className="pipeline-track">
@@ -267,7 +350,10 @@ export default function RecruiterDashboard({ user }) {
               onClick={() => navigate(stage.route)}
               aria-label={`Open ${stage.label}`}
             >
-              <span>{String(index + 1).padStart(2, "0")}</span>
+              <span>
+                {String(index + 1).padStart(2, "0")}
+              </span>
+
               <strong>{stage.label}</strong>
             </button>
           ))}
@@ -277,35 +363,66 @@ export default function RecruiterDashboard({ user }) {
       <section className="dashboard-chart-card growth-card">
         <div className="chart-heading">
           <div>
-            <div className="dashboard-panel-title">Applications Growth</div>
-            <div className="chart-caption">Your applications received by week</div>
+            <div className="dashboard-panel-title">
+              Applications Growth
+            </div>
+
+            <div className="chart-caption">
+              Your applications received by week
+            </div>
           </div>
-          <span className="chart-chip">Last 8 weeks</span>
+
+          <span className="chart-chip">
+            Last 8 weeks
+          </span>
         </div>
 
         <div className="growth-chart">
           {growthData.length === 0 && !loading ? (
             <ChartEmptyState message="No application growth data yet." />
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
               <LineChart
                 data={growthData}
-                margin={{ top: 10, right: 15, left: -20, bottom: 0 }}
+                margin={{
+                  top: 10,
+                  right: 15,
+                  left: -20,
+                  bottom: 0,
+                }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--dash-border)" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--dash-border)"
+                />
+
                 <XAxis
                   dataKey="week"
-                  tick={{ fontSize: 10, fill: "var(--dash-muted)" }}
+                  tick={{
+                    fontSize: 10,
+                    fill: "var(--dash-muted)",
+                  }}
                   axisLine={false}
                   tickLine={false}
                 />
+
                 <YAxis
-                  tick={{ fontSize: 10, fill: "var(--dash-muted)" }}
+                  tick={{
+                    fontSize: 10,
+                    fill: "var(--dash-muted)",
+                  }}
                   allowDecimals={false}
                   axisLine={false}
                   tickLine={false}
                 />
-                <Tooltip content={<DashboardTooltip />} />
+
+                <Tooltip
+                  content={<DashboardTooltip />}
+                />
+
                 <Line
                   type="monotone"
                   dataKey="count"
@@ -330,44 +447,84 @@ export default function RecruiterDashboard({ user }) {
         <div className="dashboard-chart-card mini-chart-card">
           <div className="chart-heading">
             <div>
-              <div className="dashboard-panel-title">Candidates by Stage</div>
-              <div className="chart-caption">Your current pipeline</div>
+              <div className="dashboard-panel-title">
+                Candidates by Stage
+              </div>
+
+              <div className="chart-caption">
+                Your current pipeline
+              </div>
             </div>
           </div>
 
           <div className="mini-chart">
-            {stageBreakdown.length === 0 && !loading ? (
+            {stageBreakdown.length === 0 &&
+            !loading ? (
               <ChartEmptyState message="No stage data yet." />
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+              >
                 <BarChart
                   data={stageBreakdown}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  margin={{
+                    top: 10,
+                    right: 10,
+                    left: -20,
+                    bottom: 0,
+                  }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--dash-border)" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="var(--dash-border)"
+                  />
+
                   <XAxis
                     dataKey="name"
-                    tick={{ fontSize: 9, fill: "var(--dash-muted)" }}
+                    tick={{
+                      fontSize: 9,
+                      fill: "var(--dash-muted)",
+                    }}
                     angle={-15}
                     textAnchor="end"
                     height={48}
                     axisLine={false}
                     tickLine={false}
                   />
+
                   <YAxis
-                    tick={{ fontSize: 10, fill: "var(--dash-muted)" }}
+                    tick={{
+                      fontSize: 10,
+                      fill: "var(--dash-muted)",
+                    }}
                     allowDecimals={false}
                     axisLine={false}
                     tickLine={false}
                   />
-                  <Tooltip content={<DashboardTooltip />} />
-                  <Bar dataKey="value" name="Candidates" radius={[7, 7, 0, 0]}>
-                    {stageBreakdown.map((entry, index) => (
-                      <Cell
-                        key={entry.name}
-                        fill={CHART_COLORS[index % CHART_COLORS.length]}
-                      />
-                    ))}
+
+                  <Tooltip
+                    content={<DashboardTooltip />}
+                  />
+
+                  <Bar
+                    dataKey="value"
+                    name="Candidates"
+                    radius={[7, 7, 0, 0]}
+                  >
+                    {stageBreakdown.map(
+                      (entry, index) => (
+                        <Cell
+                          key={entry.name}
+                          fill={
+                            CHART_COLORS[
+                              index %
+                                CHART_COLORS.length
+                            ]
+                          }
+                        />
+                      ),
+                    )}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -378,16 +535,25 @@ export default function RecruiterDashboard({ user }) {
         <div className="dashboard-chart-card mini-chart-card">
           <div className="chart-heading">
             <div>
-              <div className="dashboard-panel-title">Stage Distribution</div>
-              <div className="chart-caption">Share of your applications</div>
+              <div className="dashboard-panel-title">
+                Stage Distribution
+              </div>
+
+              <div className="chart-caption">
+                Share of your applications
+              </div>
             </div>
           </div>
 
           <div className="mini-chart">
-            {stageBreakdown.length === 0 && !loading ? (
+            {stageBreakdown.length === 0 &&
+            !loading ? (
               <ChartEmptyState message="No stage distribution yet." />
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+              >
                 <PieChart>
                   <Pie
                     data={stageBreakdown}
@@ -400,16 +566,30 @@ export default function RecruiterDashboard({ user }) {
                     paddingAngle={3}
                     label={false}
                   >
-                    {stageBreakdown.map((entry, index) => (
-                      <Cell
-                        key={entry.name}
-                        fill={CHART_COLORS[index % CHART_COLORS.length]}
-                      />
-                    ))}
+                    {stageBreakdown.map(
+                      (entry, index) => (
+                        <Cell
+                          key={entry.name}
+                          fill={
+                            CHART_COLORS[
+                              index %
+                                CHART_COLORS.length
+                            ]
+                          }
+                        />
+                      ),
+                    )}
                   </Pie>
-                  <Tooltip content={<DashboardTooltip />} />
+
+                  <Tooltip
+                    content={<DashboardTooltip />}
+                  />
+
                   <Legend
-                    wrapperStyle={{ fontSize: 10, color: "var(--dash-muted)" }}
+                    wrapperStyle={{
+                      fontSize: 10,
+                      color: "var(--dash-muted)",
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -421,9 +601,15 @@ export default function RecruiterDashboard({ user }) {
       <section className="dashboard-panel applications-panel">
         <div className="dashboard-section-heading">
           <div>
-            <div className="dashboard-panel-title">Recent Applications</div>
-            <div className="chart-caption">Latest activity on your jobs</div>
+            <div className="dashboard-panel-title">
+              Recent Applications
+            </div>
+
+            <div className="chart-caption">
+              Latest activity on your jobs
+            </div>
           </div>
+
           <span className="section-icon">↗</span>
         </div>
 
@@ -438,6 +624,7 @@ export default function RecruiterDashboard({ user }) {
                 <th>Score</th>
               </tr>
             </thead>
+
             <tbody>
               {loading ? (
                 <tr>
@@ -445,7 +632,9 @@ export default function RecruiterDashboard({ user }) {
                 </tr>
               ) : applications.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>No applications yet.</td>
+                  <td colSpan={5}>
+                    No applications yet.
+                  </td>
                 </tr>
               ) : (
                 applications.map((application) => (
@@ -453,25 +642,47 @@ export default function RecruiterDashboard({ user }) {
                     <td>
                       <div className="candidate-cell">
                         <span className="candidate-avatar">
-                          {(application.candidates?.name || "?")
+                          {(
+                            application.candidates?.name ||
+                            "?"
+                          )
                             .charAt(0)
                             .toUpperCase()}
                         </span>
-                        <span>{application.candidates?.name || "—"}</span>
+
+                        <span>
+                          {application.candidates?.name ||
+                            "—"}
+                        </span>
                       </div>
                     </td>
-                    <td>{application.candidates?.colleges?.name || "—"}</td>
-                    <td>{application.job_profiles?.title || "—"}</td>
+
+                    <td>
+                      {application.candidates?.colleges
+                        ?.name || "—"}
+                    </td>
+
+                    <td>
+                      {application.job_profiles?.title ||
+                        "—"}
+                    </td>
+
                     <td>
                       <span
                         className={`badge ${
-                          stageBadgeClass[application.stage] || "gray"
+                          stageBadgeClass[
+                            application.stage
+                          ] || "gray"
                         }`}
                       >
-                        {application.stage || "Unknown"}
+                        {application.stage ||
+                          "Unknown"}
                       </span>
                     </td>
-                    <td>{application.resume_score ?? "—"}</td>
+
+                    <td>
+                      {application.resume_score ?? "—"}
+                    </td>
                   </tr>
                 ))
               )}
@@ -487,6 +698,7 @@ function StatCard({ value, label, helper, tone = "purple" }) {
   return (
     <article className={`stat-card stat-${tone}`}>
       <div className="stat-decoration" />
+
       <div className="stat-icon" aria-hidden="true">
         {tone === "purple"
           ? "✦"
@@ -496,18 +708,31 @@ function StatCard({ value, label, helper, tone = "purple" }) {
               ? "◈"
               : "✓"}
       </div>
+
       <div className="num">{value}</div>
+
       <div className="lbl">{label}</div>
-      {helper && <div className="delta">{helper}</div>}
+
+      {helper && (
+        <div className="delta">{helper}</div>
+      )}
     </article>
   );
 }
 
-function DashboardTooltip({ active, payload, label }) {
-  if (!active || !payload || !payload.length) return null;
+function DashboardTooltip({
+  active,
+  payload,
+  label,
+}) {
+  if (!active || !payload || !payload.length) {
+    return null;
+  }
+
   return (
     <div className="dashboard-tooltip">
       <div className="tooltip-label">{label}</div>
+
       <div className="tooltip-value">
         {payload[0].name}: {payload[0].value}
       </div>
@@ -526,22 +751,16 @@ function ChartEmptyState({ message }) {
 
 function StarticleBackground() {
   return (
-    <div className="starticle-background" aria-hidden="true">
-      <span className="starticle starticle-1" />
-      <span className="starticle starticle-2" />
-      <span className="starticle starticle-3" />
-      <span className="starticle starticle-4" />
-      <span className="starticle starticle-5" />
-      <span className="starticle starticle-6" />
-      <span className="starticle starticle-7" />
-      <span className="starticle starticle-8" />
-      <span className="starticle starticle-9" />
-      <span className="starticle starticle-10" />
-      <span className="starticle starticle-11" />
-      <span className="starticle starticle-12" />
-      <span className="starticle starticle-13" />
-      <span className="starticle starticle-14" />
-      <span className="starticle starticle-15" />
+    <div
+      className="starticle-background"
+      aria-hidden="true"
+    >
+      {Array.from({ length: 15 }, (_, index) => (
+        <span
+          key={index}
+          className={`starticle starticle-${index + 1}`}
+        />
+      ))}
     </div>
   );
 }
