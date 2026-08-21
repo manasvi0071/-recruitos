@@ -1,160 +1,269 @@
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import "./AdminDashboard.css";
 
-function AdminDashboard() {
-  // State Management
-  const [profileFilter, setProfileFilter] = useState("All Profiles");
-  const [collegeFilter, setCollegeFilter] = useState("All Colleges");
-  const [companyFilter, setCompanyFilter] = useState("All Corporates");
-  const [statusFilter, setStatusFilter] = useState("All Status");
-  const [view, setView] = useState("college");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const STATUS_OPTIONS = [
+  "Joined",
+  "Selected",
+  "Interview",
+  "Shortlisted",
+];
 
-  // Data State
+function AdminDashboard() {
+  const [profileFilter, setProfileFilter] =
+    useState("All Profiles");
+
+  const [collegeFilter, setCollegeFilter] =
+    useState("All Colleges");
+
+  const [companyFilter, setCompanyFilter] =
+    useState("All Corporates");
+
+  const [statusFilter, setStatusFilter] =
+    useState("All Status");
+
+  const [view, setView] = useState("college");
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [candidates, setCandidates] = useState([]);
   const [requirements, setRequirements] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
 
-  // Fetch data from Supabase
   useEffect(() => {
-    const fetchData = async () => {
+    let ignore = false;
+
+    async function fetchDashboardData() {
+      setLoading(true);
+      setError("");
+
       try {
-        setLoading(true);
-        setError(null);
+        const [
+          { data: candidatesData, error: candidatesError },
+          { data: requirementsData, error: requirementsError },
+          { data: monthlyDataPoints, error: monthlyError },
+        ] = await Promise.all([
+          supabase
+            .from("candidates")
+            .select("*")
+            .order("created_at", {
+              ascending: false,
+            }),
 
-        // Fetch candidates
-        const { data: candidatesData, error: candidatesError } = await supabase
-          .from("candidates")
-          .select("*");
+          supabase
+            .from("requirements")
+            .select("*")
+            .order("created_at", {
+              ascending: false,
+            }),
 
-        if (candidatesError) throw candidatesError;
+          supabase
+            .from("monthly_recruitment")
+            .select("*")
+            .order("month_order", {
+              ascending: true,
+            }),
+        ]);
 
-        // Fetch requirements
-        const { data: requirementsData, error: requirementsError } = await supabase
-          .from("requirements")
-          .select("*");
+        if (candidatesError) {
+          throw candidatesError;
+        }
 
-        if (requirementsError) throw requirementsError;
+        if (requirementsError) {
+          throw requirementsError;
+        }
 
-        // Fetch monthly data
-        const { data: monthlyDataPoints, error: monthlyError } = await supabase
-          .from("monthly_recruitment")
-          .select("*")
-          .order("month_order", { ascending: true });
+        if (monthlyError) {
+          throw monthlyError;
+        }
 
-        if (monthlyError) throw monthlyError;
+        if (!ignore) {
+          setCandidates(candidatesData || []);
+          setRequirements(requirementsData || []);
+          setMonthlyData(monthlyDataPoints || []);
+        }
+      } catch (fetchError) {
+        console.error(
+          "Admin dashboard fetch error:",
+          fetchError,
+        );
 
-        setCandidates(candidatesData || []);
-        setRequirements(requirementsData || []);
-        setMonthlyData(monthlyDataPoints || []);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError(err.message);
+        if (!ignore) {
+          setError(
+            fetchError?.message ||
+              "Could not load dashboard data.",
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
-    };
+    }
 
-    fetchData();
+    fetchDashboardData();
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
-  // Computed values
-  const profiles = useMemo(
-    () => [...new Set(candidates.map((item) => item.profile).filter(Boolean))],
-    [candidates]
-  );
+  const profiles = useMemo(() => {
+    return [
+      ...new Set(
+        candidates
+          .map((candidate) => candidate.profile)
+          .filter(Boolean),
+      ),
+    ].sort();
+  }, [candidates]);
 
-  const colleges = useMemo(
-    () => [...new Set(candidates.map((item) => item.college).filter(Boolean))],
-    [candidates]
-  );
+  const colleges = useMemo(() => {
+    return [
+      ...new Set(
+        candidates
+          .map((candidate) => candidate.college)
+          .filter(Boolean),
+      ),
+    ].sort();
+  }, [candidates]);
 
-  const companies = useMemo(
-    () => [...new Set(requirements.map((item) => item.company).filter(Boolean))],
-    [requirements]
-  );
+  const companies = useMemo(() => {
+    return [
+      ...new Set(
+        requirements
+          .map((requirement) => requirement.company)
+          .filter(Boolean),
+      ),
+    ].sort();
+  }, [requirements]);
 
-  const statuses = ["Joined", "Selected", "Interview", "Shortlisted"];
+  const filteredCandidates = useMemo(() => {
+    return candidates.filter((candidate) => {
+      const matchesProfile =
+        profileFilter === "All Profiles" ||
+        candidate.profile === profileFilter;
 
-  // Filtering logic
-  const filteredCandidates = candidates.filter((candidate) => {
-    const profileMatch =
-      profileFilter === "All Profiles" || candidate.profile === profileFilter;
-    const collegeMatch =
-      collegeFilter === "All Colleges" || candidate.college === collegeFilter;
-    const statusMatch =
-      statusFilter === "All Status" || candidate.status === statusFilter;
+      const matchesCollege =
+        collegeFilter === "All Colleges" ||
+        candidate.college === collegeFilter;
 
-    return profileMatch && collegeMatch && statusMatch;
-  });
+      const matchesStatus =
+        statusFilter === "All Status" ||
+        candidate.status === statusFilter;
 
-  const filteredRequirements = requirements.filter((requirement) => {
-    const profileMatch =
-      profileFilter === "All Profiles" || requirement.profile === profileFilter;
-    const companyMatch =
-      companyFilter === "All Corporates" || requirement.company === companyFilter;
+      return (
+        matchesProfile &&
+        matchesCollege &&
+        matchesStatus
+      );
+    });
+  }, [
+    candidates,
+    profileFilter,
+    collegeFilter,
+    statusFilter,
+  ]);
 
-    return profileMatch && companyMatch;
-  });
+  const filteredRequirements = useMemo(() => {
+    return requirements.filter((requirement) => {
+      const matchesProfile =
+        profileFilter === "All Profiles" ||
+        requirement.profile === profileFilter;
 
-  // KPI Calculations
+      const matchesCompany =
+        companyFilter === "All Corporates" ||
+        requirement.company === companyFilter;
+
+      return matchesProfile && matchesCompany;
+    });
+  }, [
+    requirements,
+    profileFilter,
+    companyFilter,
+  ]);
+
   const totalCandidates = filteredCandidates.length;
+
   const selectedCandidates = filteredCandidates.filter(
-    (item) => item.status === "Selected"
+    (candidate) => candidate.status === "Selected",
   ).length;
+
   const joinedCandidates = filteredCandidates.filter(
-    (item) => item.status === "Joined"
+    (candidate) => candidate.status === "Joined",
   ).length;
+
   const shortlistedCandidates = filteredCandidates.filter(
-    (item) => item.status === "Shortlisted"
+    (candidate) => candidate.status === "Shortlisted",
   ).length;
+
   const interviewCandidates = filteredCandidates.filter(
-    (item) => item.status === "Interview"
+    (candidate) => candidate.status === "Interview",
   ).length;
 
   const activeRequirements = filteredRequirements.filter(
-    (item) => item.status === "Active"
+    (requirement) => requirement.status === "Active",
   ).length;
 
   const fulfilledRequirements = filteredRequirements.filter(
-    (item) => item.status === "Fulfilled"
+    (requirement) => requirement.status === "Fulfilled",
   ).length;
 
   const pendingRequirements = filteredRequirements.filter(
-    (item) => item.status === "Pending"
+    (requirement) => requirement.status === "Pending",
   ).length;
 
   const totalShared = filteredRequirements.reduce(
-    (sum, item) => sum + (item.candidates_shared || 0),
-    0
+    (sum, requirement) =>
+      sum + Number(requirement.candidates_shared || 0),
+    0,
   );
 
   const totalCorporateSelected = filteredRequirements.reduce(
-    (sum, item) => sum + (item.selected || 0),
-    0
+    (sum, requirement) =>
+      sum + Number(requirement.selected || 0),
+    0,
   );
 
-  // Helper functions
-  const resetFilters = () => {
+  const maxMonthlyValue = monthlyData.length
+    ? Math.max(
+        1,
+        ...monthlyData.map(
+          (item) =>
+            Number(item.college || 0) +
+            Number(item.shared || 0),
+        ),
+      )
+    : 1;
+
+  function resetFilters() {
     setProfileFilter("All Profiles");
     setCollegeFilter("All Colleges");
     setCompanyFilter("All Corporates");
     setStatusFilter("All Status");
-  };
+  }
 
-  const maxMonthlyValue = monthlyData.length
-    ? Math.max(
-        ...monthlyData.map((item) => (item.college || 0) + (item.shared || 0))
-      )
-    : 1;
+  function getPipelineWidth(value) {
+    if (totalCandidates === 0) {
+      return "0%";
+    }
+
+    return `${Math.min(
+      100,
+      Math.max(
+        value > 0 ? 15 : 0,
+        (value / totalCandidates) * 100,
+      ),
+    )}%`;
+  }
 
   if (loading) {
     return (
       <div className="admin-dashboard">
-        <div style={{ padding: "40px", textAlign: "center", color: "#7c8595" }}>
-          Loading dashboard data...
+        <div className="admin-state-card">
+          <div className="state-spinner" />
+          <p>Loading dashboard data...</p>
         </div>
       </div>
     );
@@ -163,8 +272,10 @@ function AdminDashboard() {
   if (error) {
     return (
       <div className="admin-dashboard">
-        <div style={{ padding: "40px", textAlign: "center", color: "#d32f2f" }}>
-          Error loading data: {error}
+        <div className="admin-state-card admin-error-state">
+          <div className="state-icon">!</div>
+          <h2>Unable to load dashboard</h2>
+          <p>{error}</p>
         </div>
       </div>
     );
@@ -172,21 +283,28 @@ function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
-      {/* HEADER */}
       <header className="header">
         <div>
+          <p className="admin-kicker">
+            SAARTHI ADMINISTRATION
+          </p>
+
           <h1>Saarthi Admin Dashboard</h1>
-          <p>Complete recruitment and corporate overview</p>
+
+          <p>
+            Complete recruitment and corporate overview.
+          </p>
         </div>
 
         <div className="admin-info">
           <div className="live">
-            <span></span>
+            <span />
             Live
           </div>
 
           <div className="admin-user">
             <div className="avatar">A</div>
+
             <div>
               <strong>Admin</strong>
               <small>Administrator</small>
@@ -195,299 +313,229 @@ function AdminDashboard() {
         </div>
       </header>
 
-      {/* FILTERS */}
       <section className="filters">
-        <div className="filter">
-          <label>Job Profile</label>
-          <select
-            value={profileFilter}
-            onChange={(e) => setProfileFilter(e.target.value)}
-          >
-            <option>All Profiles</option>
-            {profiles.map((profile) => (
-              <option key={profile}>{profile}</option>
-            ))}
-          </select>
-        </div>
+        <Filter
+          label="Job Profile"
+          value={profileFilter}
+          onChange={setProfileFilter}
+          defaultLabel="All Profiles"
+          options={profiles}
+        />
 
-        <div className="filter">
-          <label>College</label>
-          <select
-            value={collegeFilter}
-            onChange={(e) => setCollegeFilter(e.target.value)}
-          >
-            <option>All Colleges</option>
-            {colleges.map((college) => (
-              <option key={college}>{college}</option>
-            ))}
-          </select>
-        </div>
+        <Filter
+          label="College"
+          value={collegeFilter}
+          onChange={setCollegeFilter}
+          defaultLabel="All Colleges"
+          options={colleges}
+        />
 
-        <div className="filter">
-          <label>Corporate</label>
-          <select
-            value={companyFilter}
-            onChange={(e) => setCompanyFilter(e.target.value)}
-          >
-            <option>All Corporates</option>
-            {companies.map((company) => (
-              <option key={company}>{company}</option>
-            ))}
-          </select>
-        </div>
+        <Filter
+          label="Corporate"
+          value={companyFilter}
+          onChange={setCompanyFilter}
+          defaultLabel="All Corporates"
+          options={companies}
+        />
 
-        <div className="filter">
-          <label>Candidate Status</label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option>All Status</option>
-            {statuses.map((status) => (
-              <option key={status}>{status}</option>
-            ))}
-          </select>
-        </div>
+        <Filter
+          label="Candidate Status"
+          value={statusFilter}
+          onChange={setStatusFilter}
+          defaultLabel="All Status"
+          options={STATUS_OPTIONS}
+        />
 
-        <button className="reset" onClick={resetFilters}>
+        <button
+          className="reset"
+          type="button"
+          onClick={resetFilters}
+        >
           Reset
         </button>
       </section>
 
-      {/* KPI CARDS */}
       <section className="kpi-grid">
-        <div className="kpi-card">
-          <div className="kpi-symbol">👥</div>
-          <div>
-            <span>Total Candidates</span>
-            <h2>{totalCandidates}</h2>
-            <small>Current filtered view</small>
-          </div>
-        </div>
+        <KpiCard
+          icon="👥"
+          label="Total Candidates"
+          value={totalCandidates}
+          helper="Current filtered view"
+        />
 
-        <div className="kpi-card">
-          <div className="kpi-symbol">🏢</div>
-          <div>
-            <span>Corporate Requirements</span>
-            <h2>{filteredRequirements.length}</h2>
-            <small>{activeRequirements} active</small>
-          </div>
-        </div>
+        <KpiCard
+          icon="🏢"
+          label="Corporate Requirements"
+          value={filteredRequirements.length}
+          helper={`${activeRequirements} active`}
+        />
 
-        <div className="kpi-card">
-          <div className="kpi-symbol">📤</div>
-          <div>
-            <span>Candidates Shared</span>
-            <h2>{totalShared}</h2>
-            <small>With corporate clients</small>
-          </div>
-        </div>
+        <KpiCard
+          icon="📤"
+          label="Candidates Shared"
+          value={totalShared}
+          helper="With corporate clients"
+        />
 
-        <div className="kpi-card">
-          <div className="kpi-symbol">🎯</div>
-          <div>
-            <span>Selected</span>
-            <h2>{selectedCandidates + totalCorporateSelected}</h2>
-            <small>{selectedCandidates} candidate status selected</small>
-          </div>
-        </div>
+        <KpiCard
+          icon="🎯"
+          label="Selected"
+          value={
+            selectedCandidates + totalCorporateSelected
+          }
+          helper={`${selectedCandidates} candidate status selected`}
+        />
 
-        <div className="kpi-card">
-          <div className="kpi-symbol">✓</div>
-          <div>
-            <span>Joined</span>
-            <h2>{joinedCandidates}</h2>
-            <small>Final joining status</small>
-          </div>
-        </div>
+        <KpiCard
+          icon="✓"
+          label="Joined"
+          value={joinedCandidates}
+          helper="Final joining status"
+        />
       </section>
 
-      {/* MAIN DASHBOARD */}
       <main className="dashboard-grid">
-        {/* MONTHLY ACTIVITY */}
         <section className="card monthly-card">
-          <div className="card-heading">
-            <div>
-              <h3>Monthly Recruitment Activity</h3>
-              <p>College candidates and candidates shared with corporates</p>
-            </div>
+          <CardHeading
+            title="Monthly Recruitment Activity"
+            subtitle="College candidates and candidates shared with corporates"
+          />
 
-            <div className="legend">
-              <span>
-                <i className="legend-college"></i>
-                College
-              </span>
-              <span>
-                <i className="legend-shared"></i>
-                Corporate Shared
-              </span>
-            </div>
-          </div>
+          <div className="legend">
+            <span>
+              <i className="legend-college" />
+              College
+            </span>
 
-          <div className="bar-chart">
-            {monthlyData.map((item) => {
-              const collegeHeight =
-                ((item.college || 0) / maxMonthlyValue) * 100;
-              const sharedHeight =
-                ((item.shared || 0) / maxMonthlyValue) * 100;
-
-              return (
-                <div className="bar-column" key={item.id || item.month}>
-                  <div className="bars">
-                    <div
-                      className="bar college-bar"
-                      style={{ height: `${collegeHeight}%` }}
-                      title={`College: ${item.college || 0}`}
-                    ></div>
-
-                    <div
-                      className="bar shared-bar"
-                      style={{ height: `${sharedHeight}%` }}
-                      title={`Shared: ${item.shared || 0}`}
-                    ></div>
-                  </div>
-
-                  <span>{item.month}</span>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* RECRUITMENT FUNNEL */}
-        <section className="card">
-          <div className="card-heading">
-            <div>
-              <h3>Recruitment Pipeline</h3>
-              <p>Current candidate journey</p>
-            </div>
-          </div>
-
-          <div className="pipeline">
-            <div className="pipeline-row">
-              <div className="pipeline-label">
-                <span>Sourced</span>
-                <strong>{totalCandidates}</strong>
-              </div>
-              <div className="pipeline-track">
-                <div
-                  className="pipeline-fill first"
-                  style={{ width: "100%" }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="pipeline-row">
-              <div className="pipeline-label">
-                <span>Shortlisted</span>
-                <strong>{shortlistedCandidates}</strong>
-              </div>
-              <div className="pipeline-track">
-                <div
-                  className="pipeline-fill second"
-                  style={{
-                    width: `${Math.max(
-                      25,
-                      (shortlistedCandidates / Math.max(totalCandidates, 1)) *
-                        100
-                    )}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="pipeline-row">
-              <div className="pipeline-label">
-                <span>Interview</span>
-                <strong>{interviewCandidates}</strong>
-              </div>
-              <div className="pipeline-track">
-                <div
-                  className="pipeline-fill third"
-                  style={{
-                    width: `${Math.max(
-                      20,
-                      (interviewCandidates / Math.max(totalCandidates, 1)) *
-                        100
-                    )}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="pipeline-row">
-              <div className="pipeline-label">
-                <span>Selected</span>
-                <strong>{selectedCandidates}</strong>
-              </div>
-              <div className="pipeline-track">
-                <div
-                  className="pipeline-fill fourth"
-                  style={{
-                    width: `${Math.max(
-                      18,
-                      (selectedCandidates / Math.max(totalCandidates, 1)) *
-                        100
-                    )}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="pipeline-row">
-              <div className="pipeline-label">
-                <span>Joined</span>
-                <strong>{joinedCandidates}</strong>
-              </div>
-              <div className="pipeline-track">
-                <div
-                  className="pipeline-fill fifth"
-                  style={{
-                    width: `${Math.max(
-                      15,
-                      (joinedCandidates / Math.max(totalCandidates, 1)) *
-                        100
-                    )}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* CORPORATE REQUIREMENTS */}
-        <section className="card corporate-card">
-          <div className="card-heading">
-            <div>
-              <h3>Corporate Candidate Supply</h3>
-              <p>Requirements and suitable candidate movement</p>
-            </div>
-
-            <span className="count-badge">
-              {filteredRequirements.length} Requirements
+            <span>
+              <i className="legend-shared" />
+              Corporate Shared
             </span>
           </div>
 
+          {monthlyData.length === 0 ? (
+            <EmptyState message="No monthly recruitment data available." />
+          ) : (
+            <div className="bar-chart">
+              {monthlyData.map((item) => {
+                const collegeValue = Number(
+                  item.college || 0,
+                );
+
+                const sharedValue = Number(
+                  item.shared || 0,
+                );
+
+                const collegeHeight =
+                  (collegeValue / maxMonthlyValue) * 100;
+
+                const sharedHeight =
+                  (sharedValue / maxMonthlyValue) * 100;
+
+                return (
+                  <div
+                    className="bar-column"
+                    key={item.id || item.month}
+                  >
+                    <div className="bars">
+                      <div
+                        className="bar college-bar"
+                        style={{
+                          height: `${collegeHeight}%`,
+                        }}
+                        title={`College: ${collegeValue}`}
+                      />
+
+                      <div
+                        className="bar shared-bar"
+                        style={{
+                          height: `${sharedHeight}%`,
+                        }}
+                        title={`Shared: ${sharedValue}`}
+                      />
+                    </div>
+
+                    <span>{item.month}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="card">
+          <CardHeading
+            title="Recruitment Pipeline"
+            subtitle="Current candidate journey"
+          />
+
+          <PipelineRow
+            label="Sourced"
+            value={totalCandidates}
+            width={getPipelineWidth(totalCandidates)}
+            tone="first"
+          />
+
+          <PipelineRow
+            label="Shortlisted"
+            value={shortlistedCandidates}
+            width={getPipelineWidth(shortlistedCandidates)}
+            tone="second"
+          />
+
+          <PipelineRow
+            label="Interview"
+            value={interviewCandidates}
+            width={getPipelineWidth(interviewCandidates)}
+            tone="third"
+          />
+
+          <PipelineRow
+            label="Selected"
+            value={selectedCandidates}
+            width={getPipelineWidth(selectedCandidates)}
+            tone="fourth"
+          />
+
+          <PipelineRow
+            label="Joined"
+            value={joinedCandidates}
+            width={getPipelineWidth(joinedCandidates)}
+            tone="fifth"
+          />
+        </section>
+
+        <section className="card corporate-card">
+          <CardHeading
+            title="Corporate Candidate Supply"
+            subtitle="Requirements and suitable candidate movement"
+            action={
+              <span className="count-badge">
+                {filteredRequirements.length} Requirements
+              </span>
+            }
+          />
+
           <div className="corporate-stats">
-            <div>
-              <span>Active</span>
-              <strong>{activeRequirements}</strong>
-            </div>
+            <MiniStat
+              label="Active"
+              value={activeRequirements}
+            />
 
-            <div>
-              <span>Fulfilled</span>
-              <strong>{fulfilledRequirements}</strong>
-            </div>
+            <MiniStat
+              label="Fulfilled"
+              value={fulfilledRequirements}
+            />
 
-            <div>
-              <span>Pending</span>
-              <strong>{pendingRequirements}</strong>
-            </div>
+            <MiniStat
+              label="Pending"
+              value={pendingRequirements}
+            />
 
-            <div>
-              <span>Selected</span>
-              <strong>{totalCorporateSelected}</strong>
-            </div>
+            <MiniStat
+              label="Selected"
+              value={totalCorporateSelected}
+            />
           </div>
 
           <div className="mini-table">
@@ -498,187 +546,161 @@ function AdminDashboard() {
               <span>Selected</span>
             </div>
 
-            {filteredRequirements.map((item) => (
-              <div className="mini-row" key={item.id}>
-                <span>{item.company}</span>
-                <span>{item.profile}</span>
-                <span>
-                  <em className={`status ${(item.status || "").toLowerCase()}`}>
-                    {item.status}
-                  </em>
-                </span>
-                <strong>{item.selected || 0}</strong>
-              </div>
-            ))}
-          </div>
-        </section>
+            {filteredRequirements.length === 0 ? (
+              <EmptyTableRow message="No requirements found." />
+            ) : (
+              filteredRequirements.map((item) => (
+                <div className="mini-row" key={item.id}>
+                  <span>{item.company || "—"}</span>
+                  <span>{item.profile || "—"}</span>
 
-        {/* JOB PROFILE */}
-        <section className="card">
-          <div className="card-heading">
-            <div>
-              <h3>Job Profile Analysis</h3>
-              <p>Candidate distribution by specialization</p>
-            </div>
-          </div>
+                  <span>
+                    <em
+                      className={`status ${String(
+                        item.status || "",
+                      ).toLowerCase()}`}
+                    >
+                      {item.status || "Unknown"}
+                    </em>
+                  </span>
 
-          <div className="profile-list">
-            {profiles.map((profile) => {
-              const count = filteredCandidates.filter(
-                (candidate) => candidate.profile === profile
-              ).length;
-
-              const percentage =
-                (count / Math.max(filteredCandidates.length, 1)) * 100;
-
-              return (
-                <div className="profile-item" key={profile}>
-                  <div className="profile-top">
-                    <span>{profile}</span>
-                    <strong>{count}</strong>
-                  </div>
-
-                  <div className="profile-progress">
-                    <div style={{ width: `${percentage}%` }}></div>
-                  </div>
+                  <strong>{item.selected || 0}</strong>
                 </div>
-              );
-            })}
+              ))
+            )}
           </div>
         </section>
 
-        {/* PERFORMANCE ANALYSIS */}
+        <section className="card">
+          <CardHeading
+            title="Job Profile Analysis"
+            subtitle="Candidate distribution by specialization"
+          />
+
+          {profiles.length === 0 ? (
+            <EmptyState message="No job profiles available." />
+          ) : (
+            <div className="profile-list">
+              {profiles.map((profile) => {
+                const count = filteredCandidates.filter(
+                  (candidate) =>
+                    candidate.profile === profile,
+                ).length;
+
+                const percentage =
+                  (count /
+                    Math.max(filteredCandidates.length, 1)) *
+                  100;
+
+                return (
+                  <div
+                    className="profile-item"
+                    key={profile}
+                  >
+                    <div className="profile-top">
+                      <span>{profile}</span>
+                      <strong>{count}</strong>
+                    </div>
+
+                    <div className="profile-progress">
+                      <div
+                        style={{
+                          width: `${percentage}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
         <section className="card full-width">
-          <div className="card-heading">
-            <div>
-              <h3>Performance Analysis</h3>
-              <p>Switch between different management views</p>
-            </div>
+          <CardHeading
+            title="Performance Analysis"
+            subtitle="Switch between different management views"
+          />
 
-            <div className="tabs">
-              <button
-                className={view === "college" ? "active" : ""}
-                onClick={() => setView("college")}
-              >
-                College
-              </button>
+          <div className="tabs">
+            <button
+              type="button"
+              className={view === "college" ? "active" : ""}
+              onClick={() => setView("college")}
+            >
+              College
+            </button>
 
-              <button
-                className={view === "corporate" ? "active" : ""}
-                onClick={() => setView("corporate")}
-              >
-                Corporate
-              </button>
+            <button
+              type="button"
+              className={
+                view === "corporate" ? "active" : ""
+              }
+              onClick={() => setView("corporate")}
+            >
+              Corporate
+            </button>
 
-              <button
-                className={view === "profile" ? "active" : ""}
-                onClick={() => setView("profile")}
-              >
-                Job Profile
-              </button>
-            </div>
+            <button
+              type="button"
+              className={view === "profile" ? "active" : ""}
+              onClick={() => setView("profile")}
+            >
+              Job Profile
+            </button>
           </div>
 
           {view === "college" && (
-            <div className="analysis-grid">
-              {colleges.map((college) => {
-                const total = candidates.filter(
-                  (candidate) => candidate.college === college
-                ).length;
-
-                const joined = candidates.filter(
-                  (candidate) =>
-                    candidate.college === college && candidate.status === "Joined"
-                ).length;
-
-                return (
-                  <div className="analysis-box" key={college}>
-                    <span>{college}</span>
-                    <strong>{total}</strong>
-                    <small>{joined} joined</small>
-                  </div>
-                );
-              })}
-            </div>
+            <CollegeAnalysis
+              colleges={colleges}
+              candidates={filteredCandidates}
+            />
           )}
 
           {view === "corporate" && (
-            <div className="analysis-grid">
-              {requirements.map((company) => (
-                <div className="analysis-box" key={company.id}>
-                  <span>{company.company}</span>
-                  <strong>{company.candidates_shared || 0}</strong>
-                  <small>{company.selected || 0} selected</small>
-                </div>
-              ))}
-            </div>
+            <CorporateAnalysis
+              requirements={filteredRequirements}
+            />
           )}
 
           {view === "profile" && (
-            <div className="analysis-grid">
-              {profiles.map((profile) => {
-                const candidateCount = candidates.filter(
-                  (candidate) => candidate.profile === profile
-                ).length;
-
-                const selected = candidates.filter(
-                  (candidate) =>
-                    candidate.profile === profile && candidate.status === "Selected"
-                ).length;
-
-                return (
-                  <div className="analysis-box" key={profile}>
-                    <span>{profile}</span>
-                    <strong>{candidateCount}</strong>
-                    <small>{selected} selected</small>
-                  </div>
-                );
-              })}
-            </div>
+            <ProfileAnalysis
+              profiles={profiles}
+              candidates={filteredCandidates}
+            />
           )}
         </section>
 
-        {/* ACTION REQUIRED */}
         <section className="card full-width action-card">
-          <div className="card-heading">
-            <div>
-              <h3>Action Required</h3>
-              <p>Items that may need administrator attention</p>
-            </div>
-          </div>
+          <CardHeading
+            title="Action Required"
+            subtitle="Items that may need administrator attention"
+          />
 
           <div className="action-grid">
-            <div className="action-item">
-              <div className="action-number">{pendingRequirements}</div>
-              <div>
-                <strong>Pending Corporate Requirements</strong>
-                <small>Requirements waiting for suitable candidates</small>
-              </div>
-            </div>
+            <ActionItem
+              value={pendingRequirements}
+              title="Pending Corporate Requirements"
+              description="Requirements waiting for suitable candidates"
+            />
 
-            <div className="action-item">
-              <div className="action-number">{interviewCandidates}</div>
-              <div>
-                <strong>Candidates in Interview</strong>
-                <small>Candidates currently at interview stage</small>
-              </div>
-            </div>
+            <ActionItem
+              value={interviewCandidates}
+              title="Candidates in Interview"
+              description="Candidates currently at interview stage"
+            />
 
-            <div className="action-item">
-              <div className="action-number">{shortlistedCandidates}</div>
-              <div>
-                <strong>Shortlisted Candidates</strong>
-                <small>Candidates requiring next-stage movement</small>
-              </div>
-            </div>
+            <ActionItem
+              value={shortlistedCandidates}
+              title="Shortlisted Candidates"
+              description="Candidates requiring next-stage movement"
+            />
 
-            <div className="action-item">
-              <div className="action-number">{activeRequirements}</div>
-              <div>
-                <strong>Active Corporate Requirements</strong>
-                <small>Currently open requirements</small>
-              </div>
-            </div>
+            <ActionItem
+              value={activeRequirements}
+              title="Active Corporate Requirements"
+              description="Currently open requirements"
+            />
           </div>
         </section>
       </main>
@@ -686,6 +708,239 @@ function AdminDashboard() {
       <footer>
         Saarthi Admin Dashboard • Management Overview
       </footer>
+    </div>
+  );
+}
+
+function Filter({
+  label,
+  value,
+  onChange,
+  defaultLabel,
+  options,
+}) {
+  return (
+    <div className="filter">
+      <label>{label}</label>
+
+      <select
+        value={value}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
+      >
+        <option value={defaultLabel}>
+          {defaultLabel}
+        </option>
+
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function KpiCard({ icon, label, value, helper }) {
+  return (
+    <div className="kpi-card">
+      <div className="kpi-symbol">{icon}</div>
+
+      <div>
+        <span>{label}</span>
+        <h2>{value}</h2>
+        <small>{helper}</small>
+      </div>
+    </div>
+  );
+}
+
+function CardHeading({
+  title,
+  subtitle,
+  action,
+}) {
+  return (
+    <div className="card-heading">
+      <div>
+        <h3>{title}</h3>
+        <p>{subtitle}</p>
+      </div>
+
+      {action}
+    </div>
+  );
+}
+
+function MiniStat({ label, value }) {
+  return (
+    <div>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function PipelineRow({
+  label,
+  value,
+  width,
+  tone,
+}) {
+  return (
+    <div className="pipeline-row">
+      <div className="pipeline-label">
+        <span>{label}</span>
+        <strong>{value}</strong>
+      </div>
+
+      <div className="pipeline-track">
+        <div
+          className={`pipeline-fill ${tone}`}
+          style={{ width }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function CollegeAnalysis({
+  colleges,
+  candidates,
+}) {
+  if (colleges.length === 0) {
+    return <EmptyState message="No college data available." />;
+  }
+
+  return (
+    <div className="analysis-grid">
+      {colleges.map((college) => {
+        const total = candidates.filter(
+          (candidate) =>
+            candidate.college === college,
+        ).length;
+
+        const joined = candidates.filter(
+          (candidate) =>
+            candidate.college === college &&
+            candidate.status === "Joined",
+        ).length;
+
+        return (
+          <div
+            className="analysis-box"
+            key={college}
+          >
+            <span>{college}</span>
+            <strong>{total}</strong>
+            <small>{joined} joined</small>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CorporateAnalysis({
+  requirements,
+}) {
+  if (requirements.length === 0) {
+    return (
+      <EmptyState message="No corporate requirement data available." />
+    );
+  }
+
+  return (
+    <div className="analysis-grid">
+      {requirements.map((requirement) => (
+        <div
+          className="analysis-box"
+          key={requirement.id}
+        >
+          <span>{requirement.company || "—"}</span>
+          <strong>
+            {requirement.candidates_shared || 0}
+          </strong>
+          <small>
+            {requirement.selected || 0} selected
+          </small>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProfileAnalysis({
+  profiles,
+  candidates,
+}) {
+  if (profiles.length === 0) {
+    return (
+      <EmptyState message="No profile data available." />
+    );
+  }
+
+  return (
+    <div className="analysis-grid">
+      {profiles.map((profile) => {
+        const candidateCount = candidates.filter(
+          (candidate) =>
+            candidate.profile === profile,
+        ).length;
+
+        const selected = candidates.filter(
+          (candidate) =>
+            candidate.profile === profile &&
+            candidate.status === "Selected",
+        ).length;
+
+        return (
+          <div
+            className="analysis-box"
+            key={profile}
+          >
+            <span>{profile}</span>
+            <strong>{candidateCount}</strong>
+            <small>{selected} selected</small>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ActionItem({
+  value,
+  title,
+  description,
+}) {
+  return (
+    <div className="action-item">
+      <div className="action-number">{value}</div>
+
+      <div>
+        <strong>{title}</strong>
+        <small>{description}</small>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ message }) {
+  return (
+    <div className="admin-empty-state">
+      <span>◌</span>
+      <p>{message}</p>
+    </div>
+  );
+}
+
+function EmptyTableRow({ message }) {
+  return (
+    <div className="mini-row empty-table-row">
+      <span>{message}</span>
     </div>
   );
 }
