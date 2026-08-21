@@ -125,7 +125,7 @@ export default function SaarthiCampusLanding() {
                 <path d="M12 2 3 7l9 5 9-5-9-5Zm0 7L3 14v3l9 5 9-5v-3l-9 5-9-5V9Z" />
               </svg>
             </div>
-            <span style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>Saarthi</span>
+            <span style={{ fontSize: 22, fontWeight: 800, color: "#ffffff" }}>Saarthi</span>
             <span
               style={{
                 borderRadius: 999,
@@ -141,7 +141,7 @@ export default function SaarthiCampusLanding() {
             </span>
           </div>
           <div style={{ textAlign: "right" }}>
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#f1f3f8" }}>
               Powering Connections. Building Futures.
             </p>
             <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
@@ -165,7 +165,7 @@ export default function SaarthiCampusLanding() {
               <br />
               <span
                 style={{
-                  background: "linear-gradient(90deg, #7C3AED, #3B82F6)",
+                  background: "linear-gradient(90deg, #ed3a4640, #f63b864e)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -175,12 +175,12 @@ export default function SaarthiCampusLanding() {
               </span>
             </h1>
             <div style={{ marginTop: 16, height: 4, width: 64, borderRadius: 999, background: "linear-gradient(90deg, #7C3AED, #3B82F6)" }} />
-            <p style={{ marginTop: 24, fontSize: 16, color: "#475569", lineHeight: 1.6 }}>
+            <p style={{ marginTop: 24, fontSize: 16, color: "#07090d", lineHeight: 1.6 }}>
               Smart recruitment. Better connections.
               <br />
               One platform for all your hiring needs.
             </p>
-            <p style={{ marginTop: 32, fontSize: 14, fontWeight: 700, color: "#1e293b" }}>
+            <p style={{ marginTop: 32, fontSize: 14, fontWeight: 700, color: "#000000" }}>
               Choose your login to continue
             </p>
           </div>
