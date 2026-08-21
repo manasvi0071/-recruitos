@@ -125,7 +125,7 @@ export default function SaarthiCampusLanding() {
                 <path d="M12 2 3 7l9 5 9-5-9-5Zm0 7L3 14v3l9 5 9-5v-3l-9 5-9-5V9Z" />
               </svg>
             </div>
-            <span style={{ fontSize: 22, fontWeight: 800, color: "#ffffff" }}>Saarthi</span>
+            <span style={{ fontSize: 22, fontWeight: 800, color: "#6c4e07" }}>Saarthi</span>
             <span
               style={{
                 borderRadius: 999,
@@ -134,7 +134,7 @@ export default function SaarthiCampusLanding() {
                 fontSize: 12,
                 fontWeight: 700,
                 letterSpacing: "0.05em",
-                color: "#fff",
+                color: "#693906",
               }}
             >
               CAMPUS
@@ -165,7 +165,7 @@ export default function SaarthiCampusLanding() {
               <br />
               <span
                 style={{
-                  background: "linear-gradient(90deg, #ed3a4640, #f63b864e)",
+                  background: "linear-gradient(90deg, #320a4e40, #3e105f4e)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
