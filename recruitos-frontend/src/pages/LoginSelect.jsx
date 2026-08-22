@@ -1,4 +1,5 @@
 import campusBg from "../assets/campus-bg.png";
+import logoImg from "../assets/saarthi-logo-transparent.png";
 import {
   Briefcase,
   Building2,
@@ -108,24 +109,19 @@ export default function SaarthiCampusLanding() {
             marginBottom: 56,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
+          <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+            <img
+              src={logoImg}
+              alt="Saarthi Logo"
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 12,
-                background: "linear-gradient(135deg, #7C3AED, #4F46E5)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#fff",
+                display: "block",
+                alignSelf: "center",
+                height: 90,
+                width: "auto",
+                objectFit: "contain",
               }}
-            >
-              <svg viewBox="0 0 24 24" width={20} height={20} fill="currentColor">
-                <path d="M12 2 3 7l9 5 9-5-9-5Zm0 7L3 14v3l9 5 9-5v-3l-9 5-9-5V9Z" />
-              </svg>
-            </div>
-            <span style={{ fontSize: 22, fontWeight: 800, color: "#6c4e07" }}>Saarthi</span>
+            />
+            {/* <span style={{ fontSize: 22, fontWeight: 800, color: "#6c4e07" }}>Saarthi</span>
             <span
               style={{
                 borderRadius: 999,
@@ -138,7 +134,7 @@ export default function SaarthiCampusLanding() {
               }}
             >
               CAMPUS
-            </span>
+            </span> */}
           </div>
           <div style={{ textAlign: "right" }}>
             <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#f1f3f8" }}>
